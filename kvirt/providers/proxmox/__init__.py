@@ -410,8 +410,6 @@ class Kproxmox(Kbase):
         tags=[],
         storemetadata=False,
         sharedfolders=[],
-        kernel=None,
-        initrd=None,
         cmdline=None,
         placement=[],
         autostart=False,
@@ -425,6 +423,7 @@ class Kproxmox(Kbase):
         metadata={},
         securitygroups=[],
         vmuser=None,
+        guestagent=True,
     ):
         # pp(locals())
 

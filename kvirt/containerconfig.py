@@ -35,33 +35,22 @@ class Kcontainerconfig():
             default_k8s = True
         k8s = currentconfig.get('k8s', default_k8s)
         host = currentconfig.get('host', '127.0.0.1')
-        port = currentconfig.get('port', 22)
-        user = currentconfig.get('user', 'root')
         if not k8s:
             from kvirt.container import Kcontainer
             engine = currentconfig.get('containerengine', 'podman')
             cont = Kcontainer(host, engine=engine, debug=debug, insecure=insecure)
         else:
-            ca_file = currentconfig.get('ca_file')
+            kubeconfig_file = currentconfig.get('kubeconfig')
+            if kubeconfig_file is None:
+                error("Missing kubeconfig in the configuration. Leaving")
+                sys.exit(1)
+            elif not os.path.exists(os.path.expanduser(kubeconfig_file)):
+                error("Kubeconfig file path doesn't exist. Leaving")
+                sys.exit(1)
             namespace = currentconfig.get('namespace') if namespace is None else namespace
             context = currentconfig.get('context')
             readwritemany = currentconfig.get('readwritemany', False)
-            ca_file = currentconfig.get('ca_file')
-            if ca_file is not None:
-                ca_file = os.path.expanduser(ca_file)
-                if not os.path.exists(ca_file):
-                    error("Ca file %s doesn't exist. Leaving" % ca_file)
-                    sys.exit(1)
-            token = currentconfig.get('token')
-            token_file = currentconfig.get('token_file')
-            if token_file is not None:
-                token_file = os.path.expanduser(token_file)
-                if not os.path.exists(token_file):
-                    error("Token file path doesn't exist. Leaving")
-                    sys.exit(1)
-                else:
-                    token = open(token_file).read()
             from kvirt.kubernetes import Kubernetes
-            cont = Kubernetes(host=host, user=user, port=port, token=token, ca_file=ca_file, context=context,
-                              namespace=namespace, readwritemany=readwritemany, debug=debug, insecure=insecure)
+            cont = Kubernetes(kubeconfig_file, host=host, context=context, namespace=namespace,
+                              readwritemany=readwritemany, debug=debug, insecure=insecure)
         self.cont = cont

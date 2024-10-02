@@ -12,6 +12,9 @@ LABEL name="karmab/kcli" \
 
 EXPOSE 9000
 
+ADD kubectl /usr/local/bin/kubectl
+RUN chmod 777 /usr/local/bin/kubectl
+
 RUN mkdir /root/kcli
 ADD kvirt /root/kcli/kvirt
 COPY setup.py /root/kcli

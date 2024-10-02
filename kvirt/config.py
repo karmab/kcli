@@ -58,27 +58,17 @@ class Kconfig(Kbaseconfig):
             k = None
         else:
             if self.type == 'kubevirt':
-                if namespace is None:
-                    namespace = options.get('namespace')
+                kubeconfig_file = options.get('kubeconfig')
+                if kubeconfig_file is None:
+                    error("Missing kubeconfig in the configuration. Leaving")
+                    sys.exit(1)
+                elif not os.path.exists(os.path.expanduser(kubeconfig_file)):
+                    error("Kubeconfig file path doesn't exist. Leaving")
+                    sys.exit(1)
+                namespace = namespace or options.get('namespace')
                 context = options.get('context')
                 readwritemany = options.get('readwritemany', kdefaults.KUBEVIRT['readwritemany'])
-                ca_file = options.get('ca_file')
-                if ca_file is not None:
-                    ca_file = os.path.expanduser(ca_file)
-                    if not os.path.exists(ca_file):
-                        error(f"Ca file {ca_file} doesn't exist. Leaving")
-                        sys.exit(1)
                 disk_hotplug = options.get('disk_hotplug', kdefaults.KUBEVIRT['disk_hotplug'])
-                kubeconfig_file = options.get('kubeconfig')
-                token = options.get('token')
-                token_file = options.get('token_file')
-                if token_file is not None:
-                    token_file = os.path.expanduser(token_file)
-                    if not os.path.exists(token_file):
-                        error("Token file path doesn't exist. Leaving")
-                        sys.exit(1)
-                    else:
-                        token = open(token_file).read()
                 access_mode = options.get('access_mode', kdefaults.KUBEVIRT['access_mode'])
                 if access_mode not in ['External', 'LoadBalancer', 'NodePort']:
                     msg = f"Incorrect access_mode {access_mode}. Should be External, NodePort or LoadBalancer"
@@ -102,13 +92,10 @@ class Kconfig(Kbaseconfig):
                 except Exception as e:
                     exception = e if debug else None
                     dependency_error('kubevirt', exception)
-                k = Kubevirt(context=context, token=token, ca_file=ca_file, host=self.host,
-                             port=6443, user=self.user, debug=debug, namespace=namespace,
-                             disk_hotplug=disk_hotplug, readwritemany=readwritemany,
-                             access_mode=access_mode, volume_mode=volume_mode,
-                             volume_access=volume_access, harvester=harvester, embed_userdata=embed_userdata,
-                             first_consumer=first_consumer, kubeconfig_file=kubeconfig_file)
-                self.host = k.host
+                k = Kubevirt(kubeconfig_file, context=context, debug=debug, namespace=namespace,
+                             disk_hotplug=disk_hotplug, readwritemany=readwritemany, access_mode=access_mode,
+                             volume_mode=volume_mode, volume_access=volume_access, harvester=harvester,
+                             embed_userdata=embed_userdata, first_consumer=first_consumer)
             elif self.type == 'gcp':
                 credentials = options.get('credentials')
                 if credentials is not None:
@@ -419,14 +406,14 @@ class Kconfig(Kbaseconfig):
                     error("Problem parsing your configuration file")
                     sys.exit(1)
                 session = options.get('session', False)
-                remotednsmasq = options.get('remotednsmasq', False)
+                legacy = options.get('legacy', False)
                 try:
                     from kvirt.providers.kvm import Kvirt
                 except Exception as e:
                     exception = e if debug else None
                     dependency_error('libvirt', exception)
                 k = Kvirt(host=self.host, port=self.port, user=self.user, protocol=self.protocol, url=self.url,
-                          debug=debug, insecure=self.insecure, session=session, remotednsmasq=remotednsmasq)
+                          debug=debug, insecure=self.insecure, session=session, legacy=legacy)
             if k.conn is None:
                 error(f"Couldn't connect to client {self.client}. Leaving...")
                 sys.exit(1)
@@ -565,6 +552,7 @@ class Kconfig(Kbaseconfig):
         default_nets = father.get('nets', self.nets)
         default_image = father.get('image', self.image)
         default_cloudinit = father.get('cloudinit', self.cloudinit)
+        default_guestagent = father.get('guestagent', self.guestagent)
         default_nested = father.get('nested', self.nested)
         default_reservedns = father.get('reservedns', self.reservedns)
         default_reservehost = father.get('reservehost', self.reservehost)
@@ -614,8 +602,6 @@ class Kconfig(Kbaseconfig):
         default_pushbullettoken = father.get('pushbullettoken', self.pushbullettoken)
         default_slacktoken = father.get('slacktoken', self.slacktoken)
         default_sharedfolders = father.get('sharedfolders', self.sharedfolders)
-        default_kernel = father.get('kernel', self.kernel)
-        default_initrd = father.get('initrd', self.initrd)
         default_cmdline = father.get('cmdline', self.cmdline)
         default_placement = father.get('placement', self.placement)
         default_cpuhotplug = father.get('cpuhotplug', self.cpuhotplug)
@@ -667,6 +653,7 @@ class Kconfig(Kbaseconfig):
         if cloudinit and self.type == 'kvm' and\
                 which('mkisofs') is None and which('genisoimage') and which('xorrisofs') is None:
             return {'result': 'failure', 'reason': "Missing mkisofs/genisoimage/xorrisofs needed for cloudinit"}
+        guestagent = profile.get('guestagent', default_guestagent)
         reserveip = profile.get('reserveip', default_reserveip)
         reservedns = profile.get('reservedns', default_reservedns)
         reservehost = profile.get('reservehost', default_reservehost)
@@ -722,8 +709,6 @@ class Kconfig(Kbaseconfig):
         mailfrom = profile.get('mailfrom', default_mailfrom)
         mailto = profile.get('mailto', default_mailto)
         sharedfolders = profile.get('sharedfolders', default_sharedfolders)
-        kernel = profile.get('kernel', default_kernel)
-        initrd = profile.get('initrd', default_initrd)
         cmdline = profile.get('cmdline', default_cmdline)
         placement = profile.get('placement', default_placement)
         cpuhotplug = profile.get('cpuhotplug', default_cpuhotplug)
@@ -1007,10 +992,9 @@ class Kconfig(Kbaseconfig):
                           start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns,
                           domain=domain, nested=bool(nested), tunnel=tunnel, files=files, enableroot=enableroot,
                           overrides=overrides, tags=tags, storemetadata=storemetadata,
-                          sharedfolders=sharedfolders, kernel=kernel, initrd=initrd, cmdline=cmdline,
-                          placement=placement, autostart=autostart, cpuhotplug=cpuhotplug, memoryhotplug=memoryhotplug,
-                          pcidevices=pcidevices, tpm=tpm, rng=rng, metadata=metadata, securitygroups=securitygroups,
-                          vmuser=vmuser)
+                          sharedfolders=sharedfolders, cmdline=cmdline, placement=placement, autostart=autostart,
+                          cpuhotplug=cpuhotplug, memoryhotplug=memoryhotplug, pcidevices=pcidevices, tpm=tpm, rng=rng,
+                          metadata=metadata, securitygroups=securitygroups, vmuser=vmuser, guestagent=guestagent)
         if result['result'] != 'success':
             return result
         if reservedns and dnsclient is not None and domain is not None:
@@ -2476,7 +2460,7 @@ class Kconfig(Kbaseconfig):
                 result = k.add_image(url, pool, cmds=cmds, name=name or image, size=size, convert=convert)
             except Exception as e:
                 error(f"Got {e}")
-                error(f"Please run kcli delete image --yes {name}")
+                error(f"Please run kcli delete image --yes {name or image}")
                 return {'result': 'failure', 'reason': "User interruption"}
             found = 'found' in result
             if found:

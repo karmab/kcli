@@ -112,9 +112,9 @@ class Kibm(object):
                reservehost=False, start=True, keys=[], cmds=[], ips=None,
                netmasks=None, gateway=None, nested=True, dns=None, domain=None,
                tunnel=False, files=[], enableroot=True, alias=[], overrides={},
-               tags=[], storemetadata=False, sharedfolders=[], kernel=None, initrd=None, cmdline=None,
-               cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False,
-               placement=[], autostart=False, rng=False, metadata={}, securitygroups=[], vmuser=None):
+               tags=[], storemetadata=False, sharedfolders=[], cmdline=None, cpuhotplug=False, memoryhotplug=False,
+               numamode=None, numa=[], pcidevices=[], tpm=False, placement=[], autostart=False, rng=False, metadata={},
+               securitygroups=[], vmuser=None, guestagent=True):
         try:
             vpcs = self.conn.list_vpcs().result['vpcs']
             for vpc in vpcs:

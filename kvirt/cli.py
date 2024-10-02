@@ -19,7 +19,7 @@ from kvirt.common import error, pprint, success, warning, ssh, _ssh_credentials,
 from kvirt.common import get_git_version, compare_git_versions, interactive_kube, interactive_vm, convert_yaml_to_cmd
 from kvirt.config import Kconfig
 from kvirt.containerconfig import Kcontainerconfig
-from kvirt.defaults import IMAGES, VERSION, LOCAL_OPENSHIFT_APPS, SSH_PUB_LOCATIONS, PLANTYPES
+from kvirt.defaults import IMAGES, VERSION, LOCAL_OPENSHIFT_APPS, SSH_PUB_LOCATIONS, PLANTYPES, OPENSHIFT_TAG
 import os
 from prettytable import PrettyTable
 import random
@@ -1833,7 +1833,7 @@ def delete_dns(args):
 def export_vm(args):
     image = args.image
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    names = [common.get_lastvm(config.client)] if not args.names else args.names
+    names = [common.get_lastvm(config.client)] if not args.name else args.name
     k = config.k
     codes = []
     for name in names:
@@ -2563,12 +2563,13 @@ def download_hypershift(args):
 
 def download_oc(args):
     overrides = handle_parameters(args.param, args.paramfile)
-    common.get_oc(version=overrides.get('version', 'stable'), tag=overrides.get('tag', '4.16'), debug=args.debug)
+    common.get_oc(version=overrides.get('version', 'stable'), tag=overrides.get('tag', OPENSHIFT_TAG), debug=args.debug)
 
 
 def download_oc_mirror(args):
     overrides = handle_parameters(args.param, args.paramfile)
-    common.get_oc_mirror(version=overrides.get('version', 'stable'), tag=overrides.get('tag', '4.16'), debug=args.debug)
+    common.get_oc_mirror(version=overrides.get('version', 'stable'), tag=overrides.get('tag', OPENSHIFT_TAG),
+                         debug=args.debug)
 
 
 def download_openshift_installer(args):
@@ -4646,7 +4647,7 @@ def cli():
                                                    epilog=vmexport_epilog, formatter_class=rawhelp)
     vmexport_parser.add_argument('-i', '--image', help='Name for the generated image. Uses the vm name otherwise',
                                  metavar='IMAGE')
-    vmexport_parser.add_argument('vm', metavar='VM', nargs='?')
+    vmexport_parser.add_argument('name', metavar='VM', nargs='*')
     vmexport_parser.set_defaults(func=export_vm)
 
     expose_desc = 'Expose Object'

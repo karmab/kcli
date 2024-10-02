@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 
 from getpass import getuser
-# from urllib.request import urlopen, urlretrieve
-from urllib.request import urlopen
 from kvirt.defaults import IMAGES
 from kvirt.defaults import UBUNTUS, METADATA_FIELDS
 from kvirt import common
-from kvirt.common import error, pprint, warning, get_ssh_pub_key
+from kvirt.common import error, pprint, warning, get_ssh_pub_key, success
 from kvirt.providers.kvm.helpers import DHCPKEYWORDS
 from ipaddress import ip_address, ip_network
 from libvirt import open as libvirtopen, registerErrorHandler, libvirtError
@@ -87,7 +85,7 @@ registerErrorHandler(f=libvirt_callback, ctx=None)
 
 class Kvirt(object):
     def __init__(self, host='127.0.0.1', port=None, user='root', protocol='ssh', url=None, debug=False, insecure=False,
-                 session=False, remotednsmasq=False):
+                 session=False, legacy=False):
         if url is None:
             connectiontype = 'system' if not session else 'session'
             if host == '127.0.0.1' or host == 'localhost':
@@ -111,9 +109,11 @@ class Kvirt(object):
                 if publickeyfile is not None:
                     privkeyfile = publickeyfile.replace('.pub', '')
                     url = f"{url}&keyfile={privkeyfile}"
+                if legacy:
+                    url += '&socket=/var/run/libvirt/libvirt-sock'
             elif os.path.exists("/i_am_a_container"):
                 socketdir = '/var/run/libvirt' if not session else f'/home/{user}/.cache/libvirt'
-                url = f"{url}?socketf={socketdir}/libvirt-sock"
+                url += f"?socket={socketdir}/libvirt-sock"
         try:
             self.conn = libvirtopen(url)
             self.debug = debug
@@ -144,7 +144,6 @@ class Kvirt(object):
             self.identitycommand = f"-i {identityfile}"
         else:
             self.identitycommand = ""
-        self.remotednsmasq = remotednsmasq
 
     def close(self):
         conn = self.conn
@@ -215,9 +214,9 @@ class Kvirt(object):
                vnc=True, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=[],
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
                files=[], enableroot=True, overrides={}, tags=[], storemetadata=False, sharedfolders=[],
-               kernel=None, initrd=None, cmdline=None, placement=[], autostart=False, cpuhotplug=False,
+               cmdline=None, placement=[], autostart=False, cpuhotplug=False,
                memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False, metadata={},
-               securitygroups=[], vmuser=None):
+               securitygroups=[], vmuser=None, guestagent=True):
         bootdev = 1
         namespace = ''
         ignition = False
@@ -226,6 +225,7 @@ class Kvirt(object):
         diskpath = None
         qemuextra = overrides.get('qemuextra')
         enableiommu = overrides.get('iommu', False)
+        needs_ignition = image is not None and (common.needs_ignition(image) or 'ignition_file' in overrides)
         iommuxml = ""
         ioapicxml = ""
         if 'session' in self.url:
@@ -643,7 +643,7 @@ class Kvirt(object):
         nicslots = {k: 0 for k in range(0, 20)}
         alias = []
         vhostindex = 0
-        guestagent = False
+        need_guestagent = False
         for index, net in enumerate(nets):
             if usermode:
                 continue
@@ -677,6 +677,15 @@ class Kvirt(object):
                     ovs = True
                 if 'ip' in nets[index] and index == 0:
                     metadataxml += f"<kvirt:ip >{nets[index]['ip']}</kvirt:ip>"
+                    ip = nets[index].get('ip')
+                    netmask = net.get('mask') or net.get('netmask') or net.get('prefix')
+                    gateway = nets[index].get('gateway')
+                    nameserver = nets[index].get('dns') or gateway
+                    nic = nets[index].get('nic', 'ens3')
+                    if needs_ignition and ip is not None and netmask is not None and gateway is not None:
+                        warning("Injecting static networking via cmdline")
+                        cmdline = f'ip={ip}::{gateway}:{netmask}::{nic}:none nameserver={nameserver}'
+                        del nets[index]['ip']
                 if 'numa' in nets[index] and numa:
                     nicnuma = nets[index]['numa']
                 if 'filter' in nets[index]:
@@ -708,7 +717,7 @@ class Kvirt(object):
                 iftype = 'network'
                 sourcexml = f"<source network='{netname}'/>"
                 if netname in forward_bridges:
-                    guestagent = True
+                    need_guestagent = True
                 if index == 0 and not allnetworks[netname]['dhcp']:
                     metadataxml += "\n<kvirt:nodhcp>True</kvirt:nodhcp>"
             elif netname in bridges or ovs:
@@ -716,7 +725,7 @@ class Kvirt(object):
                     overrides['config_host'] = allnetworks[netname]['ip']
                 iftype = 'bridge'
                 sourcexml = f"<source bridge='{netname}'/>"
-                guestagent = True
+                need_guestagent = True
                 if reservedns and index == 0 and dns is not None:
                     dnscmd = f"sed -i 's/nameserver .*/nameserver {dns}/' /etc/resolv.conf"
                     cmds = cmds[:index] + [dnscmd] + cmds[index:]
@@ -774,7 +783,7 @@ class Kvirt(object):
 %s
 </interface>""" % (netxml, iftype, mtuxml, macxml, sourcexml, ovsxml, nicnumaxml, filterxml, nettype, multiqueuexml,
                    bootdevxml, addressxml)
-        if guestagent:
+        if need_guestagent and guestagent:
             gcmds = []
             if image is not None and 'cos' not in image and 'fedora-coreos' not in image:
                 lower = image.lower()
@@ -796,7 +805,7 @@ class Kvirt(object):
         if cloudinit:
             ignitiondata = None
             openstack = False
-            if image is not None and common.needs_ignition(image):
+            if needs_ignition:
                 ignition = 'qemu' in image
                 combustion = common.needs_combustion(image)
                 openstack = not ignition
@@ -1143,77 +1152,6 @@ class Kvirt(object):
                     foldercmd = 'ssh %s -p %s %s@%s "test -d %s || (%s)"' % (self.identitycommand, self.port,
                                                                              self.user, self.host, folder, foldercmd)
                     code = os.system(foldercmd)
-        kernelxml = ""
-        if kernel is not None:
-            existing_kernel = os.path.basename(kernel) in [os.path.basename(v) for v in self.volumes()]
-            locationdir = os.path.basename(kernel)
-            locationdir = f"{default_poolpath}/{locationdir}"
-            if existing_kernel:
-                pass
-            elif self.host == 'localhost' or self.host == '127.0.0.1':
-                os.mkdir(locationdir)
-            elif self.protocol == 'ssh':
-                locationcmd = 'ssh %s -p %s %s@%s "mkdir %s"' % (self.identitycommand, self.port, self.user,
-                                                                 self.host, locationdir)
-                code = os.system(locationcmd)
-            else:
-                return {'result': 'failure', 'reason': "Couldn't create dir to hold kernel and initrd"}
-            if kernel.startswith('http') or kernel.startswith('ftp'):
-                if existing_kernel:
-                    pass
-                elif 'rhcos' in kernel:
-                    if self.host == 'localhost' or self.host == '127.0.0.1':
-                        kernelcmd = f"curl -Lo {locationdir}/vmlinuz -f '{kernel}'"
-                        initrdcmd = f"curl -Lo {locationdir}/initrd.img -f '{initrd}'"
-                    elif self.protocol == 'ssh':
-                        kernelcmd = 'ssh %s -p %s %s@%s "curl -Lo %s/vmlinuz -f \'%s\'"' % (self.identitycommand,
-                                                                                            self.port, self.user,
-                                                                                            self.host, locationdir,
-                                                                                            kernel)
-                        initrdcmd = 'ssh %s -p %s %s@%s "curl -Lo %s/initrd.img -f \'%s\'"' % (self.identitycommand,
-                                                                                               self.port, self.user,
-                                                                                               self.host, locationdir,
-                                                                                               initrd)
-                    code = os.system(kernelcmd)
-                    code = os.system(initrdcmd)
-                else:
-                    try:
-                        location = urlopen(kernel).readlines()
-                    except Exception as e:
-                        return {'result': 'failure', 'reason': e}
-                    for line in location:
-                        if 'init' in str(line):
-                            p = re.compile(r'.*<a href="(.*)">\1.*')
-                            m = p.match(str(line))
-                            if m is not None and initrd is None:
-                                initrdfile = m.group(1)
-                                initrdurl = f"{kernel}/{initrdfile}"
-                                initrd = f"{locationdir}/initrd"
-                                if self.host == 'localhost' or self.host == '127.0.0.1':
-                                    initrdcmd = f"curl -Lo {initrd} -f '{initrdurl}'"
-                                elif self.protocol == 'ssh':
-                                    initrdcmd = 'ssh %s -p %s %s@%s "curl -Lo %s -f \'%s\'"' % (self.identitycommand,
-                                                                                                self.port, self.user,
-                                                                                                self.host, initrd,
-                                                                                                initrdurl)
-                                code = os.system(initrdcmd)
-                    kernelurl = f'{kernel}/vmlinuz'
-                    kernel = f"{locationdir}/vmlinuz"
-                    if self.host == 'localhost' or self.host == '127.0.0.1':
-                        kernelcmd = f"curl -Lo {kernel} -f '{kernelurl}'"
-                    elif self.protocol == 'ssh':
-                        kernelcmd = 'ssh %s -p %s %s@%s "curl -Lo %s -f \'%s\'"' % (self.identitycommand,
-                                                                                    self.port, self.user, self.host,
-                                                                                    kernel, kernelurl)
-                    code = os.system(kernelcmd)
-            elif initrd is None:
-                return {'result': 'failure', 'reason': "Missing initrd"}
-            warning("kernel and initrd will only be available during first boot")
-            kernel = f"{locationdir}/vmlinuz"
-            initrd = f"{locationdir}/initrd.img"
-            kernelxml = f"<kernel>{kernel}</kernel><initrd>{initrd}</initrd>"
-            if cmdline is not None:
-                kernelxml += f"<cmdline>{cmdline}</cmdline>"
         memoryhotplugxml = "<maxMemory slots='16' unit='MiB'>1524288</maxMemory>" if memoryhotplug else ""
         videoxml = ""
         firmwarexml = ""
@@ -1329,7 +1267,6 @@ class Kvirt(object):
 {ramxml}
 {firmwarexml}
 {bootxml}
-{kernelxml}
 <bootmenu enable="yes" timeout="60"/>
 </os>
 <features>
@@ -1368,7 +1305,7 @@ class Kvirt(object):
 </domain>""".format(virttype=virttype, namespace=namespace, name=name, uuidxml=uuidxml, metadataxml=metadataxml,
                     memoryhotplugxml=memoryhotplugxml, cpupinningxml=cpupinningxml, numatunexml=numatunexml,
                     hugepagesxml=hugepagesxml, memory=memory, vcpuxml=vcpuxml, osfirmware=osfirmware, arch=arch,
-                    machine=machine, ramxml=ramxml, firmwarexml=firmwarexml, bootxml=bootxml, kernelxml=kernelxml,
+                    machine=machine, ramxml=ramxml, firmwarexml=firmwarexml, bootxml=bootxml,
                     smmxml=smmxml, emulatorxml=emulatorxml, disksxml=disksxml, busxml=busxml, netxml=netxml,
                     isoxml=isoxml, extraisoxml=extraisoxml, floppyxml=floppyxml, displayxml=displayxml,
                     serialxml=serialxml, sharedxml=sharedxml, guestxml=guestxml, videoxml=videoxml,
@@ -2079,7 +2016,6 @@ class Kvirt(object):
         bridged = False
         ignition = False
         conn = self.conn
-        remotednsmasq = self.remotednsmasq
         try:
             vm = conn.lookupByName(name)
         except:
@@ -2211,24 +2147,6 @@ class Kvirt(object):
                         call("sudo /usr/bin/systemctl restart dnsmasq", shell=True)
                     except:
                         pass
-            if remotednsmasq and bridged and self.protocol == 'ssh' and self.host not in ['localhost', '127.0.0.1']:
-                deletecmd = f"sed -i '/{hostentry}/d' /etc/hosts"
-                if self.user != 'root':
-                    deletecmd = f"sudo {deletecmd}"
-                deletecmd = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host,
-                                                           deletecmd)
-                pprint("Checking if a remote host entry exists. sudo password for remote user %s might be asked"
-                       % self.user)
-                call(deletecmd, shell=True)
-                try:
-                    dnsmasqcmd = "/usr/bin/systemctl restart dnsmasq"
-                    if self.user != 'root':
-                        dnsmasqcmd = f"sudo {dnsmasqcmd}"
-                    dnsmasqcmd = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host,
-                                                                dnsmasqcmd)
-                    call(dnsmasqcmd, shell=True)
-                except:
-                    pass
         if ignition:
             ignitionpath = f'/var/lib/libvirt/images/{name}.ign'
             if self.protocol == 'ssh' and self.host not in ['localhost', '127.0.0.1']:
@@ -2452,11 +2370,8 @@ class Kvirt(object):
             try:
                 network = conn.networkLookupByName(netname)
             except:
-                if self.remotednsmasq:
-                    bridged = True
-                else:
-                    warning(f"Network {netname} can't be used for dns entries")
-                    return
+                warning(f"Bridged network {netname} can't be used for dns entries")
+                return
             if ip is None:
                 if isinstance(net, dict) and 'ip' in net:
                     ip = net['ip']
@@ -2483,11 +2398,8 @@ class Kvirt(object):
                 root = ET.fromstring(oldnetxml)
                 dns = list(root.iter('dns'))
                 if not dns:
-                    base = list(root.iter('network'))[0]
-                    dns = ET.Element("dns")
-                    base.append(dns)
-                    newxml = ET.tostring(root)
-                    conn.networkDefineXML(newxml.decode("utf-8"))
+                    warning("Ignoring reservedns as network was created without dns support")
+                    continue
                 fqdn = f"{name}.{domain}" if domain is not None and not name.endswith(domain) else name
                 hostnamexml = f'<hostname>{fqdn}</hostname>'
                 alias = [f"{entry}.{domain}" if domain is not None and
@@ -3785,7 +3697,8 @@ class Kvirt(object):
         os.system(command)
 
     def export(self, name, image=None):
-        newname = image if image is not None else "image-%s" % name
+        self.stop(name, soft=True)
+        newname = image if image is not None else f"image-{name}"
         conn = self.conn
         oldvm = conn.lookupByName(name)
         oldxml = oldvm.XMLDesc(0)
@@ -3809,6 +3722,7 @@ class Kvirt(object):
             newvolumexml = self._xmlvolume(newpath, oldvolumesize, backing=backing)
             pool.createXMLFrom(newvolumexml, oldvolume, 0)
             break
+        success(f"{newpath} generated")
         return {'result': 'success'}
 
     def _create_host_entry(self, name, ip, netname, domain):
@@ -3829,23 +3743,10 @@ class Kvirt(object):
                 warning("Old entry found.Leaving...")
                 return
         pprint("Creating hosts entry. Password for sudo might be asked")
-        if not self.remotednsmasq:
-            hostscmd = f"sh -c 'echo {hosts} >>{hostsfile}'"
-            if getuser() != 'root':
-                hostscmd = f"sudo {hostscmd}"
-            call(hostscmd, shell=True)
-        elif self.protocol != 'ssh' or self.host in ['localhost', '127.0.0.1']:
-            return
-        else:
-            hostscmd = "sudo sh -c 'echo %s >>%s'" % (hosts.replace('"', '\\"'), hostsfile)
-            hostscmd = f"ssh {self.identitycommand} -p {self.port} {self.user}@{self.host} \"{hostscmd}\""
-            call(hostscmd, shell=True)
-            dnsmasqcmd = "/usr/bin/systemctl restart dnsmasq"
-            if self.user != 'root':
-                dnsmasqcmd = f"sudo {dnsmasqcmd}"
-            dnsmasqcmd = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host,
-                                                        dnsmasqcmd)
-            call(dnsmasqcmd, shell=True)
+        hostscmd = f"sh -c 'echo {hosts} >>{hostsfile}'"
+        if getuser() != 'root':
+            hostscmd = f"sudo {hostscmd}"
+        call(hostscmd, shell=True)
 
     def delete_dns(self, name, domain, allentries=False):
         conn = self.conn

@@ -42,18 +42,18 @@ class Kwebclient(object):
                disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None,
                vnc=True, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=[],
                cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
-               files=[], enableroot=True, overrides={}, tags=[], storemetadata=False, sharedfolders=[], kernel=None,
-               initrd=None, cmdline=None, placement=[], autostart=False, cpuhotplug=False, memoryhotplug=False,
+               files=[], enableroot=True, overrides={}, tags=[], storemetadata=False, sharedfolders=[],
+               cmdline=None, placement=[], autostart=False, cpuhotplug=False, memoryhotplug=False,
                numamode=None, numa=[], pcidevices=[], tpm=False, rng=False, metadata={}, securitygroups=[],
-               vmuser=None):
+               vmuser=None, guestagent=True):
         vms_url = f"{self.base}/vms"
         sig = signature(Kwebclient.create)
         data = dict(sig.bind(self, name, virttype, profile, flavor, plan, cpumodel, cpuflags, cpupinning, numcpus,
                              memory, guestid, pool, image, disks, disksize, diskthin, diskinterface, nets, iso,
                              vnc, cloudinit, reserveip, reservedns, reservehost, start, keys,
                              cmds, ips, netmasks, gateway, nested, dns, domain, tunnel,
-                             files, enableroot, overrides, tags, storemetadata, sharedfolders, kernel,
-                             initrd, cmdline, placement, autostart, cpuhotplug, memoryhotplug,
+                             files, enableroot, overrides, tags, storemetadata, sharedfolders,
+                             cmdline, placement, autostart, cpuhotplug, memoryhotplug,
                              numamode, numa, pcidevices, tpm, rng, metadata, securitygroups, vmuser).arguments)
         del data['self']
         data = json.dumps(data).encode('utf-8')

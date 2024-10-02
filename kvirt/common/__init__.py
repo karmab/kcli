@@ -139,7 +139,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 else:
                     nicname = f"{prefix}{index}"
             ip = net.get('ip')
-            netmask = next((e for e in [net.get('mask'), net.get('netmask')] if e is not None), None)
+            netmask = net.get('mask') or net.get('netmask') or net.get('prefix')
             noconf = net.get('noconf')
             vips = net.get('vips', [])
             enableipv6 = net.get('ipv6', False)
@@ -1120,7 +1120,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                 nicname = net.get('nic', default_nicname)
                 ip = net.get('ip')
                 gateway = net.get('gateway')
-                netmask = next((e for e in [net.get('mask'), net.get('netmask')] if e is not None), None)
+                netmask = net.get('mask') or net.get('netmask') or net.get('prefix')
                 noconf = net.get('noconf')
                 vlan = net.get('vlan')
                 vips = net.get('vips')
@@ -1710,7 +1710,7 @@ def get_kubectl(version='latest', debug=False):
     call(kubecmd, shell=True)
 
 
-def get_oc(version='stable', tag='4.16', macosx=False, debug=False):
+def get_oc(version='stable', tag=OPENSHIFT_TAG, macosx=False, debug=False):
     SYSTEM = 'mac' if os.path.exists('/Users') else 'linux'
     arch = 'arm64' if os.uname().machine == 'aarch64' else 'x86_64'
     pprint("Downloading oc in current directory")
@@ -1738,7 +1738,7 @@ def get_oc(version='stable', tag='4.16', macosx=False, debug=False):
             move('oc', '/workdir/oc')
 
 
-def get_oc_mirror(version='stable', tag='4.16', macosx=False, debug=False):
+def get_oc_mirror(version='stable', tag=OPENSHIFT_TAG, macosx=False, debug=False):
     if os.path.exists('/Users'):
         error("oc-mirror is not available on Mac")
         sys.exit(1)
@@ -2399,7 +2399,7 @@ def separate_yamls(origin):
 
 
 def install_provider(provider, pip=False):
-    if provider == 'kvm':
+    if provider in ['kvm', 'kubevirt']:
         warning("Nothing needed")
         sys.exit(0)
     if os.path.exists('/Users'):
@@ -2435,8 +2435,6 @@ def install_provider(provider, pip=False):
         if not pip:
             warning("Using pip as this is the only way for this provider")
         cmd = 'pip3 install ibm_vpc ibm-cos-sdk ibm-platform-services ibm-cloud-networking-services'
-    elif provider == 'kubevirt':
-        cmd = 'pip3 install kubernetes' if pip else f'{pkgmgr} -y install python3-kubernetes'
     elif provider == 'openstack':
         if pip:
             cmd = 'pip3 install python-cinderclient python-neutronclient python-glanceclient python-keystoneclient '

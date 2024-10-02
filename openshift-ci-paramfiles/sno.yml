@@ -4,7 +4,7 @@ sno: true
 sno_wait: true
 version: stable
 network_type: OVNKubernetes
-tag: "4.16"
+tag: "4.17"
 api_ip: 192.168.254.246
 sslip: true
 bmc_user: admin

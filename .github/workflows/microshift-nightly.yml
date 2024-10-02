@@ -9,7 +9,7 @@ env:
  CLUSTER: ci-microshift
  PULLSECRET: /root/openshift_pull.json
  VERSION: stable
- TAG: "4.16"
+ TAG: "4.17"
 
 jobs:
  requirements:

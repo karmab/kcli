@@ -1,7 +1,7 @@
 from base64 import b64encode, b64decode
 from fnmatch import fnmatch
 from glob import glob
-from ipaddress import ip_network
+from ipaddress import ip_address, ip_network
 import json
 from kvirt.common import error, pprint, success, warning, info2, fix_typos
 from kvirt.common import get_oc, pwd_path, get_oc_mirror
@@ -9,7 +9,7 @@ from kvirt.common import get_latest_fcos, generate_rhcos_iso, olm_app, get_commi
 from kvirt.common import get_installer_rhcos, wait_cloud_dns, delete_lastvm
 from kvirt.common import ssh, scp, _ssh_credentials, get_ssh_pub_key, separate_yamls
 from kvirt.common import start_baremetal_hosts, update_baremetal_hosts, get_cluster_api_vips
-from kvirt.defaults import LOCAL_OPENSHIFT_APPS
+from kvirt.defaults import LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG
 import os
 import re
 from random import choice
@@ -270,7 +270,7 @@ def get_installer_version():
     return installer_version
 
 
-def offline_image(version='stable', tag='4.16', pull_secret='openshift_pull.json'):
+def offline_image(version='stable', tag=OPENSHIFT_TAG, pull_secret='openshift_pull.json'):
     tag = str(tag).split(':')[-1]
     for arch in ['x86_64', 'amd64', 'arm64', 'ppc64le', 's390x', 'x86_64']:
         tag.replace(f'-{arch}', '')
@@ -306,7 +306,7 @@ def offline_image(version='stable', tag='4.16', pull_secret='openshift_pull.json
     return offline
 
 
-def same_release_images(version='stable', tag='4.16', pull_secret='openshift_pull.json', path='.'):
+def same_release_images(version='stable', tag=OPENSHIFT_TAG, pull_secret='openshift_pull.json', path='.'):
     if not os.path.exists(f'{path}/openshift-install'):
         return False
     try:
@@ -866,6 +866,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 overrides['mdns'] = False
         else:
             return {'result': 'failure', 'reason': "You need to define api_ip in your parameters file"}
+    if api_ip is not None:
+        try:
+            ip_address(api_ip)
+        except:
+            return {'result': 'failure', 'reason': f"Invalid api_ip {api_ip}"}
     if provider in virt_providers and keepalived and not sno and ':' in api_ip:
         ipv6 = True
     if ipv6:
@@ -883,9 +888,15 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             warning("Forcing extra_args to ip=dhcp6 for sno to boot with ipv6")
             data['extra_args'] = 'ip=dhcp6'
     ingress_ip = data['ingress_ip']
-    if ingress_ip is not None and api_ip is not None and ingress_ip == api_ip:
-        ingress_ip = None
-        overrides['ingress_ip'] = None
+    if ingress_ip is not None:
+        if api_ip is not None and ingress_ip == api_ip:
+            ingress_ip = None
+            overrides['ingress_ip'] = None
+        else:
+            try:
+                ip_address(ingress_ip)
+            except:
+                return {'result': 'failure', 'reason': f"Invalid ingress_ip {ingress_ip}"}
     if sslip and provider in virt_providers:
         if api_ip is None:
             return {'result': 'failure', 'reason': "Missing api_ip which is required with sslip"}
@@ -1297,7 +1308,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     for f in glob(f"{plandir}/customisation/*.yaml"):
         if '99-ingress-controller.yaml' in f:
             ingressrole = 'master' if workers == 0 or not mdns or kubevirt_api_service else 'worker'
-            replicas = 1 if sno or (ctlplanes == 1 and workers == 0) or len(baremetal_hosts) == 1 else 2
+            default_replicas = 1 if workers == 1 else 2
+            replicas = 1 if sno or (ctlplanes == 1 and workers == 0) or len(baremetal_hosts) == 1 else default_replicas
             bm_workers = len(baremetal_hosts) > 0 and workers > 0
             if provider in virt_providers and (worker_localhost_fix or bm_workers):
                 replicas = ctlplanes
