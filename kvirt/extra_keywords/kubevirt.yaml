@@ -1,0 +1,14 @@
+affinity: Force affinity
+annotations: Annotations to add to the vm object
+boot_order: Set boot order on all disks to allow to boot from any of them
+checkpath: Readiness probe path
+checkport: Readiness probe port
+container_disk: Use container disk image in an ephemeral way
+confidential: Set launchSecurity
+embed_userdata: Put user data directly in vm spec
+hugepages: set Hugepages
+nodeSelector: specify node selector
+realtime: Set realtime mode
+rng: Set rng
+uuid: Specific uuid
+vsock: Autoattach VSOCK

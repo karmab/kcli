@@ -326,6 +326,7 @@ class Kubevirt():
             vm['spec']['template']['spec']['networks'] = networks
         pvcs = []
         sizes = []
+        boot_order = overrides.get('boot_order', False)
         for index, disk in enumerate(disks):
             existingpvc = False
             lun = False
@@ -374,8 +375,8 @@ class Kubevirt():
                 newdisk['disk']['lun'] = {}
             else:
                 newdisk['disk']['bus'] = diskinterface
-            if index == 0:
-                newdisk['bootOrder'] = 1
+            if index == 0 or boot_order:
+                newdisk['bootOrder'] = index + 1
             vm['spec']['template']['spec']['domain']['devices']['disks'].append(newdisk)
             vm['spec']['template']['spec']['volumes'].append(myvolume)
             if index == 0 and image is not None and '/' in image and container_disk:
@@ -398,7 +399,8 @@ class Kubevirt():
             if iso not in self.volumes(iso=True):
                 return {'result': 'failure', 'reason': f"you don't have iso {iso}"}
             diskname = f'{name}-iso'
-            newdisk = {'bootOrder': 2, 'cdrom': {'readOnly': False, 'bus': 'sata'}, 'name': diskname}
+            iso_boot_order = len(disks) + 1 if boot_order else 2
+            newdisk = {'bootOrder': iso_boot_order, 'cdrom': {'readOnly': False, 'bus': 'sata'}, 'name': diskname}
             good_iso = iso.replace('_', '-').replace('.', '-').lower()
             myvolume = {'name': diskname, 'persistentVolumeClaim': {'claimName': good_iso}}
             vm['spec']['template']['spec']['domain']['devices']['disks'].append(newdisk)
