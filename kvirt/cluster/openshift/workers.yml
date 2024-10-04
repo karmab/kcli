@@ -33,7 +33,9 @@
 {% endif %}
  nets: {{ [network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
+{% if coredns or mdns or keepalived %}
  files:
+{% endif %}
 {% if coredns %}
   - path: /etc/NetworkManager/dispatcher.d/99-forcedns
     origin: 99-forcedns
