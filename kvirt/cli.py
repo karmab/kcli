@@ -1471,64 +1471,6 @@ def list_pool(args):
     print(poolstable)
 
 
-def list_product(args):
-    group = args.group
-    repo = args.repo
-    search = args.search
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    if search is not None:
-        baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-        productstable = PrettyTable(["Repo", "Product", "Group", "Description", "Numvms", "Memory"])
-        productstable.align["Repo"] = "l"
-        productsinfo = baseconfig.list_products(repo=repo)
-        output = args.global_output or args.output
-        if output is not None:
-            _list_output(productsinfo, output)
-        for prod in sorted(productsinfo, key=lambda x: (x['repo'], x['group'], x['name'])):
-            name = prod['name']
-            repo = prod['repo']
-            prodgroup = prod['group']
-            description = prod.get('description', 'N/A')
-            if search.lower() not in name.lower() and search.lower() not in description.lower():
-                continue
-            if group is not None and prodgroup != group:
-                continue
-            numvms = prod.get('numvms', 'N/A')
-            memory = prod.get('memory', 'N/A')
-            group = prod.get('group', 'N/A')
-            productstable.add_row([repo, name, group, description, numvms, memory])
-    else:
-        productstable = PrettyTable(["Repo", "Product", "Group", "Description", "Numvms", "Memory"])
-        productstable.align["Repo"] = "l"
-        productsinfo = baseconfig.list_products(group=group, repo=repo)
-        output = args.global_output or args.output
-        if output is not None:
-            _list_output(productsinfo, output)
-        for product in sorted(productsinfo, key=lambda x: (x['repo'], x['group'], x['name'])):
-            name = product['name']
-            repo = product['repo']
-            description = product.get('description', 'N/A')
-            numvms = product.get('numvms', 'N/A')
-            memory = product.get('memory', 'N/A')
-            group = product.get('group', 'N/A')
-            productstable.add_row([repo, name, group, description, numvms, memory])
-    print(productstable)
-
-
-def list_repo(args):
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    repostable = PrettyTable(["Repo", "Url"])
-    repostable.align["Repo"] = "l"
-    reposinfo = baseconfig.list_repos()
-    output = args.global_output or args.output
-    if output is not None:
-        _list_output(reposinfo, output)
-    for repo in sorted(reposinfo):
-        url = reposinfo[repo]
-        repostable.add_row([repo, url])
-    print(repostable)
-
-
 def list_vmdisk(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
@@ -2715,69 +2657,6 @@ def revert_snapshot_plan(args):
     snapshot = args.snapshot
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     config.revert_plan(plan, snapshotname=snapshot)
-
-
-def create_repo(args):
-    repo = args.repo
-    url = args.url
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    if repo is None:
-        error("Missing repo. Leaving...")
-        sys.exit(1)
-    if url is None:
-        error("Missing url. Leaving...")
-        sys.exit(1)
-    pprint(f"Adding repo {repo}...")
-    baseconfig.create_repo(repo, url)
-
-
-def delete_repo(args):
-    yes = args.yes
-    yes_top = args.yes_top
-    if not yes and not yes_top:
-        common.confirm("Are you sure?")
-    repo = args.repo
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    if repo is None:
-        error("Missing repo. Leaving...")
-        sys.exit(1)
-    pprint(f"Deleting repo {repo}...")
-    baseconfig.delete_repo(repo)
-
-
-def update_repo(args):
-    repo = args.repo
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    if repo is None:
-        pprint("Updating all repos...")
-        repos = baseconfig.list_repos()
-        for repo in repos:
-            pprint(f"Updating repo {repo}...")
-            baseconfig.update_repo(repo)
-    else:
-        pprint(f"Updating repo {repo}...")
-        baseconfig.update_repo(repo)
-
-
-def info_product(args):
-    repo = args.repo
-    product = args.product
-    group = args.group
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
-    pprint(f"Providing information on product {product}...")
-    baseconfig.info_product(product, repo, group)
-
-
-def create_product(args):
-    repo = args.repo
-    product = args.product
-    latest = args.latest
-    group = args.group
-    overrides = handle_parameters(args.param, args.paramfile)
-    plan = overrides['plan'] if 'plan' in overrides else None
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    pprint(f"Creating product {product}...")
-    config.create_product(product, repo=repo, group=group, plan=plan, latest=latest, overrides=overrides)
 
 
 def update_openshift_disconnected(args):
@@ -4051,17 +3930,6 @@ def cli():
     poolcreate_parser.add_argument('pool')
     poolcreate_parser.set_defaults(func=create_pool)
 
-    productcreate_desc = 'Create Product'
-    productcreate_parser = create_subparsers.add_parser('product', description=productcreate_desc,
-                                                        help=productcreate_desc, parents=[parent_parser])
-    productcreate_parser.add_argument('-g', '--group', help='Group to use as a name during deployment', metavar='GROUP')
-    productcreate_parser.add_argument('-l', '--latest', action='store_true', help='Grab latest version of the plans')
-    productcreate_parser.add_argument('-r', '--repo',
-                                      help='Repo to use, if deploying a product present in several repos',
-                                      metavar='REPO')
-    productcreate_parser.add_argument('product', metavar='PRODUCT')
-    productcreate_parser.set_defaults(func=create_product)
-
     profilecreate_desc = 'Create Profile'
     profilecreate_epilog = f"Examples:\n\n{examples.profilecreate}"
     profilecreate_parser = argparse.ArgumentParser(add_help=False)
@@ -4095,7 +3963,7 @@ def cli():
 
     hcloudprovidercreate_desc = 'Install Hcloud Provider'
     hcloudprovidercreate_parser = providercreate_subparsers.add_parser('hcloud', help=hcloudprovidercreate_desc,
-                                                                    description=hcloudprovidercreate_desc)
+                                                                       description=hcloudprovidercreate_desc)
     hcloudprovidercreate_parser.add_argument('-p', '--pip', action='store_true', help='Force pip installation')
     hcloudprovidercreate_parser.set_defaults(func=install_provider)
 
@@ -4153,15 +4021,6 @@ def cli():
                                                                         description=vsphereprovidercreate_desc)
     vsphereprovidercreate_parser.add_argument('-p', '--pip', action='store_true', help='Force pip installation')
     vsphereprovidercreate_parser.set_defaults(func=install_provider)
-
-    repocreate_desc = 'Create Repo'
-    repocreate_epilog = f"Examples:\n\n{examples.repocreate}"
-    repocreate_parser = create_subparsers.add_parser('repo', description=repocreate_desc, help=repocreate_desc,
-                                                     epilog=repocreate_epilog,
-                                                     formatter_class=rawhelp)
-    repocreate_parser.add_argument('-u', '--url', help='URL of the repo', metavar='URL', type=valid_url)
-    repocreate_parser.add_argument('repo')
-    repocreate_parser.set_defaults(func=create_repo)
 
     securitygroupcreate_desc = 'Create Security Group'
     securitygroupcreate_epilog = f"Examples:\n\n{examples.securitygroupcreate}"
@@ -4457,12 +4316,6 @@ def cli():
     profiledelete_parser.set_defaults(func=delete_profile)
     delete_subparsers.add_parser('profile', parents=[profiledelete_parser], description=profiledelete_desc,
                                  help=profiledelete_desc)
-
-    repodelete_desc = 'Delete Repo'
-    repodelete_parser = delete_subparsers.add_parser('repo', description=repodelete_desc, help=repodelete_desc)
-    repodelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    repodelete_parser.add_argument('repo')
-    repodelete_parser.set_defaults(func=delete_repo)
 
     subnetdelete_desc = 'Delete Subnet'
     subnetdelete_parser = delete_subparsers.add_parser('subnet', description=subnetdelete_desc,
@@ -4848,19 +4701,6 @@ def cli():
     planinfo_parser.add_argument('plan', metavar='PLAN', nargs='?')
     planinfo_parser.set_defaults(func=info_plan)
 
-    productinfo_desc = 'Info Of Product'
-    productinfo_epilog = f"Examples:\n\n{examples.productinfo}"
-    productinfo_parser = argparse.ArgumentParser(add_help=False)
-    productinfo_parser.set_defaults(func=info_product)
-    productinfo_parser.add_argument('-g', '--group', help='Only Display products of the indicated group',
-                                    metavar='GROUP')
-    productinfo_parser.add_argument('-r', '--repo', help='Only Display products of the indicated repository',
-                                    metavar='REPO')
-    productinfo_parser.add_argument('product', metavar='PRODUCT')
-    info_subparsers.add_parser('product', parents=[productinfo_parser], description=productinfo_desc,
-                               help=productinfo_desc,
-                               epilog=productinfo_epilog, formatter_class=rawhelp)
-
     subnetinfo_desc = 'Info Subnet'
     subnetinfo_parser = info_subparsers.add_parser('subnetwork', description=subnetinfo_desc, help=subnetinfo_desc,
                                                    aliases=['subnet'])
@@ -5038,26 +4878,11 @@ def cli():
     poollist_parser.add_argument('-s', '--short', action='store_true')
     poollist_parser.set_defaults(func=list_pool)
 
-    productlist_desc = 'List Products'
-    productlist_parser = list_subparsers.add_parser('product', description=productlist_desc, help=productlist_desc,
-                                                    aliases=['products'], parents=[output_parser])
-    productlist_parser.add_argument('-g', '--group', help='Only Display products of the indicated group',
-                                    metavar='GROUP')
-    productlist_parser.add_argument('-r', '--repo', help='Only Display products of the indicated repository',
-                                    metavar='REPO')
-    productlist_parser.add_argument('-s', '--search', help='Search matching products')
-    productlist_parser.set_defaults(func=list_product)
-
     profilelist_desc = 'List Profiles'
     profilelist_parser = list_subparsers.add_parser('profile', description=profilelist_desc, help=profilelist_desc,
                                                     aliases=['profiles'], parents=[output_parser])
     profilelist_parser.add_argument('-s', '--short', action='store_true')
     profilelist_parser.set_defaults(func=list_profile)
-
-    repolist_desc = 'List Repos'
-    repolist_parser = list_subparsers.add_parser('repo', description=repolist_desc, help=repolist_desc,
-                                                 aliases=['repos'], parents=[output_parser])
-    repolist_parser.set_defaults(func=list_repo)
 
     securitygrouplist_desc = 'List Security Groups'
     securitygrouplist_parser = list_subparsers.add_parser('security-group', description=securitygrouplist_desc,
@@ -5494,11 +5319,6 @@ def cli():
                                  description=disconnectedupdate_desc, help=disconnectedupdate_desc,
                                  epilog=disconnectedupdate_epilog, formatter_class=rawhelp,
                                  aliases=['openshift-disconnected'])
-
-    repoupdate_desc = 'Update Repo'
-    repoupdate_parser = update_subparsers.add_parser('repo', description=repoupdate_desc, help=repoupdate_desc)
-    repoupdate_parser.add_argument('repo')
-    repoupdate_parser.set_defaults(func=update_repo)
 
     securitygroupupdate_desc = 'Update Securitygroup/Firewall'
     securitygroupupdate_epilog = f"Examples:\n\n{examples.securitygroupupdate}"

@@ -23,7 +23,7 @@ import re
 import stat
 from subprocess import call
 import sys
-from shutil import copytree, rmtree, which, copy2
+from shutil import copytree, which, copy2
 from tempfile import TemporaryDirectory
 from time import sleep
 import yaml
@@ -525,99 +525,6 @@ class Kbaseconfig:
             results[keyword] = None
         return results
 
-    def list_repos(self):
-        repos = {}
-        plansdir = "%s/.kcli/plans" % os.environ.get('HOME')
-        if not os.path.exists(plansdir):
-            return {}
-        else:
-            repodirs = [d for d in os.listdir(plansdir) if os.path.isdir(f"{plansdir}/{d}")]
-            for d in repodirs:
-                repos[d] = None
-                if os.path.exists(f"{plansdir}/{d}/.git/config") and which('git') is not None:
-                    gitcmd = f"git config -f {plansdir}/{d}/.git/config  --get remote.origin.url"
-                    giturl = os.popen(gitcmd).read().strip()
-                    repos[d] = giturl
-        return repos
-
-    def list_products(self, group=None, repo=None):
-        plansdir = "%s/.kcli/plans" % os.environ.get('HOME')
-        if not os.path.exists(plansdir):
-            return []
-        else:
-            products = []
-            repodirs = [d for d in os.listdir(plansdir) if os.path.isdir(f"{plansdir}/{d}")]
-            for rep in repodirs:
-                repometa = f"{plansdir}/{rep}/KMETA"
-                if not os.path.exists(repometa):
-                    continue
-                else:
-                    realdir = os.path.dirname(os.readlink(repometa)) if os.path.islink(repometa) else None
-                    with open(repometa, 'r') as entries:
-                        try:
-                            repoproducts = yaml.safe_load(entries)
-                            for repoproduct in repoproducts:
-                                repoproduct['repo'] = rep
-                                if 'file' not in repoproduct:
-                                    repoproduct['file'] = 'kcli_plan.yml'
-                                if '/' in repoproduct['file']:
-                                    repoproduct['group'] = repoproduct['file'].split('/')[0]
-                                else:
-                                    repoproduct['group'] = ''
-                                if realdir is not None:
-                                    repoproduct['realdir'] = realdir
-                                products.append(repoproduct)
-                        except yaml.scanner.ScannerError:
-                            error("Couldn't properly parse .kcli/repo. Leaving...")
-                            continue
-            if repo is not None:
-                products = [product for product in products if 'repo'
-                            in product and product['repo'] == repo]
-            if group is not None:
-                products = [product for product in products if 'group'
-                            in product and product['group'] == group]
-            return products
-
-    def create_repo(self, name, url):
-        reponame = name if name is not None else os.path.basename(url)
-        repodir = "%s/.kcli/plans/%s" % (os.environ.get('HOME'), reponame)
-        if not os.path.exists(repodir):
-            os.makedirs(repodir, exist_ok=True)
-        if not url.startswith('http') and not url.startswith('git'):
-            os.symlink(url, repodir)
-        elif which('git') is None:
-            error('repo operations require git')
-            sys.exit(1)
-        else:
-            os.system(f"git clone {url} {repodir}")
-        if not os.path.exists(f"{repodir}/KMETA"):
-            for root, dirs, files in os.walk(repodir):
-                for name in files:
-                    if name == 'KMETA':
-                        dst = f"{repodir}/KMETA"
-                        src = "%s/KMETA" % root.replace("%s/" % repodir, '')
-                        os.symlink(src, dst)
-                        break
-        sys.exit(1)
-
-    def update_repo(self, name, url=None):
-        repodir = "%s/.kcli/plans/%s" % (os.environ.get('HOME'), name)
-        if not os.path.exists(repodir):
-            return {'result': 'failure', 'reason': f'repo {name} not found'}
-        elif which('git') is None:
-            return {'result': 'failure', 'reason': 'repo operations require git'}
-        else:
-            os.chdir(repodir)
-            if os.path.exists('.git'):
-                os.system("git pull --rebase")
-        return {'result': 'success'}
-
-    def delete_repo(self, name):
-        repodir = "%s/.kcli/plans/%s" % (os.environ.get('HOME'), name)
-        if os.path.exists(repodir) and os.path.isdir(repodir):
-            rmtree(repodir)
-            return {'result': 'success'}
-
     def info_plan(self, inputfile, quiet=False, web=False, onfly=None, doc=False):
         inputfile = os.path.expanduser(inputfile) if inputfile is not None else 'kcli_plan.yml'
         basedir = os.path.dirname(inputfile)
@@ -685,44 +592,6 @@ class Kbaseconfig:
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         inputfile = f'{plandir}/disconnected.yml'
         return self.info_plan(inputfile)
-
-    def info_product(self, name, repo=None, group=None, web=False):
-        if repo is not None and group is not None:
-            products = [product for product in self.list_products
-                        if product['name'] == name and product['repo'] == repo and product['group'] == group]
-        elif repo is not None:
-            products = [product for product in self.list_products()
-                        if product['name'] == name and product['repo'] == repo]
-        if group is not None:
-            products = [product for product in self.list_products()
-                        if product['name'] == name and product['group'] == group]
-        else:
-            products = [product for product in self.list_products() if product['name'] == name]
-        if len(products) == 0:
-            error("Product not found. Leaving...")
-            sys.exit(1)
-        elif len(products) > 1:
-            error("Product found in several places. Specify repo or group")
-            sys.exit(1)
-        else:
-            product = products[0]
-            repo = product['repo']
-            repodir = "%s/.kcli/plans/%s" % (os.environ.get('HOME'), repo)
-            group = product['group']
-            description = product.get('description')
-            _file = product['file']
-            if not web:
-                if group is not None:
-                    print(f"group: {group}")
-                if description is not None:
-                    print(f"description: {description}")
-            inputfile = "%s/%s" % (product['realdir'], _file) if 'realdir' in product else _file
-            print(f"{repodir}/{inputfile}")
-            parameters = self.info_plan(f"{repodir}/{inputfile}", quiet=True, web=web)
-            if web:
-                if parameters is None:
-                    parameters = {}
-                return {'product': product, 'parameters': parameters}
 
     def process_inputfile(self, plan, inputfile, overrides={}, onfly=None, full=False, ignore=False,
                           download_mode=False, extra_funcs=[], split=False):

@@ -1338,61 +1338,6 @@ class Kconfig(Kbaseconfig):
                 pass
         return kubes
 
-    def create_product(self, name, repo=None, group=None, plan=None, latest=False, overrides={}):
-        if repo is not None and group is not None:
-            products = [product for product in self.list_products()
-                        if product['name'] == name and product['repo'] == repo and product['group'] == group]
-        elif repo is not None:
-            products = [product for product in self.list_products()
-                        if product['name'] == name and product['repo'] == repo]
-        if group is not None:
-            products = [product for product in self.list_products()
-                        if product['name'] == name and product['group'] == group]
-        else:
-            products = [product for product in self.list_products() if product['name'] == name]
-        if len(products) == 0:
-            error("Product not found. Leaving...")
-            sys.exit(1)
-        elif len(products) > 1:
-            error("Product found in several repos or groups. Specify one...")
-            for product in products:
-                group = product['group']
-                repo = product['repo']
-                print(f"repo:{repo}\tgroup:{group}")
-            sys.exit(1)
-        else:
-            product = products[0]
-            plan = nameutils.get_random_name() if plan is None else plan
-            repo = product['repo']
-            if 'realdir' in product:
-                repodir = "%s/.kcli/plans/%s/%s" % (os.environ.get('HOME'), repo, product['realdir'])
-            else:
-                repodir = "%s/.kcli/plans/%s" % (os.environ.get('HOME'), repo)
-            if '/' in product['file']:
-                inputfile = os.path.basename(product['file'])
-                repodir += "/%s" % os.path.dirname(product['file'])
-            else:
-                inputfile = product['file']
-            image = product.get('image')
-            parameters = product.get('parameters')
-            if image is not None:
-                print(f"Note that this product uses image: {image}")
-            if parameters is not None:
-                for parameter in parameters:
-                    applied_parameter = overrides[parameter] if parameter in overrides else parameters[parameter]
-                    print(f"Using parameter {parameter}: {applied_parameter}")
-            extraparameters = list(set(overrides) - set(parameters)) if parameters is not None else overrides
-            for parameter in extraparameters:
-                print("Using parameter %s: %s" % (parameter, overrides[parameter]))
-            if not latest:
-                pprint(f"Using directory {repodir}")
-                self.plan(plan, path=repodir, inputfile=inputfile, overrides=overrides)
-            else:
-                self.update_repo(repo)
-                self.plan(plan, path=repodir, inputfile=inputfile, overrides=overrides)
-            pprint(f"Product can be deleted with: kcli delete plan --yes {plan}")
-        return {'result': 'success', 'plan': plan}
-
     def start_plan(self, plan, container=False):
         k = self.k
         startfound = False

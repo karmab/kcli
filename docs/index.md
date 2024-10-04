@@ -92,7 +92,7 @@ There are several recommended flags:
 
 - `--net host` for kcli ssh
 - `-v /var/run/libvirt:/var/run/libvirt -v /var/lib/libvirt/images:/var/lib/libvirt/images` if running against a local client.
-- `-v  ~/.kcli:/root/.kcli` to use your kcli configuration (also profiles and repositories) stored locally.
+- `-v  ~/.kcli:/root/.kcli` to use your kcli configuration (and profiles) stored locally.
 - `-v ~/.ssh:/root/.ssh` to share your ssh keys. Alternatively, you can store your public and private key in the ~/.kcli directory.
 - `--security-opt label=disable` if running with selinux.
 - `-v $PWD:/workdir` to access plans below your current directory.
@@ -2230,20 +2230,20 @@ Additionally, there are ansible kcli modules in [ansible-kcli-modules](https://g
 
 - kvirt_vm allows you to create/delete vm (based on an existing profile or a template)
 - kvirt_plan allows you to create/delete a plan
-- kvirt_product allows you to create/delete a product (provided you have a product repository configured)
 - kvirt_info allows you to retrieve a dict of values similar to `kcli info` output. You can select which fields to gather
 
 Those modules rely on python3 so you will need to pass `-e 'ansible_python_interpreter=path_to_python3'` to your ansible-playbook invocations ( or set it in your inventory) if your default ansible installation is based on python2.
 
-Both kvirt_vm, kvirt_plan and kvirt_product support overriding parameters:
+Both kvirt_vm and kvirt_plan support overriding parameters. For instance, 
 
 ```
 - name: Deploy fission with additional parameters
-  kvirt_product:
+  karmab.kcli.kcli_vm:
     name: fission
-    product: fission
+    state: present
+    image: centos9stream
     parameters:
-     fission_type: all
+      memory: 2048
 ```
 
 Finally, you can use the key ansible within a profile:
@@ -2403,127 +2403,9 @@ The minimum is configured as an env variable AUTOSCALE_MINIMUM provided during t
 
 Setting the minimum to any value below 1 effectively disables the feature.
 
-# Using products
-
-To easily share plans, you can make use of the products feature which leverages them:
-
-## Repos
-
-First, add a repo containing a KMETA file with yaml info about products you want to expose. For instance, mine
-
-```
-kcli create repo -u https://github.com/karmab/kcli-plans karmab
-```
-
-You can also update later a given repo, to refresh its KMETA file ( or all the repos, if not specifying any)
-
-```
-kcli update repo REPO_NAME
-```
-
-You can delete a given repo with
-
-```
-kcli delete repo REPO_NAME
-```
-
-## Product
-
-Once you have added some repos, you can list available products, and get their description
-
-```
-kcli list products 
-```
-
-You can also get direct information on the product (memory and cpu used, number of vms deployed and all parameters that can be overriden)
-
-```
-kcli info product YOUR_PRODUCT 
-```
-
-And deploy any product. Deletion is handled by deleting the corresponding plan.
-
-```
-kcli create product YOUR_PRODUCT
-```
-
-# Using Jenkins
-
-## Requisites
-
-- Jenkins running somewhere, either:
-   - standalone
-   - on K8s/Openshift
-- Docker running if using this backend
-- Podman installed if using this backend
-
-## Credentials
-
-First, create the following credentials in Jenkins as secret files:
-
-- kcli-config with the content of your ~/.kcli/config.yml
-- kcli-id-rsa with your ssh private key
-- kcli-id-rsa-pub with your ssh public key
-
-You can use arbitrary names for those credentials, but you will then have to either edit Jenkinsfile later or specify credentials when running your build.
-
-## Kcli configuration
-
-Default backend is *podman* . If you want to use Docker or Kubernetes instead, add the corresponding snippet in *~/.kcli/config.yml*.
-
-For instance, for Kubernetes:
-
-```
-jenkinsmode: kubernetes
-```
-
-## Create Jenkins file
-
-Now you can create a Jenkinsfile from your specific, or from default *kcli_plan.yml*
-
-```
-kcli create pipeline
-```
-
-You can see an example of the generated Jenkinsfile for both targets from the sample plan provided in this directory.
-
-Parameters from the plan get converted in Jenkins parameters, along with extra parameters:
-- for needed credentials (kcli config file, public and private ssh key)
-- a `wait` boolean to indicated whether to wait for plan completion upon run.
-- a `kcli_client` parameter that can be used to override the target client where to launch plan at run time.
-
-Your Jenkinsfile is ready for use!
-
-## Openshift
-
-You can create credentials as secrets and tag them so they get synced to Jenkins:
-
-```
-oc create secret generic kcli-config-yml --from-file=filename=config.yml
-oc annotate secret/kcli-config-yml jenkins.openshift.io/secret.name=kcli-config-yml
-oc label secret/kcli-config-yml credential.sync.jenkins.openshift.io=true
-
-oc create secret generic kcli-id-rsa --from-file=filename=~/.ssh/id_rsa
-oc annotate secret/kcli-id-rsa jenkins.openshift.io/secret.name=kcli-id-rsa
-oc label secret/kcli-id-rsa credential.sync.jenkins.openshift.io=true
-
-oc create secret generic kcli-id-rsa-pub --from-file=filename=$HOME/.ssh/id_rsa.pub
-oc annotate secret/kcli-id-rsa-pub jenkins.openshift.io/secret.name=kcli-id-rsa-pub
-oc label secret/kcli-id-rsa-pub credential.sync.jenkins.openshift.io=true
-```
-
-You will also need to allow *anyuid* scc for kcli pod, which can be done with the following command (adjust to your project):
-
-```
-PROJECT=kcli
-oc adm policy add-scc-to-user anyuid system:serviceaccount:$PROJECT:default
-```
-
 # Api Usage
 
-## Locally
-
-You can also use kvirt library directly, without the client or to embed it into your own application.
+You can use kvirt library directly, without the client or to embed it into your own application.
 
 Here's a sample:
 

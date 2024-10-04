@@ -66,9 +66,6 @@ $ kcli list vm
 # Get list of vms from all hosts/clients
 $ kcli -C all list vm
 
-# Get list of products
-$ kcli list product
-
 # Get list of clients/hosts
 $ kcli list host
 """
@@ -117,14 +114,6 @@ $ kcli info plan myplan -P field=status -P name=myvm01
 
 # Get all vms of a specific plan which are down
 $ kcli info plan myplan -P field=status -P value=down
-"""
-
-productinfo = """# Get info from product kubernetes
-$ kcli info product kubernetes
-"""
-
-repocreate = """# Create a product repo from karmab samples repo
-$ kcli create repo -u https://github.com/karmab/kcli-plans karmab
 """
 
 start = """# Start vms named vm1 and vm2
