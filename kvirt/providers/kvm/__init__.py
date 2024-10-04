@@ -2398,7 +2398,13 @@ class Kvirt(object):
                 root = ET.fromstring(oldnetxml)
                 dns = list(root.iter('dns'))
                 if not dns:
-                    warning("Ignoring reservedns as network was created without dns support")
+                    base = list(root.iter('network'))[0]
+                    dns = ET.Element("dns")
+                    base.append(dns)
+                    newxml = ET.tostring(root)
+                    conn.networkDefineXML(newxml.decode("utf-8"))
+                elif dns[0].get('enable', 'yes') == 'no':
+                    warning("Ignoring reservedns as network was created with dns explicitely disabled")
                     continue
                 fqdn = f"{name}.{domain}" if domain is not None and not name.endswith(domain) else name
                 hostnamexml = f'<hostname>{fqdn}</hostname>'
