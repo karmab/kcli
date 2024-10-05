@@ -1,0 +1,51 @@
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  labels:
+    machineconfiguration.openshift.io/role: master
+  name: 98-etcd-partition
+spec:
+  config:
+    ignition:
+      version: 3.1.0
+    storage:
+      disks:
+      - device: /dev/{{ disk }}
+        partitions:
+        - sizeMiB: 0
+          startMiB: 0
+          label: etcd
+      filesystems:
+        - path: /var/lib/etcd
+          device: /dev/disk/by-partlabel/etcd
+          format: xfs
+    systemd:
+      units:
+        - name: etcd.mount
+          enabled: true
+          contents: |
+            [Unit]
+            Before=local-fs.target
+            [Mount]
+            Where=/var/lib/etcd
+            What=/dev/disk/by-partlabel/etcd
+            Type=xfs
+            [Install]
+            WantedBy=local-fs.target
+        - name: restorecon-var-lib-containers.service
+          enabled: true
+          contents: |
+            [Unit]
+            Description=Restore recursive SELinux security contexts
+            DefaultDependencies=no
+            After=etcd.mount
+            Before=shutdown.target
+
+            [Service]
+            Type=oneshot
+            RemainAfterExit=yes
+            ExecStart=/sbin/restorecon -R /var/lib/etcd/
+            TimeoutSec=0
+
+            [Install]
+            WantedBy=multi-user.target

@@ -803,6 +803,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     ovn_hostrouting = data['ovn_hostrouting']
     metal3 = data['metal3']
     autologin = data['autologin']
+    dedicated_etcd = data['dedicated_etcd']
     if not data['coredns']:
         warning("You will need to provide DNS records for api and ingress on your own")
     keepalived = data['keepalived']
@@ -1402,6 +1403,21 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             autologinfile = config.process_inputfile(cluster, f"{plandir}/99-autologin.yaml", overrides={'role': role})
             with open(f"{clusterdir}/openshift/99-autologin-{role}.yaml", 'w') as _f:
                 _f.write(autologinfile)
+    if dedicated_etcd:
+        extra_disks = data['extra_ctlplane_disks'] or data['extra_disks']
+        if not extra_disks:
+            dedicated_etcd_size = data['dedicated_etcd_size']
+            warning(f"Adding an additional {dedicated_etcd_size}gb disk for etcd")
+            extra_disks = [dedicated_etcd_size]
+            data['extra_ctlplane_disks'] = extra_disks
+        extra_disk = extra_disks[0]
+        if config.type == 'vsphere' or isinstance(extra_disk, dict) and extra_disk.get('interface', '') == 'scsi':
+            disk = 'sdb'
+        else:
+            disk = 'vdb'
+        etcdfile = config.process_inputfile(cluster, f"{plandir}/98-etcd.yaml", overrides={'disk': disk})
+        with open(f"{clusterdir}/openshift/98-etcd.yaml", 'w') as _f:
+            _f.write(etcdfile)
     if provider == 'kubevirt':
         kubevirtctlplane = config.process_inputfile(cluster, f"{plandir}/99-kubevirt-fix.yaml",
                                                     overrides={'role': 'master'})

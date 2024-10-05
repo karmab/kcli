@@ -170,3 +170,5 @@ public_api_ip:
 cpu_partitioning: false
 kubetype: hypershift
 macosx: False
+dedicated_etcd: False
+dedicated_etcd_size: 100
