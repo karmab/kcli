@@ -133,8 +133,7 @@ class Ksphere:
         si = self.si
         dc = self.dc
         vmFolder = dc.vmFolder
-        vm = findvm(si, vmFolder, name)
-        return True if vm is not None else False
+        return findvm(si, vmFolder, name) is not None
 
     def net_exists(self, name):
         print("not implemented")
@@ -148,6 +147,8 @@ class Ksphere:
                cmdline=None, placement=[], autostart=False, cpuhotplug=False, memoryhotplug=False,
                numamode=None, numa=[], pcidevices=[], tpm=False, rng=False, metadata={}, securitygroups=[],
                vmuser=None, guestagent=True):
+        if self.exists(name):
+            return {'result': 'failure', 'reason': f"VM {name} already exists"}
         dc = self.dc
         vmFolder = dc.vmFolder
         diskmode = 'persistent'
@@ -1371,7 +1372,7 @@ class Ksphere:
             return {'result': 'success'}
         vmdk_path = None
         ovf_path = None
-        basedir = os.path.dirname(url) if os.path.exists(url) else '/tmp'
+        basedir = os.path.dirname(os.path.abspath(url)) if os.path.exists(url) else '/tmp'
         if url.endswith('zip'):
             with ZipFile(f"{basedir}/{shortimage}") as zipf:
                 for _fil in zipf.namelist():
@@ -1402,8 +1403,11 @@ class Ksphere:
                 uncompresscmd = f"{executable} {flag} {basedir}/{shortimage}"
                 os.system(uncompresscmd)
                 shortimage = shortimage.replace(f'.{extension}', '')
-            extension = os.path.splitext(shortimage)[1].replace('.', '')
-            vmdk_file = shortimage.replace(extension, 'vmdk')
+            if '.' in shortimage:
+                extension = os.path.splitext(shortimage)[1].replace('.', '')
+                vmdk_file = shortimage.replace(extension, 'vmdk')
+            else:
+                vmdk_file = f"{shortimage}.vmdk"
             vmdk_path = f"{basedir}/{vmdk_file}"
             if cmds and shortimage.endswith('qcow2') and which('virt-customize') is not None:
                 for cmd in cmds:
@@ -1413,7 +1417,7 @@ class Ksphere:
                 pprint("Converting qcow2 file to vmdk")
                 cmd = f"qemu-img convert -O vmdk -o subformat=streamOptimized {basedir}/{shortimage} {vmdk_path}"
                 os.popen(cmd).read()
-            ovf_path = f"{basedir}/{shortimage.replace(extension, 'ovf')}"
+            ovf_path = vmdk_path.replace('.vmdk', '.ovf')
             commondir = os.path.dirname(common.pprint.__code__.co_filename)
             vmdk_info = json.loads(os.popen(f"qemu-img info {vmdk_path} --output json").read())
             virtual_size = vmdk_info['virtual-size']
@@ -1449,14 +1453,12 @@ class Ksphere:
         lease = resourcepool.ImportVApp(import_spec.importSpec, vmFolder)
         while True:
             if lease.state == vim.HttpNfcLease.State.ready:
-                pprint("Uploading vmdk")
                 url = lease.info.deviceUrl[0].url.replace('*', host.name)
+                pprint(f"Uploading {vmdk_path} to {url}")
                 keepalive_thread = Thread(target=keep_lease_alive, args=(lease,))
                 keepalive_thread.start()
-                upload_cmd = (
-                    "curl -sS -X POST --insecure -T %s -H 'Content-Type: \
-                    application/x-vnd.vmware-streamVmdk' %s" % (vmdk_path, url))
-                os.system(upload_cmd)
+                cmd = f'curl -k -# -X POST -T {vmdk_path} -H "Content-Type: application/x-vnd.vmware-streamVmdk" {url}'
+                call(cmd, shell=True)
                 lease.HttpNfcLeaseComplete()
                 keepalive_thread.join()
                 break
