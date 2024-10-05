@@ -292,7 +292,7 @@ class Ksphere:
                 vm = findvm(si, vmFolder, name)
                 t = vm.ReconfigVM_Task(confspec)
             waitForMe(t)
-            if cloudinitiso is not None:
+            if cloudinit and cloudinitiso is not None:
                 with TemporaryDirectory() as tmpdir:
                     if combustion:
                         cmdsdata = common.process_combustion_cmds(cmds, overrides)
