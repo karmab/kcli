@@ -523,7 +523,7 @@ class Kconfig(Kbaseconfig):
         profile = vmprofiles[profile]
         pimage = profile.get('image', 'XXX')
         pimage_missing = pimage in IMAGES and pimage not in volumes
-        esx_image = esx and 'image_url' in overrides
+        esx_image = esx and ('image_url' in overrides or os.path.exists(pimage))
         download_needed = pimage is not None and pimage.startswith('http')
         if not onlyassets and self.type not in cloudplatforms and (pimage_missing or esx_image or download_needed):
             pprint(f"Image {pimage} not found. Downloading")
@@ -536,7 +536,7 @@ class Kconfig(Kbaseconfig):
                 pimage_data['url'] = get_rhcos_url_from_file(profilename, _type=self.type)
             if esx:
                 pimage_data['name'] = name
-                pimage_data['url'] = overrides.get('image_url')
+                pimage_data['url'] = pimage if download_needed or os.path.exists(pimage) else overrides.get('image_url')
             if download_needed:
                 pimage_data['name'] = profilename
                 pimage_data['url'] = pimage
