@@ -7,45 +7,35 @@ metadata:
 spec:
   config:
     ignition:
-      version: 3.1.0
+      version: 3.2.0
     storage:
       disks:
-      - device: /dev/{{ disk }}
-        partitions:
-        - sizeMiB: 0
-          startMiB: 0
-          label: etcd
+        - device: /dev/{{ disk }}
+          partitions:
+            - label: etcd
+              sizeMiB: 0
+              startMiB: 0
       filesystems:
-        - path: /var/lib/etcd
-          device: /dev/disk/by-partlabel/etcd
+        - device: /dev/disk/by-partlabel/etcd
           format: xfs
+          mountOptions:
+            - defaults
+            - prjquota
+          path: /var/lib/etcd
     systemd:
       units:
-        - name: etcd.mount
-          enabled: true
-          contents: |
+        - contents: |-
             [Unit]
-            Before=local-fs.target
+            Requires=systemd-fsck@dev-disk-by\x2dpartlabel-etcd.service
+            After=systemd-fsck@dev-disk-by\x2dpartlabel-etcd.service
+
             [Mount]
             Where=/var/lib/etcd
             What=/dev/disk/by-partlabel/etcd
             Type=xfs
+            Options=defaults,prjquota
+
             [Install]
-            WantedBy=local-fs.target
-        - name: restorecon-var-lib-containers.service
+            RequiredBy=local-fs.target
           enabled: true
-          contents: |
-            [Unit]
-            Description=Restore recursive SELinux security contexts
-            DefaultDependencies=no
-            After=etcd.mount
-            Before=shutdown.target
-
-            [Service]
-            Type=oneshot
-            RemainAfterExit=yes
-            ExecStart=/sbin/restorecon -R /var/lib/etcd/
-            TimeoutSec=0
-
-            [Install]
-            WantedBy=multi-user.target
+          name: var-lib-etcd.mount
