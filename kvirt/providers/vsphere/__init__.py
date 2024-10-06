@@ -147,7 +147,7 @@ class Ksphere:
                cmdline=None, placement=[], autostart=False, cpuhotplug=False, memoryhotplug=False,
                numamode=None, numa=[], pcidevices=[], tpm=False, rng=False, metadata={}, securitygroups=[],
                vmuser=None, guestagent=True):
-        if self.exists(name):
+        if not self.esx and self.exists(name):
             return {'result': 'failure', 'reason': f"VM {name} already exists"}
         dc = self.dc
         vmFolder = dc.vmFolder
