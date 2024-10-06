@@ -1006,7 +1006,9 @@ class Ksphere:
         vmFolder = dc.vmFolder
         vm = findvm(si, vmFolder, name)
         if vm is None:
-            return {'result': 'failure', 'reason': f"VM {name} not found"}
+            msg = f"VM {name} not found"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
         configspec = vim.vm.ConfigSpec()
         opt = vim.option.OptionValue()
         opt.key = metatype
@@ -1017,13 +1019,17 @@ class Ksphere:
 
     def update_memory(self, name, memory):
         if memory % 1024 != 0:
-            return {'result': 'failure', 'reason': "Memory needs to be multiple of 1024"}
+            msg = "Memory needs to be multiple of 1024"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
         si = self.si
         dc = self.dc
         vmFolder = dc.vmFolder
         vm = findvm(si, vmFolder, name)
         if vm is None:
-            return {'result': 'failure', 'reason': f"VM {name} not found"}
+            msg = f"VM {name} not found"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
         configspec = vim.vm.ConfigSpec()
         configspec.memoryMB = memory
         t = vm.ReconfigVM_Task(configspec)
@@ -1035,7 +1041,9 @@ class Ksphere:
         vmFolder = dc.vmFolder
         vm = findvm(si, vmFolder, name)
         if vm is None:
-            return {'result': 'failure', 'reason': f"VM {name} not found"}
+            msg = f"VM {name} not found"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
         configspec = vim.vm.ConfigSpec()
         configspec.numCPUs = numcpus
         t = vm.ReconfigVM_Task(configspec)
@@ -1061,7 +1069,9 @@ class Ksphere:
             else:
                 iso = isos[0]
         if vm is None:
-            return {'result': 'failure', 'reason': f"VM {name} not found"}
+            msg = f"VM {name} not found"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
         c = changecd(self.si, vm, iso)
         if iso is None:
             answered = False
@@ -1082,13 +1092,17 @@ class Ksphere:
 
     def convert_to_template(self, name):
         if self.esx:
-            return {'result': 'failure', 'reason': "Operation not supported on single ESX"}
+            msg = "Operation not supported on single ESX"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
         si = self.si
         dc = self.dc
         vmFolder = dc.vmFolder
         vm = findvm(si, vmFolder, name)
         if vm is None:
-            return {'result': 'failure', 'reason': f"VM {name} not found"}
+            msg = f"VM {name} not found"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
         elif not self.esx:
             vm.MarkAsTemplate()
 
@@ -1098,7 +1112,9 @@ class Ksphere:
         vmFolder = dc.vmFolder
         vm = findvm(si, vmFolder, name)
         if vm is None:
-            return {'result': 'failure', 'reason': f"VM {name} not found"}
+            msg = f"VM {name} not found"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
         else:
             rootFolder = self.rootFolder
             clu = find(si, rootFolder, vim.ComputeResource, self.clu)
@@ -1147,7 +1163,9 @@ class Ksphere:
         vmFolder = self.basefolder
         vm, info = findvm2(si, vmFolder, name)
         if vm is None:
-            return {'result': 'failure', 'reason': f"VM {name} not found"}
+            msg = f"VM {name} not found"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
         config = info['config']
         spec = vim.vm.ConfigSpec()
         unit_number = 0
@@ -1205,7 +1223,9 @@ class Ksphere:
         vmFolder = self.basefolder
         vm, info = findvm2(si, vmFolder, name)
         if vm is None:
-            return {'result': 'failure', 'reason': f"VM {name} not found"}
+            msg = f"VM {name} not found"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
         config = info['config']
         spec = vim.vm.ConfigSpec()
         nicnumber = len([dev for dev in config.hardware.device if "addressType" in dir(dev)])
@@ -1222,7 +1242,9 @@ class Ksphere:
         vmFolder = self.basefolder
         vm, info = findvm2(si, vmFolder, name)
         if vm is None:
-            return {'result': 'failure', 'reason': f"VM {name} not found"}
+            msg = f"VM {name} not found"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
         config = info['config']
         for dev in config.hardware.device:
             if isinstance(dev, vim.vm.device.VirtualEthernetCard) and dev.deviceInfo.label == interface:
@@ -1269,14 +1291,18 @@ class Ksphere:
         rootFolder = self.rootFolder
         net = find(si, rootFolder, vim.Network, name)
         if net is not None:
-            return {'result': 'failure', 'reason': f"Network {name} already there"}
+            msg = f"Network {name} already there"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
         o = si.content.viewManager.CreateContainerView(rootFolder, [vim.DistributedVirtualSwitch], True)
         dvnetworks = o.view
         o.Destroy()
         for dvnetw in dvnetworks:
             for portg in dvnetw.portgroup:
                 if portg.name == name:
-                    return {'result': 'failure', 'reason': f"Network {name} already there"}
+                    msg = f"Network {name} already there"
+                    error(msg)
+                    return {'result': 'failure', 'reason': msg}
         if overrides.get('distributed', False):
             pnic_specs = []
             dvs_host_configs = []
@@ -1318,7 +1344,9 @@ class Ksphere:
                 net = find(si, rootFolder, vim.Network, name)
                 net.Destroy()
             except:
-                return {'result': 'failure', 'reason': f"Network {name} not found"}
+                msg = f"Network {name} not found"
+                error(msg)
+                return {'result': 'failure', 'reason': msg}
         return {'result': 'success'}
 
     def vm_ports(self, name):
@@ -1343,7 +1371,9 @@ class Ksphere:
             pprint(f"Template {shortimage} already there")
             return {'result': 'success'}
         if not find(si, rootFolder, vim.Datastore, pool):
-            return {'result': 'failure', 'reason': f"Pool {pool} not found"}
+            msg = f"Pool {pool} not found"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
         if os.path.exists(url):
             pprint(f"Using {url} as path")
         elif not os.path.exists(f'/tmp/{shortimage}'):
@@ -1351,7 +1381,9 @@ class Ksphere:
             downloadcmd = f"curl -kLo /tmp/{shortimage} -f '{url}'"
             code = os.system(downloadcmd)
             if code != 0:
-                return {'result': 'failure', 'reason': "Unable to download indicated image"}
+                msg = "Unable to download indicated image"
+                error(msg)
+                return {'result': 'failure', 'reason': msg}
         else:
             pprint(f"Using found /tmp/{shortimage}")
         if iso:
@@ -1381,7 +1413,9 @@ class Ksphere:
                     elif _fil.endswith('ovf'):
                         ovf_path = f'{basedir}/{_fil}'
                 if vmdk_path is None or ovf_path is None:
-                    return {'result': 'failure', 'reason': "Incorrect ova file"}
+                    msg = "Incorrect ova file"
+                    error(msg)
+                    return {'result': 'failure', 'reason': msg}
                 zipf.extractall(basedir)
         elif url.endswith('ova'):
             with tarfile.open(f"{basedir}/{shortimage}") as tar:
@@ -1391,7 +1425,9 @@ class Ksphere:
                     elif _fil.endswith('ovf'):
                         ovf_path = f'{basedir}/{_fil}'
                 if vmdk_path is None or ovf_path is None:
-                    return {'result': 'failure', 'reason': "Incorrect ova file"}
+                    msg = "Incorrect ova file"
+                    error(msg)
+                    return {'result': 'failure', 'reason': msg}
                 tar.extractall(basedir)
         else:
             need_uncompress = any(shortimage.endswith(suffix) for suffix in ['.gz', '.xz', '.bz2', '.zst'])
