@@ -210,6 +210,9 @@ class Ksphere:
             confspec.flags = vim.vm.FlagInfo()
             confspec.flags.diskUuidEnabled = True
             confspec.annotation = name
+            if memory % 1024 != 0:
+                warning("Rounding up memory to be multiple of 1024")
+                memory += (1024 - memory) % 1024
             confspec.memoryMB = memory
             confspec.memoryHotAddEnabled = memoryhotplug
             cores = overrides.get('cores')
@@ -1019,9 +1022,8 @@ class Ksphere:
 
     def update_memory(self, name, memory):
         if memory % 1024 != 0:
-            msg = "Memory needs to be multiple of 1024"
-            error(msg)
-            return {'result': 'failure', 'reason': msg}
+            warning("Rounding up memory to be multiple of 1024")
+            memory += (1024 - memory) % 1024
         si = self.si
         dc = self.dc
         vmFolder = dc.vmFolder
