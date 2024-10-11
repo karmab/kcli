@@ -817,6 +817,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     sno_relocate = data['sno_relocate']
     kubevirt_api_service, kubevirt_api_service_node_port = False, False
     kubevirt_ignore_node_port = data['kubevirt_ignore_node_port']
+    prega = data['prega']
+    virtualization_nightly = data['virtualization_nightly']
     version = data['version']
     tag = data['tag']
     if str(tag) == '4.1':
@@ -931,6 +933,13 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 public_api_ip = k.create_network_port(f"{cluster}-vip", network, ip=api_ip, floating=True)['floating']
     if not os.path.exists(pull_secret):
         return {'result': 'failure', 'reason': f"Missing pull secret file {pull_secret}"}
+    if prega:
+        if version not in ['dev-preview', 'ci']:
+            return {'result': 'failure', 'reason': f"Invalid version {version} for prega"}
+        if 'quay.io/prega' not in open(os.path.expanduser(pull_secret)).read():
+            return {'result': 'failure', 'reason': "entry for quay.io/prega missing in pull secret"}
+    if virtualization_nightly and 'quay.io/openshift-cnv' not in open(os.path.expanduser(pull_secret)).read():
+        return {'result': 'failure', 'reason': "entry for quay.io/openshift-cnv missing in pull secret"}
     if which('oc') is None:
         get_oc(macosx=macosx)
     pub_key = data['pub_key'] or get_ssh_pub_key()
@@ -1343,9 +1352,15 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 _f.write(monitoringfile)
             continue
         copy2(f, f"{clusterdir}/openshift")
-    if 'quay.io/openshift-cnv' in open(os.path.expanduser(pull_secret)).read():
+    if virtualization_nightly:
         pprint("Adding custom catalog for OpenShift Virtualization Nightly")
         copy2(f'{plandir}/99-openshift-virtualization-catalog.yaml', f"{clusterdir}/openshift")
+    if prega and not disconnected_vm:
+        pprint("Adding custom catalog for Prega")
+        pregafile = config.process_inputfile(cluster, f'{plandir}/99-prega-catalog.yaml',
+                                             overrides={'version': version})
+        with open(f"{clusterdir}/openshift/99-prega-catalog.yaml", 'w') as _f:
+            _f.write(pregafile)
     registry = disconnected_url or 'quay.io'
     if async_install or autoscale:
         config.import_in_kube(network=network, dest=f"{clusterdir}/openshift", secure=True)

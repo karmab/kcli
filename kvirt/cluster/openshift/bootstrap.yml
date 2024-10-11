@@ -14,40 +14,40 @@
  reservedns: true
 {% endif %}
  nets:
-  - name: {{ network }}
+ - name: {{ network }}
 {% if bootstrap_mac != None %}
-    mac: {{ bootstrap_mac }}
+   mac: {{ bootstrap_mac }}
 {% endif %}
  disks:
-  - size: {{ disk_size }}
+ - size: {{ disk_size }}
 {% if coredns or mdns or keepalived %}
  files:
 {% endif %}
 {% if coredns %}
-  - path: /etc/NetworkManager/dispatcher.d/99-forcedns
-    origin: 99-forcedns
-    mode: 755
-  - path: /etc/kubernetes/manifests/coredns.yml
-    origin: staticpods/coredns.yml
-  - path: /etc/kubernetes/Corefile
-    origin: Corefile
+ - path: /etc/NetworkManager/dispatcher.d/99-forcedns
+   origin: 99-forcedns
+   mode: 755
+ - path: /etc/kubernetes/manifests/coredns.yml
+   origin: staticpods/coredns.yml
+ - path: /etc/kubernetes/Corefile
+   origin: Corefile
 {% endif %}
 {% if mdns %}
-  - path: /etc/kubernetes/manifests/mdns.yml
-    origin: staticpods/mdns.yml
-  - path: /etc/kubernetes/config.hcl.templ
-    origin: config.hcl.templ
+ - path: /etc/kubernetes/manifests/mdns.yml
+   origin: staticpods/mdns.yml
+ - path: /etc/kubernetes/config.hcl.templ
+   origin: config.hcl.templ
 {% endif %}
 {% if kubevirt_api_service %}
-  - path: /etc/kubernetes/manifests/haproxy.yml
-    origin: staticpods/haproxy.yml
-  - path: /etc/kubernetes/haproxy.cfg
-    origin: haproxy.cfg.kubevirt
+ - path: /etc/kubernetes/manifests/haproxy.yml
+   origin: staticpods/haproxy.yml
+ - path: /etc/kubernetes/haproxy.cfg
+   origin: haproxy.cfg.kubevirt
 {% elif keepalived %}
-  - path: /etc/kubernetes/manifests/keepalived.yml
-    origin: staticpods/keepalived.yml
-  - path: /etc/kubernetes/keepalived.conf
-    origin: keepalived.conf
+ - path: /etc/kubernetes/manifests/keepalived.yml
+   origin: staticpods/keepalived.yml
+ - path: /etc/kubernetes/keepalived.conf
+   origin: keepalived.conf
 {% endif %}
 {% if files|default([]) %}
  extra_files: {{ files }}

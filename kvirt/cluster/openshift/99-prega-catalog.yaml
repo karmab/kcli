@@ -1,0 +1,13 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: prega-catalog-source
+  namespace: openshift-marketplace
+spec:
+  sourceType: grpc
+  image: quay.io/prega/prega-operator-index:{{ version }}
+  displayName: Prega
+  publisher: Red Hat
+  updateStrategy:
+    registryPoll:
+      interval: 8h

@@ -32,41 +32,41 @@
  files:
 {% endif %}
 {% if coredns %}
-  - path: /etc/NetworkManager/dispatcher.d/99-forcedns
-    origin: 99-forcedns
-    mode: 755
-  - path: /etc/kubernetes/manifests/coredns.yml
-    origin: staticpods/coredns.yml
-  - path: /etc/kubernetes/Corefile
-    origin: Corefile
+ - path: /etc/NetworkManager/dispatcher.d/99-forcedns
+   origin: 99-forcedns
+   mode: 755
+ - path: /etc/kubernetes/manifests/coredns.yml
+   origin: staticpods/coredns.yml
+ - path: /etc/kubernetes/Corefile
+   origin: Corefile
 {% endif %}
 {% if mdns %}
-  - path: /etc/kubernetes/manifests/mdns.yml
-    origin: staticpods/mdns.yml
-  - path: /etc/kubernetes/config.hcl.templ
-    origin: config.hcl.templ
+ - path: /etc/kubernetes/manifests/mdns.yml
+   origin: staticpods/mdns.yml
+ - path: /etc/kubernetes/config.hcl.templ
+   origin: config.hcl.templ
 {% endif %}
 {% if mdns or kubevirt_api_service %}
-  - path: /etc/kubernetes/manifests/haproxy.yml
-    origin: staticpods/haproxy.yml
-  - path: /etc/kubernetes/haproxy.cfg
-    origin: haproxy.cfg{{ '.kubevirt' if kubevirt_api_service else '' }}
-  - path: /etc/sysctl.d/nonlocalbind.conf
-    origin: nonlocalbind.conf
+ - path: /etc/kubernetes/manifests/haproxy.yml
+   origin: staticpods/haproxy.yml
+ - path: /etc/kubernetes/haproxy.cfg
+   origin: haproxy.cfg{{ '.kubevirt' if kubevirt_api_service else '' }}
+ - path: /etc/sysctl.d/nonlocalbind.conf
+   origin: nonlocalbind.conf
 {% endif %}
 {% if keepalived and not kubevirt_api_service %}
-  - path: /etc/kubernetes/manifests/keepalived.yml
-    origin: staticpods/keepalived.yml
-  - path: /etc/kubernetes/keepalived.conf
-    origin: keepalived.conf
+ - path: /etc/kubernetes/manifests/keepalived.yml
+   origin: staticpods/keepalived.yml
+ - path: /etc/kubernetes/keepalived.conf
+   origin: keepalived.conf
 {% endif %}
 {% if ipv6 %}
-  - path: /etc/NetworkManager/conf.d/kcli-ipv6.conf
-    origin: kcli-ipv6.conf.j2
+ - path: /etc/NetworkManager/conf.d/kcli-ipv6.conf
+   origin: kcli-ipv6.conf.j2
 {% endif %}
 {% if async and num == 0 %}
-  - path: /etc/kubernetes/kubeconfig.{{ cluster }}
-    origin: ~/.kcli/clusters/{{ cluster }}/auth/kubeconfig
+ - path: /etc/kubernetes/kubeconfig.{{ cluster }}
+   origin: ~/.kcli/clusters/{{ cluster }}/auth/kubeconfig
 {% endif %}
 {% if files|default([]) %}
  extra_files: {{ files }}

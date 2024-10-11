@@ -13,7 +13,8 @@ mirror:
   operators: # Operators we want to mirror
 {% if disconnected_operators|default([]) %}
 {% if disconnected_operators_version %}
-  - catalog: registry.redhat.io/redhat/redhat-operator-index:{{ disconnected_operators_version }}
+{% set catalog = 'quay.io/prega/prega-operator-index' if prega else 'registry.redhat.io/redhat/redhat-operator-index' %}
+  - catalog: {{ catalog }}:{{ disconnected_operators_version }}
 {% else %}
   - catalog: registry.redhat.io/redhat/redhat-operator-index:v{{ tag }}
 {% endif %}

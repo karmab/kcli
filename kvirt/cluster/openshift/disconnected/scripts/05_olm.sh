@@ -38,5 +38,17 @@ envsubst < /root/scripts/mirror-config.yaml.sample > /root/mirror-config.yaml
 
 rm -rf /root/oc-mirror-workspace || true
 oc-mirror --config /root/mirror-config.yaml docker://$LOCAL_REGISTRY
-cp /root/oc-mirror-workspace/results-*/imageContentSourcePolicy.yaml /root
+
+{% if prega %}
+[ ! -d /root/idms ] || rm -rf /root/idms
+mkdir /root/idms
+sed -i -e '/source:/!b;/bundle/b;/cincinnati/b;s,quay.io/prega/test/,registry.redhat.io/,' /root/oc-mirror-workspace/results-*/*imageContentSourcePolicy.yaml
+oc adm migrate icsp /root/oc-mirror-workspace/results-*/*imageContentSourcePolicy.yaml --dest-dir /root/idms
+{% endif %}
+
+if [ -d /root/idms ] ; then
+  cp /root/idms/*yaml /root/manifests/imageContentSourcePolicy.yaml
+else
+  cp /root/oc-mirror-workspace/results-*/imageContentSourcePolicy.yaml /root
+fi
 cp /root/oc-mirror-workspace/results-*/catalogSource* /root
