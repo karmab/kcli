@@ -1150,7 +1150,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                     if isinstance(dns, str):
                         dns = dns.split(',')
                     for index, dnsentry in enumerate(dns):
-                        netdata += f"DNS{index +1 }={dnsentry}\n"
+                        netdata += f"DNS{index + 1}={dnsentry}\n"
                 if vlan is not None:
                     netdata += "VLAN=yes\n"
                 if isinstance(vips, list) and vips:
@@ -1913,7 +1913,7 @@ def delete_app_openshift(config, appname, appdir, overrides={}):
         app_files = [os.path.basename(_fic) for _fic in app_files]
         for app_file in app_files:
             rendered = config.process_inputfile(cluster, f"{appdir}/{appname}/{app_file}", overrides=appdata)
-            destfile = f"{tmpdir }/{app_file}"
+            destfile = f"{tmpdir}/{app_file}"
             with open(destfile, 'w') as g:
                 g.write(rendered)
         destfile = f"{tmpdir}/install.yml"

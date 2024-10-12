@@ -5,7 +5,7 @@ metadata:
   namespace: openshift-marketplace
 spec:
   sourceType: grpc
-  image: quay.io/prega/prega-operator-index:{{ version }}
+  image: quay.io/prega/prega-operator-index:v{{ tag }}
   displayName: Prega
   publisher: Red Hat
   updateStrategy:

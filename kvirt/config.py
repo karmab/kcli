@@ -2083,7 +2083,7 @@ class Kconfig(Kbaseconfig):
                                 updated = True
                                 pprint(f"Removing Nics of {name}")
                                 for net in range(len(currentnets), len(profile['nets']), -1):
-                                    interface = f"eth{net -1}"
+                                    interface = f"eth{net - 1}"
                                     z.delete_nic(name, interface)
                         if profile.get('files', []) and not overrides.get('skip_files_remediation', False)\
                            and self.remediate_files(name, profile.get('files', []), overrides, inputdir=inputdir):

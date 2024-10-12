@@ -17,9 +17,8 @@ PACKET = ['packet-python']
 PROXMOX = ['proxmoxer']
 VSPHERE = ['pyvmomi', 'cryptography']
 IBMCLOUD = ['google-crc32c==1.1.2', 'ibm_vpc', 'ibm-cos-sdk', 'ibm-platform-services', 'ibm-cloud-networking-services']
-#           'cos-aspera']
-EXTRAS = ['pyghmi']
-ALL = ['podman'] + ['websockify'] + EXTRAS + AWS + GCP + OPENSTACK + OVIRT + PACKET + VSPHERE + IBMCLOUD + AZURE + HCLOUD
+EXTRAS = ['pyghmi', 'podman', 'websockify']
+ALL = EXTRAS + AWS + GCP + OPENSTACK + OVIRT + PACKET + VSPHERE + IBMCLOUD + AZURE + HCLOUD
 
 description = 'Provisioner/Manager for Libvirt/Vsphere/Aws/Gcp/Hcloud/Kubevirt/Ovirt/Openstack/IBM Cloud and containers'
 long_description = description
