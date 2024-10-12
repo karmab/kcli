@@ -1308,7 +1308,8 @@ def create_app_openshift(args):
             if app == 'users' and args.subcommand_create_app == 'hypershift':
                 app_data['hypershift'] = True
         else:
-            name, source, channel, csv, description, namespace, channels, crds = common.olm_app(app)
+            catalog = overrides.get('catalog')
+            name, catalog, channel, csv, description, namespace, channels, crds = common.olm_app(app, catalog)
             if name is None:
                 error(f"Couldn't find any app matching {app}. Skipping...")
                 continue
@@ -1321,7 +1322,7 @@ def create_app_openshift(args):
                     channel = overrides_channel
             if 'namespace' in overrides:
                 namespace = overrides['namespace']
-            app_data = {'source': source, 'channel': channel, 'namespace': namespace, 'csv': csv}
+            app_data = {'catalog': catalog, 'channel': channel, 'namespace': namespace, 'csv': csv}
             app_data.update(overrides)
         pprint(f"Adding app {app}")
         baseconfig.create_app_openshift(name, app_data, outputdir=outputdir)
@@ -2284,9 +2285,10 @@ def info_openshift_disconnected(args):
     baseconfig.info_openshift_disconnected()
 
 
-def info_openshift_app(args):
+def info_app_openshift(args):
+    overrides = handle_parameters(args.param, args.paramfile, cluster=True)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
-    baseconfig.info_app_openshift(args.app)
+    baseconfig.info_app_openshift(args.app, overrides)
 
 
 def info_plan(args):
@@ -3481,7 +3483,7 @@ def cli():
                                                     help=createapp_desc, aliases=['apps', 'operator', 'operators'])
     createapp_subparsers = createapp_parser.add_subparsers(metavar='', dest='subcommand_create_app')
 
-    appgenericcreate_desc = 'Create Kube App Generic'
+    appgenericcreate_desc = 'Create Kube Generic App'
     appgenericcreate_epilog = None
     appgenericcreate_parser = createapp_subparsers.add_parser('generic', description=appgenericcreate_desc,
                                                               parents=[parent_parser],
@@ -3491,7 +3493,7 @@ def cli():
     appgenericcreate_parser.add_argument('apps', metavar='APPS', nargs='*')
     appgenericcreate_parser.set_defaults(func=create_app_generic)
 
-    appopenshiftcreate_desc = 'Create Kube App Openshift'
+    appopenshiftcreate_desc = 'Create Openshift App'
     appopenshiftcreate_epilog = f"Examples:\n\n{examples.appopenshiftcreate}"
     appopenshiftcreate_parser = createapp_subparsers.add_parser('openshift', description=appopenshiftcreate_desc,
                                                                 help=appopenshiftcreate_desc,
@@ -4548,9 +4550,9 @@ def cli():
 
     appopenshiftinfo_desc = 'Info Openshift App'
     appopenshiftinfo_parser = appinfo_subparsers.add_parser('openshift', description=appopenshiftinfo_desc,
-                                                            help=appopenshiftinfo_desc)
+                                                            help=appopenshiftinfo_desc, parents=[parent_parser])
     appopenshiftinfo_parser.add_argument('app', metavar='APP')
-    appopenshiftinfo_parser.set_defaults(func=info_openshift_app)
+    appopenshiftinfo_parser.set_defaults(func=info_app_openshift)
 
     baremetalhostinfo_desc = 'Report info about Baremetal Host'
     baremetalhostinfo_epilog = f"Examples:\n\n{examples.infohosts}"

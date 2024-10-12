@@ -1,6 +1,10 @@
+#!/bin/bash
+
 export HOME=.
 export PATH=/usr/local/bin:$PATH
 export DEB_BUILD_OPTIONS=nocheck debuild
+
+. venv/bin/activate
 
 PACKAGES=$(cloudsmith list package karmab/kcli | grep 'python3-kcli.*99.0' | cut -d'|' -f4 | xargs | awk '{$NF=""; print $0}')
 if [ "$(echo $PACKAGES | wc -w)" != "0" ] ; then
@@ -12,9 +16,11 @@ fi
 
 export VERSION="99.0.0.git."
 export MINOR=$(date "+%Y%m%d%H%M").$(git rev-parse --short HEAD)
-find . -name *pyc -exec rm {} \;
+find kvirt -name *pyc -exec rm {} \;
 GIT_VERSION="$(git ls-remote https://github.com/karmab/kcli | head -1 | cut -c1-7) $(date +%Y/%m/%d)"
 echo $GIT_VERSION > kvirt/version/git
+sudo rm -rf kcli.egg-info
+sudo sed -i "s/SafeConfigParser/ConfigParser/" venv/lib/python3.*/site-packages/stdeb/util.py
 python3 setup.py --command-packages=stdeb.command sdist_dsc --debian-version $MINOR --depends python3-dateutil,python3-prettytable,python3-libvirt,genisoimage,python3-distutils,git bdist_deb
 deb=$(realpath $(find . -name *.deb))
 

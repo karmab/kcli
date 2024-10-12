@@ -1,3 +1,4 @@
+. venv/bin/activate
 [ -d $HOME/.config ] || mkdir $HOME/.config
 echo $COPR_BASE64 | base64 -d > $HOME/.config/copr
 tar -C .. -Pczf /tmp/kcli.tar.gz --exclude=".*" kcli

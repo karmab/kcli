@@ -2042,19 +2042,23 @@ def generate_rhcos_iso(k, cluster, pool, version='latest', installer=False, arch
         os.system(isocmd)
 
 
-def olm_app(package):
+def olm_app(package, overrides={}):
+    specific_catalog = overrides.get('catalog')
     os.environ["PATH"] += f":{os.getcwd()}"
     own = True
-    name, source, defaultchannel, csv, description, installmodes, crds = None, None, None, None, None, None, []
+    name, catalog, defaultchannel, csv, description, installmodes, crds = None, None, None, None, None, None, []
     target_namespace = None
     channels = []
-    manifestscmd = f"oc get packagemanifest -n openshift-marketplace {package} -o yaml 2>/dev/null"
-    data = yaml.safe_load(os.popen(manifestscmd).read())
-    if data is not None:
+    manifestscmd = "oc get packagemanifest -n openshift-marketplace -o yaml 2>/dev/null"
+    for data in yaml.safe_load(os.popen(manifestscmd).read()).get('items', []):
+        if name != package:
+            continue
         name = data['metadata']['name']
         target_namespace = name.split('-operator')[0]
         status = data['status']
-        source = status['catalogSource']
+        catalog = status['catalogSource']
+        if specific_catalog is not None and catalog != specific_catalog:
+            continue
         defaultchannel = status['defaultChannel']
         for channel in status['channels']:
             channels.append(channel['name'])
@@ -2074,7 +2078,7 @@ def olm_app(package):
                 if 'customresourcedefinitions' in csvdesc and 'owned' in csvdesc['customresourcedefinitions']:
                     for crd in csvdesc['customresourcedefinitions']['owned']:
                         crds.append(crd['name'])
-    return name, source, defaultchannel, csv, description, target_namespace, channels, crds
+    return name, catalog, defaultchannel, csv, description, target_namespace, channels, crds
 
 
 def need_fake():

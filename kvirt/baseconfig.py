@@ -7,7 +7,7 @@ from jinja2 import StrictUndefined as strictundefined
 from jinja2.runtime import Undefined as defaultundefined
 from jinja2.exceptions import TemplateSyntaxError, TemplateError, TemplateNotFound
 from kvirt import common
-from kvirt.common import error, pprint, warning, container_mode, ssh, scp, NoAliasDumper
+from kvirt.common import error, pprint, warning, container_mode, ssh, scp, NoAliasDumper, olm_app
 from kvirt.common import PlanLoader
 from kvirt import defaults as kdefaults
 from kvirt.cluster import hypershift
@@ -1015,15 +1015,15 @@ class Kbaseconfig:
         else:
             common.delete_app_openshift(self, app, appdir, overrides=overrides)
 
-    def info_app_openshift(self, app):
+    def info_app_openshift(self, app, overrides={}):
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         if app not in kdefaults.LOCAL_OPENSHIFT_APPS:
-            name, source, defaultchannel, csv, description, target_namespace, channels, crds = common.olm_app(app)
+            name, catalog, defaultchannel, csv, description, target_namespace, channels, crds = olm_app(app, overrides)
             if name is None:
                 warning(f"Couldn't find any app matching {app}")
             else:
                 pprint(f"Providing information for app {name}")
-                print(f"source: {source}")
+                print(f"catalog: {catalog}")
                 print(f"channels: {channels}")
                 print(f"channel: {defaultchannel}")
                 print(f"target namespace: {target_namespace}")
