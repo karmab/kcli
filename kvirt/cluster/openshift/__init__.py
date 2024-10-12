@@ -459,8 +459,7 @@ def process_apps(config, clusterdir, apps, overrides):
             name = appname
             app_data = base_data
         else:
-            catalog = base_data.get('catalog')
-            name, catalog, channel, csv, description, namespace, channels, crds = olm_app(appname, catalog)
+            name, catalog, channel, csv, description, namespace, channels, crds = olm_app(appname, base_data)
             if name is None:
                 error(f"Couldn't find any app matching {app}. Skipping...")
                 continue
