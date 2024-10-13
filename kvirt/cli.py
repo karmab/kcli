@@ -1308,8 +1308,7 @@ def create_app_openshift(args):
             if app == 'users' and args.subcommand_create_app == 'hypershift':
                 app_data['hypershift'] = True
         else:
-            catalog = overrides.get('catalog')
-            name, catalog, channel, csv, description, namespace, channels, crds = common.olm_app(app, catalog)
+            name, catalog, channel, csv, description, namespace, channels, crds = common.olm_app(app, overrides)
             if name is None:
                 error(f"Couldn't find any app matching {app}. Skipping...")
                 continue
@@ -1375,7 +1374,7 @@ def delete_app_openshift(args):
             if app == 'users' and args.subcommand_delete_app == 'hypershift':
                 app_data['hypershift'] = True
         else:
-            name, source, channel, csv, description, namespace, channels, crds = common.olm_app(app)
+            name, source, channel, csv, description, namespace, channels, crds = common.olm_app(app, app_data)
             if name is None:
                 error(f"Couldn't find any app matching {app}. Skipping...")
                 continue

@@ -2045,39 +2045,47 @@ def generate_rhcos_iso(k, cluster, pool, version='latest', installer=False, arch
 def olm_app(package, overrides={}):
     specific_catalog = overrides.get('catalog')
     os.environ["PATH"] += f":{os.getcwd()}"
-    own = True
-    name, catalog, defaultchannel, csv, description, installmodes, crds = None, None, None, None, None, None, []
-    target_namespace = None
+    if specific_catalog is not None:
+        data = None
+        manifestscmd = f"oc get packagemanifest --field-selector metadata.name={package}"
+        manifestscmd += " -o jsonpath='{.items[?(@.status.catalogSource==\"%s\")]}'" % specific_catalog
+        try:
+            data = json.loads(os.popen(manifestscmd).read())
+        except:
+            data = None
+    else:
+        manifestscmd = "oc get packagemanifest -n openshift-marketplace {package} -o yaml 2>/dev/null"
+        data = yaml.safe_load(os.popen(manifestscmd).read())
+    if data is None:
+        if specific_catalog is not None:
+            warning(f"App not found in {specific_catalog}")
+        return None, None, None, None, None, None, []
+    name = data['metadata']['name']
+    target_namespace = name.split('-operator')[0]
+    status = data['status']
+    catalog = status['catalogSource']
+    defaultchannel = status['defaultChannel']
     channels = []
-    manifestscmd = "oc get packagemanifest -n openshift-marketplace -o yaml 2>/dev/null"
-    for data in yaml.safe_load(os.popen(manifestscmd).read()).get('items', []):
-        if name != package:
-            continue
-        name = data['metadata']['name']
-        target_namespace = name.split('-operator')[0]
-        status = data['status']
-        catalog = status['catalogSource']
-        if specific_catalog is not None and catalog != specific_catalog:
-            continue
-        defaultchannel = status['defaultChannel']
-        for channel in status['channels']:
-            channels.append(channel['name'])
-            if channel['name'] == defaultchannel:
-                csv = channel['currentCSV']
-                description = channel['currentCSVDesc']['description']
-                installmodes = channel['currentCSVDesc']['installModes']
-                for mode in installmodes:
-                    if mode['type'] == 'OwnNamespace' and not mode['supported']:
-                        target_namespace = 'openshift-operators'
-                        own = False
-                        break
-                csvdesc = channel['currentCSVDesc']
-                csvdescannotations = csvdesc['annotations']
-                if own and 'operatorframework.io/suggested-namespace' in csvdescannotations:
-                    target_namespace = csvdescannotations['operatorframework.io/suggested-namespace']
-                if 'customresourcedefinitions' in csvdesc and 'owned' in csvdesc['customresourcedefinitions']:
-                    for crd in csvdesc['customresourcedefinitions']['owned']:
-                        crds.append(crd['name'])
+    own = True
+    for channel in status['channels']:
+        channels.append(channel['name'])
+        if channel['name'] == defaultchannel:
+            csv = channel['currentCSV']
+            description = channel['currentCSVDesc']['description']
+            installmodes = channel['currentCSVDesc']['installModes']
+            for mode in installmodes:
+                if mode['type'] == 'OwnNamespace' and not mode['supported']:
+                    target_namespace = 'openshift-operators'
+                    own = False
+                    break
+            csvdesc = channel['currentCSVDesc']
+            csvdescannotations = csvdesc['annotations']
+            if own and 'operatorframework.io/suggested-namespace' in csvdescannotations:
+                target_namespace = csvdescannotations['operatorframework.io/suggested-namespace']
+            crds = []
+            if 'customresourcedefinitions' in csvdesc and 'owned' in csvdesc['customresourcedefinitions']:
+                for crd in csvdesc['customresourcedefinitions']['owned']:
+                    crds.append(crd['name'])
     return name, catalog, defaultchannel, csv, description, target_namespace, channels, crds
 
 
