@@ -207,7 +207,7 @@ class Redfish(object):
             newboot['BootSourceOverrideEnabled'] = 'Once'
         if currentboot['BootSourceOverrideTarget'] != 'Cd':
             newboot['BootSourceOverrideTarget'] = 'Cd'
-        if 'BootSourceOverrideMode' not in currentboot or currentboot['BootSourceOverrideMode'] != 'UEFI':
+        if 'BootSourceOverrideMode' not in currentboot:
             newboot['BootSourceOverrideMode'] = 'UEFI'
         data = {"Boot": newboot}
         if self.debug:
