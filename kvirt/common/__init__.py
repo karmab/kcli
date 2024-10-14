@@ -2054,12 +2054,12 @@ def olm_app(package, overrides={}):
         except:
             data = None
     else:
-        manifestscmd = "oc get packagemanifest -n openshift-marketplace {package} -o yaml 2>/dev/null"
+        manifestscmd = f"oc get packagemanifest -n openshift-marketplace {package} -o yaml 2>/dev/null"
         data = yaml.safe_load(os.popen(manifestscmd).read())
     if data is None:
         if specific_catalog is not None:
             warning(f"App not found in {specific_catalog}")
-        return None, None, None, None, None, None, []
+        return None, None, None, None, None, None, None, []
     name = data['metadata']['name']
     target_namespace = name.split('-operator')[0]
     status = data['status']
@@ -2284,9 +2284,12 @@ def stop_baremetal_hosts(baremetal_hosts, overrides={}, debug=False):
         if bmc_url is not None:
             red = Redfish(bmc_url, bmc_user, bmc_password, debug=debug)
             node_name = host['name'] if 'name' in host else f"with url {bmc_url}"
-            pprint(f"Stopping Host {node_name}")
             try:
-                red.stop()
+                if red.status() != 'Off':
+                    pprint(f"Stopping Host {node_name}")
+                    red.stop()
+                else:
+                    pprint(f"Host {node_name} already stopped")
             except Exception as e:
                 msg = f'Hit {e} when stopping host {node_name}'
                 error(msg)
@@ -2305,19 +2308,34 @@ def update_baremetal_hosts(baremetal_hosts, overrides={}, debug=False):
             or overrides.get('user') or overrides.get('username')
         bmc_password = host.get('password') or host.get('bmc_password') or overrides.get('bmc_password')
         secureboot = host.get('secureboot') or host.get('bmc_secureboot') or overrides.get('secureboot')
-        if bmc_url is not None and secureboot is not None:
+        iso_none = ('iso' in host and host['iso'] is None) or ('iso' in overrides and overrides['iso'] is None)
+        if bmc_url is not None:
             red = Redfish(bmc_url, bmc_user, bmc_password, debug=debug)
-            node_name = host['name'] if 'name' in host else f"with url {bmc_url}"
-            pprint(f"Updating secureboot in Host {node_name}")
-            try:
-                if secureboot:
-                    red.enable_secureboot()
-                else:
-                    red.disable_secureboot()
-            except Exception as e:
-                msg = f"Hit {e} when updating secureboot in host {node_name}"
-                error(msg)
-                failures.append(msg)
+            if secureboot is not None:
+                node_name = host['name'] if 'name' in host else f"with url {bmc_url}"
+                try:
+                    if secureboot:
+                        pprint(f"Enabling secureboot in Host {node_name}")
+                        red.enable_secureboot()
+                    else:
+                        pprint(f"Disabling secureboot in Host {node_name}")
+                        red.disable_secureboot()
+                except Exception as e:
+                    msg = f"Hit {e} when updating secureboot in host {node_name}"
+                    error(msg)
+                    failures.append(msg)
+            if iso_none:
+                node_name = host['name'] if 'name' in host else f"with url {bmc_url}"
+                try:
+                    current_iso = red.get_iso_status()
+                    if current_iso != '':
+                        pprint(f"Setting iso from {current_iso} to None in Host {node_name}")
+                        red.eject_iso()
+                    else:
+                        pprint(f"Iso already set to None in Host {node_name}")
+                except Exception as e:
+                    msg = f"Hit {e} when setting iso to None in host {node_name}"
+                    error(msg)
         else:
             warning(f"Skipping entry {index} because either bmc_url, bmc_user or bmc_password is not set")
     if failures:

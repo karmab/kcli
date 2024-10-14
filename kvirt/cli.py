@@ -1374,11 +1374,11 @@ def delete_app_openshift(args):
             if app == 'users' and args.subcommand_delete_app == 'hypershift':
                 app_data['hypershift'] = True
         else:
-            name, source, channel, csv, description, namespace, channels, crds = common.olm_app(app, app_data)
+            name, catalog, channel, csv, description, namespace, channels, crds = common.olm_app(app, app_data)
             if name is None:
                 error(f"Couldn't find any app matching {app}. Skipping...")
                 continue
-            app_data = {'source': source, 'channel': channel, 'namespace': namespace, 'crds': crds}
+            app_data = {'catalog': catalog, 'channel': channel, 'namespace': namespace, 'crds': crds}
             app_data.update(overrides)
         pprint(f"Deleting app {name}")
         baseconfig.delete_app_openshift(app, app_data)
