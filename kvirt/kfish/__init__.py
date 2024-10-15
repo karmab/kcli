@@ -229,6 +229,10 @@ class Redfish(object):
         return urlopen(request)
 
     def stop(self):
+        current_status = self.status()
+        if current_status == 'Off':
+            print("Node already powered off")
+            return
         data = {"ResetType": "ForceOff"}
         reset_url = f"{self.url}/Actions/ComputerSystem.Reset"
         if self.debug:
@@ -267,11 +271,16 @@ class Redfish(object):
 
     def set_iso(self, iso_url):
         result = None
-        try:
-            self.eject_iso()
-        except Exception as e:
-            if self.debug:
-                traceback.print_exception(e)
+        current_iso = self.get_iso_status()
+        if current_iso == iso_url:
+            print(f"Iso {iso_url} already set")
+            return
+        elif current_iso != '':
+            try:
+                self.eject_iso()
+            except Exception as e:
+                if self.debug:
+                    traceback.print_exception(e)
         try:
             result = self.insert_iso(iso_url)
         except Exception as e:
@@ -294,7 +303,7 @@ class Redfish(object):
         response = json.loads(urlopen(request).read())
         enabled = response['SecureBootEnable']
         if enabled:
-            print("secureboot already enabled")
+            print("Secureboot already enabled")
             return
         data = {"SecureBootEnable": True}
         if self.debug:
@@ -309,7 +318,7 @@ class Redfish(object):
         response = json.loads(urlopen(request).read())
         enabled = response['SecureBootEnable']
         if not enabled:
-            print("secureboot already disabled")
+            print("Secureboot already disabled")
             return
         data = {"SecureBootEnable": False}
         if self.debug:
