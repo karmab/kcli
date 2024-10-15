@@ -24,7 +24,7 @@ metadata:
 spec:
   channel: "{{ channel }}"
   name: {{ name }}
-  source: {{ source | default('redhat-operators') }}
+  source: {{ catalog | default('redhat-operators') }}
   sourceNamespace: openshift-marketplace
 {% if csv is defined %}
   startingCSV: {{ csv }}
