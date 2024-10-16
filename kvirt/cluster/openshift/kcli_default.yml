@@ -174,3 +174,4 @@ dedicated_etcd: False
 dedicated_etcd_size: 100
 prega: false
 virtualization_nightly: false
+techpreview: false

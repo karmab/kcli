@@ -48,6 +48,9 @@ compute:
 controlPlane:
   name: master
   replicas: {{ 1 if sno or sno_vm else ctlplanes }}
+{% if techpreview %}
+featureSet: TechPreviewNoUpgrade
+{% endif %}
 metadata:
   name: {{ cluster }}
 networking:
