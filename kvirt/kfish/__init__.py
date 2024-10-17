@@ -274,21 +274,21 @@ class Redfish(object):
         current_iso = self.get_iso_status()
         if current_iso == iso_url:
             print(f"Iso {iso_url} already set")
-            return
-        elif current_iso != '':
+        else:
+            if current_iso != '':
+                try:
+                    self.eject_iso()
+                except Exception as e:
+                    if self.debug:
+                        traceback.print_exception(e)
             try:
-                self.eject_iso()
+                result = self.insert_iso(iso_url)
             except Exception as e:
                 if self.debug:
                     traceback.print_exception(e)
-        try:
-            result = self.insert_iso(iso_url)
-        except Exception as e:
-            if self.debug:
-                traceback.print_exception(e)
-        if result.code not in [200, 202, 204]:
-            print(f"Hit {result.reason} When plugging {iso_url}")
-            sys.exit(1)
+            if result.code not in [200, 202, 204]:
+                print(f"Hit {result.reason} When plugging {iso_url}")
+                sys.exit(1)
         try:
             self.set_iso_once()
         except Exception as e:
