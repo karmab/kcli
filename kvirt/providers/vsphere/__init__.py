@@ -495,6 +495,7 @@ class Ksphere:
             confspec.firmware = 'efi'
             if secureboot:
                 confspec.bootOptions = vim.vm.BootOptions(efiSecureBootEnabled=True)
+        confspec.vAppConfigRemoved = True
         t = vm.Reconfigure(confspec)
         waitForMe(t)
         if overrides.get('boot_order', False):
