@@ -55,7 +55,7 @@ def _base_image_size(image):
 class Kubevirt():
     def __init__(self, kubeconfig_file, context=None, debug=False, namespace=None,
                  disk_hotplug=False, readwritemany=False, access_mode='NodePort', volume_mode='Filesystem',
-                 volume_access='ReadWriteOnce', harvester=False, embed_userdata=False, first_consumer=False):
+                 volume_access='ReadWriteOnce', harvester=False, embed_userdata=False, registry='quay.io'):
         self.namespace = namespace or 'default'
         self.kubectl = which('kubectl') or which('oc')
         if self.kubectl is None:
@@ -74,8 +74,8 @@ class Kubevirt():
         self.disk_hotplug = disk_hotplug
         self.harvester = harvester
         self.embed_userdata = embed_userdata
-        self.first_consumer = first_consumer
         self.kubeconfig_file = kubeconfig_file
+        self.registry = registry
         return
 
     def close(self):
@@ -499,7 +499,7 @@ class Kubevirt():
                 vm['spec']['dataVolumeTemplates'] = [dvt]
                 continue
             _create_resource(kubectl, pvc, namespace, debug=self.debug)
-            bound = self.pvc_bound(pvcname, namespace, first_consumer=self.first_consumer)
+            bound = self.pvc_bound(pvcname, namespace, diskpool)
             if not bound:
                 error(f'timeout waiting for pvc {pvcname} to get bound')
                 return {'result': 'failure', 'reason': f'timeout waiting for pvc {pvcname} to get bound'}
@@ -519,8 +519,7 @@ class Kubevirt():
             vm['spec']['template']['spec']['readinessProbe'] = readinessprobe
         vminfo = _create_resource(kubectl, vm, namespace, debug=self.debug)
         uid = vminfo.get("metadata")['uid']
-        api_version = f"{DOMAIN}/{VERSION}"
-        reference = {'apiVersion': api_version, 'kind': 'VirtualMachine', 'name': name, 'uid': uid}
+        reference = {'apiVersion': f"{DOMAIN}/{VERSION}", 'kind': 'VirtualMachine', 'name': name, 'uid': uid}
         if reservedns and domain is not None:
             newdomain = domain.replace('.', '-')
             if _get_resource(kubectl, 'svc', newdomain, namespace, debug=self.debug) is not None:
@@ -1104,7 +1103,7 @@ class Kubevirt():
             disk_overrides['volume_mode'] = volume_mode
             disk_overrides['volume_access'] = volume_access
             self.create_disk(diskname, size=size, pool=diskpool, thin=thin, image=image, overrides=disk_overrides)
-            bound = self.pvc_bound(diskname, namespace, first_consumer=self.first_consumer)
+            bound = self.pvc_bound(diskname, namespace, diskpool)
             if not bound:
                 return {'result': 'failure', 'reason': f'timeout waiting for pvc {diskname} to get bound'}
             bus = overrides.get('interface', 'virtio')
@@ -1169,7 +1168,7 @@ class Kubevirt():
             else:
                 name = metadata['name']
                 storageclass = p['spec']['storageClassName']
-                pv = p['spec']['volumeName']
+                pv = p['spec'].get('volumeName')
                 disks[name] = {'pool': storageclass, 'path': pv}
         return disks
 
@@ -1263,7 +1262,7 @@ class Kubevirt():
             pprint("Using existing pvc")
         else:
             _create_resource(kubectl, pvc, namespace, debug=self.debug)
-            bound = self.pvc_bound(volname, namespace, first_consumer=self.first_consumer)
+            bound = self.pvc_bound(volname, namespace, pool)
             if not bound:
                 return {'result': 'failure', 'reason': 'timeout waiting for pvc to get bound'}
         completed = self.import_completed(volname, namespace)
@@ -1272,7 +1271,8 @@ class Kubevirt():
             return {'result': 'failure', 'reason': 'timeout waiting for cdi importer pod to complete'}
         return {'result': 'success'}
 
-    def patch_pvc(self, pvc, command, image="quay.io/karmab/curl", files=[]):
+    def patch_pvc(self, pvc, command, files=[]):
+        image = f'{self.registry}/karmab/curl'
         kubectl = self.kubectl
         namespace = self.namespace
         now = datetime.datetime.now().strftime("%Y%M%d%H%M")
@@ -1433,21 +1433,26 @@ class Kubevirt():
         storageclass = _get_resource(kubectl, 'sc', pool, debug=self.debug)
         return storageclass['provisioner']
 
-    def pvc_bound(self, volname, namespace, first_consumer=False):
+    def wait_for_first_consumer(self, pool):
         kubectl = self.kubectl
-        if first_consumer:
+        storageclass = _get_resource(kubectl, 'sc', pool, debug=self.debug)
+        return storageclass['volumeBindingMode'] == 'WaitForFirstConsumer'
+
+    def pvc_bound(self, volname, namespace, pool=None):
+        kubectl = self.kubectl
+        if self.wait_for_first_consumer(pool or self.pool):
             job_name = f"temp-{volname}"
-            container = {'name': 'hello', 'image': 'quay.io/karmab/kubectl', 'command': ["echo", "hello"]}
+            container = {'name': 'hello', 'image': f'{self.registry}/karmab/curl', 'command': ["echo", "hello"]}
             volume = {'name': volname, 'persistentVolumeClaim': {'claimName': volname}}
             template = {'metadata': {'labels': {"app": "hello"}},
                         'spec': {'containers': [container], 'volumes': [volume], 'restartPolicy': "Never"}}
-            spec = {'template': template, 'backoff_limit': 0, 'ttlSecondsAfterFinished': 10}
-            job = {'api_version': 'batch/v1', 'kind': 'Job', 'metadata': {'name': job_name}, 'spec': spec}
+            spec = {'template': template, 'backoffLimit': 0, 'ttlSecondsAfterFinished': 10}
+            job = {'apiVersion': 'batch/v1', 'kind': 'Job', 'metadata': {'name': job_name}, 'spec': spec}
             _create_resource(kubectl, job, namespace, debug=self.debug)
             completed = False
             while not completed:
                 response = _get_resource(kubectl, 'job', job_name, namespace, debug=self.debug)
-                if response['status']['succeeded'] is not None or response['status']['failed'] is not None:
+                if response['status'].get('succeeded') is not None or response['status'].get('failed') is not None:
                     completed = True
         pvctimeout = 120
         pvcruntime = 0

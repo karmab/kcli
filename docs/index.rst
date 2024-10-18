@@ -515,7 +515,7 @@ You can use additional parameters for the Kubevirt section:
 -  ``volume_access`` Volume access mode. Defaults to ReadWriteOnce.
 -  ``disk_hotplug`` Whether to allow to hotplug (and unplug) disks. Defaults to false. Note it also requires to enable The HotplugVolumes featureGate within Kubevirt
 -  ``embed_userdata`` Whether to embed userdata directly in the vm spec. Defaults to false
--  ``first_consumer`` Whether the storage class has a volumeBindingMode set to WaitForFirstConsumer. Defaults to false. This allows to provision pvcs by creating a dummy job to force PVC binding
+-  ``registry`` Specific registry where to gather karmab/curl image used when pool/sc has a volume binding mode of WaitForFirstConsumer. Defaults to quay.io
 
 You can use the following indications to gather context, create a suitable service account and retrieve its associated token:
 

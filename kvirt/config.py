@@ -86,7 +86,7 @@ class Kconfig(Kbaseconfig):
                     sys.exit(1)
                 harvester = options.get('harvester', kdefaults.KUBEVIRT['harvester'])
                 embed_userdata = options.get('embed_userdata', kdefaults.KUBEVIRT['embed_userdata'])
-                first_consumer = options.get('first_consumer', kdefaults.KUBEVIRT['first_consumer'])
+                registry = options.get('registry', kdefaults.KUBEVIRT['registry'])
                 try:
                     from kvirt.providers.kubevirt import Kubevirt
                 except Exception as e:
@@ -95,7 +95,7 @@ class Kconfig(Kbaseconfig):
                 k = Kubevirt(kubeconfig_file, context=context, debug=debug, namespace=namespace,
                              disk_hotplug=disk_hotplug, readwritemany=readwritemany, access_mode=access_mode,
                              volume_mode=volume_mode, volume_access=volume_access, harvester=harvester,
-                             embed_userdata=embed_userdata, first_consumer=first_consumer)
+                             embed_userdata=embed_userdata, registry=registry)
             elif self.type == 'gcp':
                 credentials = options.get('credentials')
                 if credentials is not None:

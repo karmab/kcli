@@ -21,8 +21,9 @@ def _delete_resource(kubectl, resource, name, namespace, debug=False):
     return os.popen(f'{kubectl} delete -n {namespace} {resource} {name} 2>/dev/null').read()
 
 
-def _get_resource(kubectl, resource, name, namespace, debug=False):
-    return yaml.safe_load(os.popen(f'{kubectl} get {resource} -n {namespace} -o yaml {name} 2>/dev/null').read())
+def _get_resource(kubectl, resource, name, namespace=None, debug=False):
+    namespace = f" -n {namespace}" if namespace is not None else ''
+    return yaml.safe_load(os.popen(f'{kubectl} get {resource} {namespace} -o yaml {name} 2>/dev/null').read())
 
 
 def _get_all_resources(kubectl, resource, namespace=None, debug=False):
