@@ -112,7 +112,7 @@ class Kubevirt():
         owners = []
         container_disk = overrides.get('container_disk', False)
         guest_agent = False
-        need_ssh_service = not tunnel and self.access_mode != 'External'
+        need_access_service = not tunnel and self.access_mode != 'External'
         if self.exists(name):
             return {'result': 'failure', 'reason': f"VM {name} already exists"}
         if image is not None:
@@ -316,7 +316,7 @@ class Kubevirt():
                     newnet['multus'] = {'networkName': netname}
                     guest_agent = True
                     if index == 0:
-                        need_ssh_service = False
+                        need_access_service = False
             else:
                 newnet['pod'] = {}
             interfaces.append(newif)
@@ -400,7 +400,7 @@ class Kubevirt():
                 return {'result': 'failure', 'reason': f"you don't have iso {iso}"}
             diskname = f'{name}-iso'
             iso_boot_order = len(disks) + 1 if boot_order else 2
-            newdisk = {'bootOrder': iso_boot_order, 'cdrom': {'readOnly': False, 'bus': 'sata'}, 'name': diskname}
+            newdisk = {'bootOrder': iso_boot_order, 'cdrom': {'readonly': False, 'bus': 'sata'}, 'name': diskname}
             good_iso = iso.replace('_', '-').replace('.', '-').lower()
             myvolume = {'name': diskname, 'persistentVolumeClaim': {'claimName': good_iso}}
             vm['spec']['template']['spec']['domain']['devices']['disks'].append(newdisk)
@@ -518,7 +518,7 @@ class Kubevirt():
                 readinessprobe[checktype]['scheme'] = checkscheme
             vm['spec']['template']['spec']['readinessProbe'] = readinessprobe
         vminfo = _create_resource(kubectl, vm, namespace, debug=self.debug)
-        uid = vminfo.get("metadata")['uid']
+        uid = vminfo.get("metadata").get('uid')
         reference = {'apiVersion': f"{DOMAIN}/{VERSION}", 'kind': 'VirtualMachine', 'name': name, 'uid': uid}
         if reservedns and domain is not None:
             newdomain = domain.replace('.', '-')
@@ -530,11 +530,13 @@ class Kubevirt():
                            'spec': {'selector': {'subdomain': newdomain}, 'clusterIP': 'None',
                                     'ports': [{'name': 'foo', 'port': 1234, 'targetPort': 1234}]}}
                 _create_resource(kubectl, dnsspec, namespace, debug=self.debug)
-        if need_ssh_service:
-            if os.popen(f'{kubectl} get svc -n {namespace} {name}-ssh >/dev/null 2>&1').read() == '':
+        if need_access_service:
+            svc = 'rdp' if iso is not None and iso.lower().startswith('win') else 'ssh'
+            port = 3389 if svc == 'rdp' else 22
+            if os.popen(f'{kubectl} get svc -n {namespace} {name}-{svc} >/dev/null 2>&1').read() == '':
                 selector = {'kubevirt.io/provider': 'kcli', 'kubevirt.io/domain': name}
-                self.create_service(f'{name}-ssh', namespace, selector, _type=self.access_mode, ports=[{'port': 22}],
-                                    reference=reference)
+                self.create_service(f'{name}-{svc}', namespace, selector, _type=self.access_mode,
+                                    ports=[{'port': port}], reference=reference)
         if name.endswith('-sno') and metadata.get('kubetype', '') == 'openshift':
             selector = {'kubevirt.io/provider': 'kcli', 'kubevirt.io/domain': name}
             self.create_service(f'{name}-api', namespace, selector, _type=self.access_mode, ports=[{'port': 6443}],
@@ -909,7 +911,7 @@ class Kubevirt():
         else:
             items = _get_all_resources(kubectl, 'pvc', namespace, debug=self.debug)
             completed = 'Completed'
-            allimages = [p['metadata']['name'] for p in items if p['metadata']['annotations'] is not None and
+            allimages = [p['metadata']['name'] for p in items if p['metadata'].get('annotations') is not None and
                          'cdi.kubevirt.io/storage.import.endpoint' in p['metadata']['annotations'] and
                          'cdi.kubevirt.io/storage.condition.running.reason' in p['metadata']['annotations'] and
                          p['metadata']['annotations']['cdi.kubevirt.io/storage.condition.running.reason'] == completed]
@@ -1033,7 +1035,7 @@ class Kubevirt():
                 else:
                     return
         if iso is not None and not found:
-            newdisk = {'bootOrder': 2, 'cdrom': {'readOnly': False, 'bus': 'sata'}, 'name': diskname}
+            newdisk = {'bootOrder': 2, 'cdrom': {'readonly': False, 'bus': 'sata'}, 'name': diskname}
             myvolume = {'name': diskname, 'persistentVolumeClaim': {'claimName': good_iso}}
             vm['spec']['template']['spec']['domain']['devices']['disks'].append(newdisk)
             vm['spec']['template']['spec']['volumes'].append(myvolume)
@@ -1434,13 +1436,15 @@ class Kubevirt():
         return storageclass['provisioner']
 
     def wait_for_first_consumer(self, pool):
+        if pool is None:
+            return False
         kubectl = self.kubectl
         storageclass = _get_resource(kubectl, 'sc', pool, debug=self.debug)
         return storageclass['volumeBindingMode'] == 'WaitForFirstConsumer'
 
     def pvc_bound(self, volname, namespace, pool=None):
         kubectl = self.kubectl
-        if self.wait_for_first_consumer(pool or self.pool):
+        if self.wait_for_first_consumer(pool or self.get_default_sc()):
             job_name = f"temp-{volname}"
             container = {'name': 'hello', 'image': f'{self.registry}/karmab/curl', 'command': ["echo", "hello"]}
             volume = {'name': volname, 'persistentVolumeClaim': {'claimName': volname}}
@@ -1476,10 +1480,12 @@ class Kubevirt():
             if pvcruntime >= pvctimeout:
                 return False
             pvc = _get_resource(kubectl, 'pvc', volname, namespace, debug=self.debug)
-            if 'cdi.kubevirt.io/storage.pod.phase' not in pvc['metadata']['annotations']:
-                phase = 'Pending'
-            else:
-                phase = pvc['metadata']['annotations']['cdi.kubevirt.io/storage.pod.phase']
+            annotations = pvc['metadata'].get('annotations')
+            if annotations is not None:
+                if 'cdi.kubevirt.io/storage.pod.phase' not in annotations:
+                    phase = 'Pending'
+                else:
+                    phase = pvc['metadata']['annotations']['cdi.kubevirt.io/storage.pod.phase']
             time.sleep(5)
             pprint("Waiting for import to complete...")
             pvcruntime += 5
