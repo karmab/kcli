@@ -2404,8 +2404,9 @@ class Kconfig(Kbaseconfig):
                 convert = '.raw.' in url
                 result = k.add_image(url, pool, cmds=cmds, name=name or image, size=size, convert=convert)
             except Exception as e:
-                error(f"Got {e}")
-                error(f"Please run kcli delete image --yes {name or image}")
+                image_type = 'iso' if url.endswith('.iso') else 'image'
+                error(f"Hit issue when adding {image_type}. Got {e}")
+                error(f"Please run kcli delete {image_type} --yes {name or image}")
                 return {'result': 'failure', 'reason': "User interruption"}
             found = 'found' in result
             if found:
