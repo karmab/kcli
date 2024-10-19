@@ -244,7 +244,9 @@ class Kvirt(object):
             overrides['arch'] = capabilities['arch']
         custom_emulator = overrides.get('emulator')
         if custom_emulator is not None:
-            if which(custom_emulator) is None:
+            if os.path.exists(custom_emulator):
+                emulator = custom_emulator
+            elif which(custom_emulator) is None:
                 return {'result': 'failure', 'reason': f"Emulator {custom_emulator} not found in your path"}
             else:
                 emulator = which(custom_emulator)
