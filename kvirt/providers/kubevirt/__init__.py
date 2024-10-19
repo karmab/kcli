@@ -112,6 +112,7 @@ class Kubevirt():
         owners = []
         container_disk = overrides.get('container_disk', False)
         guest_agent = False
+        windows = iso is not None and iso.lower().startswith('win')
         need_access_service = not tunnel and self.access_mode != 'External'
         if self.exists(name):
             return {'result': 'failure', 'reason': f"VM {name} already exists"}
@@ -296,7 +297,7 @@ class Kubevirt():
                 elif 'macvtap' in net and net['macvtap']:
                     newif['macvtap'] = {}
                     del newif['bridge']
-                elif 'masquerade' in net and net['masquerade']:
+                elif ('masquerade' in net and net['masquerade']) or (windows and index == 0):
                     newif['masquerade'] = {}
                     del newif['bridge']
                 elif 'slirp' in net and net['slirp']:
@@ -461,6 +462,24 @@ class Kubevirt():
                     self.create_secret(netdatasecretname, namespace, netdata, field='networkdata')
                     owners.append(netdatasecretname)
             vm['spec']['template']['spec']['volumes'].append(cloudinitvolume)
+        if windows:
+            vm['spec']['template']['spec']['devices']['tpm'] = {}
+            vm['spec']['template']['spec']['domain']['clock'] = {'timer': {'hpet': {'present': False},
+                                                                           'pit': {'tickPolicy': 'delay'},
+                                                                           'rtc': {'tickPolicy': 'catchup'},
+                                                                           'hyperv': {}},
+                                                                 'utc': {}}
+            vm['spec']['template']['spec']['features']['acpi'] = {}
+            vm['spec']['template']['spec']['features']['apic'] = {}
+            vm['spec']['template']['spec']['features']['hyperv'] = {'relaxed': {},
+                                                                    'spinlocks': {'spinlocks': 8191},
+                                                                    'vapic': {}}
+            vm['spec']['template']['spec']['features']['smm'] = {}
+            windowsdisk = {'cdrom': {'readonly': True, 'bus': 'sata'}, 'name': 'virtio'}
+            vm['spec']['template']['spec']['domain']['devices']['disks'].append(windowsdisk)
+            windowsvolume = {'containerDisk': {'image': f'{self.registry}/kubevirt/virtio-container-disk'},
+                             'name': 'virtio'}
+            vm['spec']['template']['spec']['volumes'].append(windowsvolume)
         if self.debug:
             common.pretty_print(vm)
         for index, pvc in enumerate(pvcs):
@@ -531,8 +550,8 @@ class Kubevirt():
                                     'ports': [{'name': 'foo', 'port': 1234, 'targetPort': 1234}]}}
                 _create_resource(kubectl, dnsspec, namespace, debug=self.debug)
         if need_access_service:
-            svc = 'rdp' if iso is not None and iso.lower().startswith('win') else 'ssh'
-            port = 3389 if svc == 'rdp' else 22
+            svc = 'rdp' if windows else 'ssh'
+            port = 3389 if windows else 22
             if os.popen(f'{kubectl} get svc -n {namespace} {name}-{svc} >/dev/null 2>&1').read() == '':
                 selector = {'kubevirt.io/provider': 'kcli', 'kubevirt.io/domain': name}
                 self.create_service(f'{name}-{svc}', namespace, selector, _type=self.access_mode,
