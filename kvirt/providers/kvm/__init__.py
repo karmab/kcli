@@ -294,10 +294,6 @@ class Kvirt(object):
         for element in root.iter('path'):
             default_poolpath = element.text
             break
-        if not vnc:
-            display = 'spice'
-        else:
-            display = 'vnc'
         volumes = {}
         volumespaths = {}
         for poo in conn.listAllStoragePools(VIR_CONNECT_LIST_STORAGE_POOLS_ACTIVE):
@@ -897,28 +893,24 @@ class Kvirt(object):
                         return {'result': 'failure', 'reason': msg}
                     self._uploadimage(name, pool=default_storagepool, origin=tmpdir)
         listen = '0.0.0.0' if self.host not in ['localhost', '127.0.0.1'] else '127.0.0.1'
-        if aarch64 or as390x:
+        if not vnc or (aarch64 or as390x):
             displayxml = ''
-            display = 'vnc'
         else:
             displayxml = """<input type='mouse' bus='ps2'/>"""
-        vncviewerpath = '/Applications/VNC Viewer.app'
-        passwd = "passwd='kcli'" if os.path.exists('/Applications') and not os.path.exists(vncviewerpath) else ''
-        displayxml += """<graphics type='%s' port='-1' autoport='yes' listen='%s' %s>
+            vncviewerpath = '/Applications/VNC Viewer.app'
+            passwd = "passwd='kcli'" if os.path.exists('/Applications') and not os.path.exists(vncviewerpath) else ''
+            displayxml += """<graphics type='vnc' port='-1' autoport='yes' listen='%s' %s>
 <listen type='address' address='%s'/>
 </graphics>
-<memballoon model='virtio'/>""" % (display, listen, passwd, listen)
-        if aarch64_full:
-            displayxml += """<video><model type='virtio' vram='16384' heads='1' primary='yes'/></video>"""
+<memballoon model='virtio'/>""" % (listen, passwd, listen)
+            if aarch64_full:
+                displayxml += "<video><model type='virtio' vram='16384' heads='1' primary='yes'/></video>"
         if cpumodel == 'host-model' and not aarch64:
-            cpuxml = """<cpu mode='host-model'>
-<model fallback='allow'/>"""
+            cpuxml = "<cpu mode='host-model'><model fallback='allow'/>"
         elif cpumodel == 'host-passthrough' or aarch64_full:
-            cpuxml = """<cpu mode='host-passthrough'>
-<model fallback='allow'/>"""
+            cpuxml = "<cpu mode='host-passthrough'>model fallback='allow'/>"
         else:
-            cpuxml = """<cpu mode='custom' match='exact'>
-<model fallback='allow'>%s</model>""" % cpumodel
+            cpuxml = f"<cpu mode='custom' match='exact'><model fallback='allow'>{cpumodel}</model>"
         if virttype is None:
             if not capabilities['kvm']:
                 warning("No acceleration available with this hypervisor")
