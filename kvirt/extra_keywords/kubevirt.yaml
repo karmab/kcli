@@ -5,10 +5,11 @@ checkpath: Readiness probe path
 checkport: Readiness probe port
 container_disk: Use container disk image in an ephemeral way
 confidential: Set launchSecurity
-embed_userdata: Put user data directly in vm spec
+embed_userdata: Put user data directly in the vm spec
 hugepages: set Hugepages
 nodeSelector: specify node selector
 realtime: Set realtime mode
 rng: Set rng
 uuid: Specific uuid
 vsock: Autoattach VSOCK
+windows: inject Windows specific configuration in the vm spec

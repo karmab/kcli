@@ -112,7 +112,7 @@ class Kubevirt():
         owners = []
         container_disk = overrides.get('container_disk', False)
         guest_agent = False
-        windows = iso is not None and iso.lower().startswith('win')
+        windows = overrides.get('windows', False) or (iso is not None and iso.lower().startswith('win'))
         need_access_service = not tunnel and self.access_mode != 'External'
         if self.exists(name):
             return {'result': 'failure', 'reason': f"VM {name} already exists"}
