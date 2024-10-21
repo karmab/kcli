@@ -1772,7 +1772,7 @@ def get_helm(version='latest', debug=False):
     call(helmcmd, shell=True)
 
 
-def create_app_kube(config, appname, appdir, overrides={}, outputdir=None):
+def create_app_generic(config, appname, appdir, overrides={}, outputdir=None):
     appdata = {'name': appname, 'cluster': 'mykube', 'domain': 'karmalabs.corp', 'ctlplanes': 1, 'workers': 0}
     cwd = os.getcwd()
     os.environ["PATH"] += f":{cwd}"
@@ -1804,7 +1804,7 @@ def create_app_kube(config, appname, appdir, overrides={}, outputdir=None):
     return result
 
 
-def delete_app_kube(config, appname, appdir, overrides={}):
+def delete_app_generic(config, appname, appdir, overrides={}):
     appdata = {'name': appname, 'cluster': 'mykube', 'domain': 'karmalabs.corp', 'ctlplanes': 1, 'workers': 0}
     found = False
     cwd = os.getcwd()

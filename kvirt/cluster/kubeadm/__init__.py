@@ -2,7 +2,7 @@ from binascii import hexlify
 from ipaddress import ip_network
 import json
 from kvirt.common import success, pprint, warning, info2, container_mode, wait_cloud_dns, update_etc_hosts, fix_typos
-from kvirt.common import get_kubectl, create_app_kube, get_ssh_pub_key, _ssh_credentials, ssh, deploy_cloud_storage
+from kvirt.common import get_kubectl, create_app_generic, get_ssh_pub_key, _ssh_credentials, ssh, deploy_cloud_storage
 from kvirt.common import get_cluster_api_vips, wait_for_nodes
 from kvirt.defaults import UBUNTUS
 import os
@@ -309,7 +309,7 @@ def create(config, plandir, cluster, overrides):
                 pprint(f"Adding app {app}")
                 if f'{app}_version' not in overrides:
                     app_data[f'{app}_version'] = 'latest'
-                create_app_kube(config, app, appdir, overrides=app_data)
+                create_app_generic(config, app, appdir, overrides=app_data)
     if ctlplanes + workers > 1:
         ready = wait_for_nodes(ctlplanes + workers)
         if not ready:
