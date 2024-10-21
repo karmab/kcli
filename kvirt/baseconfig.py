@@ -652,15 +652,18 @@ class Kbaseconfig:
                             overrides[baseparameter] = baseparameters[baseparameter]
             for parameter in parameters:
                 if parameter in overrides:
-                    parameter_type = type(parameters[parameter])
-                    override_type = type(overrides[parameter])
+                    parameter_value = parameters[parameter]
+                    parameter_type = type(parameter_value)
+                    override_value = overrides[parameter]
+                    override_type = type(override_value)
                     if parameter_type == str and override_type == type(None):
                         continue
-                    if parameters[parameter] is not None and override_type != parameter_type:
-                        msg = f"Parameter {parameter} doesn't have type {parameter_type}"
+                    if parameter_value is not None and override_type != parameter_type:
+                        msg = f"Parameter {parameter} doesn't have type {parameter_type}, it has type {override_type}"
+                        msg += f" and value {override_value}"
                         if parameter_type == str and override_type in [int, float]:
                             try:
-                                float(overrides[parameter])
+                                float(override_value)
                             except:
                                 error(msg)
                                 sys.exit(1)
