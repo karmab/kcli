@@ -118,6 +118,7 @@ def create(config, plandir, cluster, overrides):
     data = safe_load(open(f'{plandir}/kcli_default.yml'))
     data.update(overrides)
     fix_typos(data)
+    storedparameters = data.get('storedparameters', True)
     cloud_dns = data['cloud_dns']
     data['cloud_lb'] = overrides.get('cloud_lb', provider in cloud_providers and data['ctlplanes'] > 1)
     cloud_lb = data['cloud_lb']
@@ -175,7 +176,6 @@ def create(config, plandir, cluster, overrides):
             if data.get('virtual_router_id') is None:
                 data['virtual_router_id'] = hash(data['cluster']) % 254 + 1
                 pprint(f"Using keepalived virtual_router_id {data['virtual_router_id']}")
-                virtual_router_id = data.get('virtual_router_id')
             if data.get('auth_pass') is None:
                 auth_pass = ''.join(choice(ascii_letters + digits) for i in range(5))
                 data['auth_pass'] = auth_pass
@@ -210,21 +210,22 @@ def create(config, plandir, cluster, overrides):
     first_info = config.k.info(f'{cluster}-ctlplane-0')
     first_ip = first_info.get('private_ip') or first_info.get('ip')
     data['first_ip'] = first_ip
-    with open(f"{clusterdir}/kcli_parameters.yml", 'w') as p:
-        installparam = overrides.copy()
-        installparam['client'] = config.client
-        installparam['cluster'] = cluster
-        installparam['api_ip'] = api_ip
-        installparam['first_ip'] = first_ip
-        installparam['plan'] = plan
-        installparam['kubetype'] = 'k3s'
-        installparam['image'] = image
-        if not cloud_lb and ctlplanes > 1:
-            installparam['virtual_router_id'] = virtual_router_id
-            installparam['auth_pass'] = auth_pass
-        if 'automatic_api_ip' in data:
-            installparam['automatic_api_ip'] = True
-        safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
+    if storedparameters:
+        with open(f"{clusterdir}/kcli_parameters.yml", 'w') as p:
+            installparam = overrides.copy()
+            installparam['client'] = config.client
+            installparam['cluster'] = cluster
+            installparam['api_ip'] = api_ip
+            installparam['first_ip'] = first_ip
+            installparam['plan'] = plan
+            installparam['kubetype'] = 'k3s'
+            installparam['image'] = image
+            if not cloud_lb and ctlplanes > 1:
+                installparam['virtual_router_id'] = data['virtual_router_id']
+                installparam['auth_pass'] = data['auth_pass']
+            if 'automatic_api_ip' in data:
+                installparam['automatic_api_ip'] = True
+            safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     for role in ['ctlplanes', 'workers']:
         if (role == 'ctlplanes' and ctlplanes == 1) or (role == 'workers' and workers == 0):
             continue
