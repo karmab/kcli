@@ -176,6 +176,8 @@ def create(config, plandir, cluster, overrides):
                 data['virtual_router_id'] = hash(data['cluster']) % 254 + 1
                 pprint(f"Using keepalived virtual_router_id {data['virtual_router_id']}")
                 virtual_router_id = data.get('virtual_router_id')
+            else:
+                virtual_router_id = data.get('virtual_router_id')
             if data.get('auth_pass') is None:
                 auth_pass = ''.join(choice(ascii_letters + digits) for i in range(5))
                 data['auth_pass'] = auth_pass
