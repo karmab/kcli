@@ -1333,7 +1333,7 @@ class Kvirt(object):
             if 'rhcos' in image or 'fcos' in image:
                 virtcmd = 'virt-edit'
                 bootdisk = '/dev/sda3'
-                bootfile = "/boot/loader/entries/ostree-1-rhcos.conf"
+                bootfile = "/boot/loader/entries/ostree-1.conf"
                 cmd = f"sudo {virtcmd} -a {firstdisk} -m {bootdisk} {bootfile} -e 's@^options@options {cmdline}@'"
             elif common.is_ubuntu(image) or 'debian' in image:
                 virtcmd = 'virt-customize'
