@@ -685,8 +685,10 @@ class Kvirt(object):
                     nameserver = nets[index].get('dns') or gateway
                     nic = nets[index].get('nic', 'ens3')
                     if needs_ignition and ip is not None and netmask is not None and gateway is not None:
+                        nameservers = [nameserver] if isinstance(nameserver, str) else nameserver
+                        nameservers = ' '.join([f"nameserver={nameserver}" for name in nameservers])
                         warning("Injecting static networking via cmdline")
-                        cmdline = f'ip={ip}::{gateway}:{netmask}::{nic}:none nameserver={nameserver}'
+                        cmdline = f'ip={ip}::{gateway}:{netmask}::{nic}:none {nameservers}'
                         del nets[index]['ip']
                 if 'numa' in nets[index] and numa:
                     nicnuma = nets[index]['numa']
