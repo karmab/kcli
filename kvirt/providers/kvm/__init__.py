@@ -310,12 +310,15 @@ class Kvirt(object):
         forward_bridges = []
         networks = []
         ovsnetworks = []
+        nics = []
         ipv6networks = []
         for n in allnetworks:
             if allnetworks[n]['type'] == 'bridged':
                 bridges.append(n)
             elif allnetworks[n]['type'] == 'ovs':
                 ovsnetworks.append(n)
+            elif allnetworks[n]['type'] == 'nic':
+                nics.append(n)
             else:
                 networks.append(n)
                 if allnetworks[n]['mode'] == 'bridge':
@@ -733,7 +736,7 @@ class Kvirt(object):
                 if reservedns and index == 0 and dns is not None:
                     dnscmd = f"sed -i 's/nameserver .*/nameserver {dns}/' /etc/resolv.conf"
                     cmds = cmds[:index] + [dnscmd] + cmds[index:]
-            elif netname in [i.name() for i in self.conn.listAllInterfaces()]:
+            elif netname in nics:
                 iftype = 'direct'
                 sourcexml = f"<source dev='{netname}' mode='bridge'/>"
                 need_guestagent = True
