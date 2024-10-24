@@ -1254,7 +1254,7 @@ class Kbaseconfig:
                     directoryfiles.append(f'{origin}/{_fic}')
                 continue
             scriptname = os.path.basename(origin)
-            rendered = content or self.process_inputfile(workflow, origin, overrides=overrides)
+            rendered = self.process_inputfile(workflow, origin, overrides=overrides)
             destfile = f"{destdir}/{scriptname}"
             if 'path' in destfile:
                 destfile = entry.get('path')
