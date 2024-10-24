@@ -740,6 +740,7 @@ class Kvirt(object):
                 iftype = 'direct'
                 sourcexml = f"<source dev='{netname}' mode='bridge'/>"
                 need_guestagent = True
+                warning("Using macvtap. The vm will most likely be unaccessible from your hypervisor")
             else:
                 return {'result': 'failure', 'reason': f"Invalid network {netname}"}
             if netname in ipv6networks:
