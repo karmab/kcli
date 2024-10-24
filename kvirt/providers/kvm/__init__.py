@@ -1815,17 +1815,24 @@ class Kvirt(object):
             yamlinfo['nets'].append({'device': device, 'mac': mac, 'net': network, 'type': networktype})
         all_ips = [ip] if ip is not None else []
         if vm.isActive():
+            source_first = vir_src_agent if bridged or nodhcp else vir_src_lease
+            source_second = vir_src_agent if source_first == vir_src_lease else vir_src_lease
             try:
-                ifaces = vm.interfaceAddresses(vir_src_agent if bridged or nodhcp else vir_src_lease, 0)
+                ifaces = vm.interfaceAddresses(source_first, 0)
             except:
                 ifaces = {}
+            if not ifaces:
+                try:
+                    ifaces = vm.interfaceAddresses(source_second, 0)
+                except:
+                    ifaces = {}
             if ifaces:
                 ips = []
                 for mac in macs:
                     for x in ifaces:
                         if ifaces[x]['hwaddr'] == mac and ifaces[x]['addrs'] is not None:
                             for entry in ifaces[x]['addrs']:
-                                if entry['addr'].startswith('fe80::') or entry['addr'].startswith('169.254.169'):
+                                if entry['addr'].startswith(tuple(['fe80::', '169.254.169', 'fd69'])):
                                     continue
                                 ip = entry['addr']
                                 if ip not in ips:
