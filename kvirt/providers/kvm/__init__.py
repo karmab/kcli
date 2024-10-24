@@ -3527,6 +3527,8 @@ class Kvirt(object):
                 continue
             bridge = list(root.iter('bridge'))
             if not bridge:
+                if not interface.startswith('macvtap'):
+                    networks[interface] = {'cidr': 'N/A', 'dhcp': 'N/A', 'type': 'nic', 'mode': 'N/A'}
                 continue
             ip = None
             cidr = 'N/A'
