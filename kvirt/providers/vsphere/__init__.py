@@ -836,6 +836,8 @@ class Ksphere:
                 yamlinfo['user'] = common.get_user(entry.value)
             if entry.key == 'tags':
                 yamlinfo['tags'] = entry.value
+            if entry.key == 'ip':
+                yamlinfo['ip'] = entry.value
         kubetype = yamlinfo.get('kubetype')
         cluster_network = yamlinfo.get('cluster_network')
         ips = []

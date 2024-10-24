@@ -748,11 +748,11 @@ class Kubevirt():
                 'harvesterhci.io/imageId' in spec['dataVolumeTemplates'][0]['metadata']['annotations']:
             image = spec['dataVolumeTemplates'][0]['metadata']['annotations']['harvesterhci.io/imageId'].split('/')[1]
         if annotations is not None:
-            profile = annotations['kcli/profile'] if 'kcli/profile' in annotations else 'N/A'
-            plan = annotations['kcli/plan'] if 'kcli/plan' in annotations else 'N/A'
-            ip = annotations['kcli/ip'] if 'kcli/ip' in annotations else None
-            kube = annotations['kcli/kube'] if 'kcli/kube' in annotations else None
-            kubetype = annotations['kcli/kubetype'] if 'kcli/kubetype' in annotations else None
+            profile = annotations.get('kcli/profile', 'N/A')
+            plan = annotations.get('kcli/plan', 'N/A')
+            ip = annotations.get('kcli/ip')
+            kube = annotations.ge('kcli/kube')
+            kubetype = annotations.get('kcli/kubetype')
             if 'kcli/image' in annotations:
                 image = annotations['kcli/image']
         host = None
