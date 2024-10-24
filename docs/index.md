@@ -1555,7 +1555,7 @@ parameters:
 |*diskthin*|True||
 |*disks*|[]|Array of disks to define. For each of them, you can specify pool, size, thin (as boolean), interface (either ide or virtio) and a wwn.If you omit parameters, default values will be used from config or profile file (You can actually let the entire entry blank or just indicate a size number directly)|
 |*iso*|None||
-|*nets*|[]|Array of networks to define. For each of them, you can specify just a string for the name, or a dict containing name, public and alias and ip, mask and gateway, and bridge. Any visible network is valid, in particular bridge networks can be used on Libvirt, beyond regular nat networks|
+|*nets*|[]|Array of networks to define. For each of them, you can specify just a string for the name, or a dict containing name, public and alias and ip, mask and gateway, and bridge. Any visible network is valid, in particular bridges or specific interfaces can be used on Libvirt, beyond regular nat networks|
 |*gateway*|None||
 |*dns*|None|Dns server|
 |*domain*|None|Dns search domain|

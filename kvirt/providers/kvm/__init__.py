@@ -733,6 +733,10 @@ class Kvirt(object):
                 if reservedns and index == 0 and dns is not None:
                     dnscmd = f"sed -i 's/nameserver .*/nameserver {dns}/' /etc/resolv.conf"
                     cmds = cmds[:index] + [dnscmd] + cmds[index:]
+            elif netname in [i.name() for i in self.conn.listAllInterfaces()]:
+                iftype = 'direct'
+                sourcexml = f"<source dev='{netname}' mode='bridge'/>"
+                need_guestagent = True
             else:
                 return {'result': 'failure', 'reason': f"Invalid network {netname}"}
             if netname in ipv6networks:
@@ -1802,6 +1806,9 @@ class Kvirt(object):
                 network = 'user'
             elif networktype == 'bridge':
                 network = element.find('source').get('bridge')
+                bridged = True
+            elif networktype == 'direct':
+                network = element.find('source').get('dev')
                 bridged = True
             else:
                 network = element.find('source').get('network')
