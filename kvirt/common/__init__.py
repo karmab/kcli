@@ -2199,6 +2199,7 @@ def info_baremetal_hosts(baremetal_hosts, overrides={}, debug=False, full=False)
                 msg = f'Hit {e} when getting info on host {node_name}'
                 error(msg)
                 failures.append(msg)
+                continue
             if full:
                 pretty_print(info)
             else:
@@ -2259,7 +2260,7 @@ def start_baremetal_hosts(baremetal_hosts, iso_url, overrides={}, debug=False):
                 except Exception as e:
                     msg = f"Hit {e} when plugging iso to host {node_name}"
                     error(msg)
-                    return {'result': 'failure', 'reason': msg}
+                    failures.append(msg)
             else:
                 pprint(f"Booting Host {node_name}")
                 try:
