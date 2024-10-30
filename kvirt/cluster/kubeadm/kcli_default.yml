@@ -60,7 +60,7 @@ ctlplanes_threaded: false
 workers_threaded: false
 keys: []
 tempkey: false
-calico_version: None
+calico_version:
 autoscale: False
 token:
 async: false
