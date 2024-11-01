@@ -20,10 +20,16 @@ mirror:
 {% endif %}
     packages:
 {% for package in disconnected_operators %}
-{% if package.name is defined %}{# Comment: Support new syntax allowing to further filtering #}
+{% if package.name is defined %}
     - name: {{ package.name }}
 {% else %}{# Comment: Support old syntax #}
     - name: {{ package }}
+{% endif %}
+{% if package.minVersion is defined %}
+      minVersion: {{ package.minVersion }}
+{% endif %}
+{% if package.maxVersion is defined %}
+      maxVersion: {{ package.maxVersion }}
 {% endif %}
 {% if package.channels is defined and package.channels|length > 0 %}
       channels:
@@ -52,6 +58,12 @@ mirror:
 {% else %}
     - name: {{ package }}
 {% endif %}
+{% if package.minVersion is defined %}
+      minVersion: {{ package.minVersion }}
+{% endif %}
+{% if package.maxVersion is defined %}
+      maxVersion: {{ package.maxVersion }}
+{% endif %}
 {% if package.channels is defined and package.channels|length > 0 %}
       channels:
 {% for channel in package.channels %}
@@ -79,6 +91,12 @@ mirror:
 {% else %}
     - name: {{ package }}
 {% endif %}
+{% if package.minVersion is defined %}
+      minVersion: {{ package.minVersion }}
+{% endif %}
+{% if package.maxVersion is defined %}
+      maxVersion: {{ package.maxVersion }}
+{% endif %}
 {% if package.channels is defined and package.channels|length > 0 %}
       channels:
 {% for channel in package.channels %}
@@ -105,6 +123,12 @@ mirror:
     - name: {{ package.name }}
 {% else %}
     - name: {{ package }}
+{% endif %}
+{% if package.minVersion is defined %}
+      minVersion: {{ package.minVersion }}
+{% endif %}
+{% if package.maxVersion is defined %}
+      maxVersion: {{ package.maxVersion }}
 {% endif %}
 {% if package.channels is defined and package.channels|length > 0 %}
       channels:
