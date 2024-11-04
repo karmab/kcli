@@ -425,7 +425,7 @@ $ kcli download image rhcoslatest -P qemu=true
 $ kcli download image rhcoslatest -P installer=true
 
 # Download image from specific url
-$ kcli download image -u http://super.qcow2 super
+$ kcli download image -P url=http://super.qcow2 super
 """
 
 isodownload = """# Download debian iso
