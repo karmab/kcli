@@ -48,6 +48,8 @@ jobs:
          run: |
            curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
            kcli create sushy-service
+           systemctl daemon-reload
+           systemctl restart ksushy
        - name: Delete old install
          run: |
            kcli delete cluster --yes $CLUSTER || true
