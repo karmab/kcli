@@ -1804,6 +1804,8 @@ class Ksphere:
         datastores = {}
         for datacenter in view:
             for clu in datacenter.hostFolder.childEntity:
+                if 'ClusterComputeResource' not in str(clu.__class__):
+                    continue
                 for datastore in clu.datastore:
                     datastores[datastore.name] = datacenter.name
         return datastores
