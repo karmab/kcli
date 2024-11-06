@@ -38,11 +38,12 @@ BSD = 'https://object-storage.public.mtl1.vexxhost.net/swift/v1/1dbafeefbd4f4c80
 BSD += '/bsd-cloud-image.org/images/dragonflybsd'
 CENTOS = 'https://cloud.centos.org/centos'
 DEBIAN = 'https://cdimage.debian.org/cdimage'
+EULER = 'https://mirror.accum.se/mirror/openeuler.org/openEuler'
 FEDORA = 'http://mirror.uv.es/mirror/fedora/linux/releases'
 GENTOO = 'https://gentoo.osuosl.org/experimental/amd64/openstack'
-SUSE = 'https://download.opensuse.org'
 RHCOS = 'https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos'
 ROCKY = 'https://dl.rockylinux.org/pub/rocky/'
+SUSE = 'https://download.opensuse.org'
 UBUNTU = 'https://cloud-images.ubuntu.com/releases'
 IMAGES = {'almalinux8': f'{ALMA}/8/cloud/x86_64/images/AlmaLinux-8-GenericCloud-latest.x86_64.qcow2',
           'almalinux9': f'{ALMA}/9/cloud/x86_64/images/AlmaLinux-9-GenericCloud-latest.x86_64.qcow2',
@@ -70,6 +71,8 @@ IMAGES = {'almalinux8': f'{ALMA}/8/cloud/x86_64/images/AlmaLinux-8-GenericCloud-
           'dragonflybsd601': f'{BSD}/dragonflybsd/6.0.1/2021-12-11/dragonflybsd-6.0.1-hammer2.qcow2',
           'dragonflybsd622': f'{BSD}/dragonflybsd/6.2.2/2022-09-06/hammer2/dragonflybsd-6.2.2-hammer2-2022-09-06.qcow2',
           'gentoo': f'{GENTOO}/gentoo-openstack-amd64-default-latest.qcow2',
+          'openeuler2403': f'{EULER}-24.03-LTS/virtual_machine_img/x86_64/openEuler-24.03-LTS-x86_64.qcow2.xz',
+          'openeuler2409': f'{EULER}-24.09/virtual_machine_img/x86_64/openEuler-24.09-x86_64.qcow2.xz',
           'opensuse155': f'{SUSE}/repositories/Cloud:/Images:/Leap_15.5/images/openSUSE-Leap-15.5.x86_64-NoCloud.qcow2',
           'opensuse156': f'{SUSE}/repositories/Cloud:/Images:/Leap_15.6/images/openSUSE-Leap-15.6.x86_64-NoCloud.qcow2',
           'rhcos410': f'{RHCOS}/4.10',

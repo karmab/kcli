@@ -1619,17 +1619,11 @@ def is_debian_new(image):
 
 
 def is_ubuntu(image):
-    if [x for x in UBUNTUS if x in image.lower()] or 'ubuntu' in image.lower():
-        return True
-    else:
-        return False
+    return 'ubuntu' in image.lower() or [x for x in UBUNTUS if x in image.lower()]
 
 
 def is_7(image):
-    lower = image.lower()
-    if lower.startswith('centos-7') or lower.startswith('rhel-server-7'):
-        return True
-    return False
+    return image.lower().startswith('centos-7') or image.lower().startswith('rhel-server-7')
 
 
 def needs_ignition(image):

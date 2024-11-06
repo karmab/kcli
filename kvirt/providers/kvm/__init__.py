@@ -1345,11 +1345,12 @@ class Kvirt(object):
                 bootdisk = '/dev/sda3'
                 bootfile = "/boot/loader/entries/ostree-1.conf"
                 cmd = f"sudo {virtcmd} -a {firstdisk} -m {bootdisk} {bootfile} -e 's@^options@options {cmdline}@'"
-            elif common.is_ubuntu(image) or 'debian' in image:
+            elif common.is_ubuntu(image) or 'debian' in image or 'openeuler' in image.lower():
                 virtcmd = 'virt-customize'
-                runcommand = rf'echo GRUB_CMDLINE_LINUX_DEFAULT=\"\$GRUB_CMDLINE_LINUX_DEFAULT {cmdline}\"'
-                runcommand += ' > /etc/default/grub.d/kcli.cfg ; update-grub'
-                cmd = f"sudo {virtcmd} -a {firstdisk} --run-command '{runcommand}'"
+                updatecmd = 'grub2-mkconfig -o /boot/grub2/grub.cfg' if 'openeuler' in image.lower() else 'update-grub'
+                runcmd = rf'echo GRUB_CMDLINE_LINUX_DEFAULT=\"\$GRUB_CMDLINE_LINUX_DEFAULT {cmdline}\"'
+                runcmd += f' > /etc/default/grub.d/kcli.cfg ; {updatecmd}'
+                cmd = f"sudo {virtcmd} -a {firstdisk} --run-command '{runcmd}'"
             else:
                 virtcmd = 'virt-customize'
                 cmd = f"sudo {virtcmd} -a {firstdisk} --run-command 'grubby --update-kernel=ALL --args={cmdline}'"
