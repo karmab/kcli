@@ -29,7 +29,7 @@ def get_info(url, user, password):
     oem_url = f"https://{url}" if '://' not in url else url
     p = urlparse(oem_url)
     headers = {'Accept': 'application/json'}
-    request_url = f"https://{p.netloc}/redfish/v1"
+    request_url = f"{p.scheme}://{p.netloc}/redfish/v1"
     request = Request(request_url, headers=headers)
     try:
         v1data = json.loads(urlopen(request).read())
@@ -123,10 +123,11 @@ class Redfish(object):
             print(f"Getting {iso_url}")
         request = Request(iso_url, headers=self.headers)
         response = json.loads(urlopen(request).read())
-        ret_data = f"{response['Image']}"
+        iso = f"{response['Image']}"
+        inserted = response['Inserted']
         if self.debug:
-            print(f"ISO status is {ret_data}")
-        return ret_data
+            print(f"ISO status is Image: {iso} Inserted: {inserted}")
+        return iso, inserted
 
     def get_iso_eject_url(self):
         iso_url = self.get_iso_url()
@@ -271,8 +272,8 @@ class Redfish(object):
 
     def set_iso(self, iso_url):
         result = None
-        current_iso = self.get_iso_status()
-        if current_iso == iso_url:
+        current_iso, inserted = self.get_iso_status()
+        if current_iso == iso_url and inserted:
             print(f"Iso {iso_url} already set")
         else:
             if current_iso != '':
