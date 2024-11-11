@@ -7,6 +7,8 @@ mv /tmp/kcli.tar.gz $HOME/rpmbuild/SOURCES
 export GIT_CUSTOM_VERSION=0.0.git.$(date "+%Y%m%d%H%M").$(git rev-parse --short HEAD)
 export GIT_DIR_VCS=git+https://github.com/karmab/kcli#$(git rev-parse HEAD):
 envsubst < kcli.spec > $HOME/rpmbuild/SOURCES/kcli.spec
+git show -s --format='* %as %an <%ae>' >> $HOME/rpmbuild/SOURCES/kcli.spec
+git show -s --format='- %s' >> $HOME/rpmbuild/SOURCES/kcli.spec
 
 rpmbuild -bs $HOME/rpmbuild/SOURCES/kcli.spec
 copr-cli build --nowait kcli $HOME/rpmbuild/SRPMS/*src.rpm
