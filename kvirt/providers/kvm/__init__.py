@@ -703,7 +703,8 @@ class Kvirt(object):
                 if 'mtu' in nets[index]:
                     mtuxml = f"<mtu size='{nets[index]['mtu']}'/>"
                 if 'vfio' in nets[index] and nets[index]['vfio']:
-                    iommuxml = "<iommu model='intel'/>"
+                    iommu_model = 'intel' if overrides.get('arch', 'x86_64') == 'x86_64' else 'virtio'
+                    iommuxml = f"<iommu model='{iommu_model}'/>"
                 if 'multiqueues' in nets[index]:
                     multiqueues = nets[index]['multiqueues']
                     if not isinstance(multiqueues, int):
