@@ -242,6 +242,7 @@ class Kvirt(object):
         capabilities = self.get_capabilities(overrides.get('arch'))
         if 'arch' not in overrides:
             overrides['arch'] = capabilities['arch']
+        iommu_model = 'intel' if overrides.get('arch', 'x86_64') == 'x86_64' else 'virtio'
         custom_emulator = overrides.get('emulator')
         if custom_emulator is not None:
             if os.path.exists(custom_emulator):
@@ -649,6 +650,7 @@ class Kvirt(object):
         alias = []
         vhostindex = 0
         need_guestagent = False
+        sriov_nic = False
         for index, net in enumerate(nets):
             if usermode:
                 continue
@@ -670,6 +672,7 @@ class Kvirt(object):
                     nets[index]['type'] = 'igb'
                     nets[index]['vfio'] = True
                     nets[index]['noconf'] = True
+                    sriov_nic = True
                 if 'mac' in nets[index]:
                     mac = nets[index]['mac']
                     macxml = f"<mac address='{mac}'/>"
@@ -703,7 +706,6 @@ class Kvirt(object):
                 if 'mtu' in nets[index]:
                     mtuxml = f"<mtu size='{nets[index]['mtu']}'/>"
                 if 'vfio' in nets[index] and nets[index]['vfio']:
-                    iommu_model = 'intel' if overrides.get('arch', 'x86_64') == 'x86_64' else 'virtio'
                     iommuxml = f"<iommu model='{iommu_model}'/>"
                 if 'multiqueues' in nets[index]:
                     multiqueues = nets[index]['multiqueues']
@@ -1223,7 +1225,7 @@ class Kvirt(object):
                 else:
                     ramxml += "<firmware><feature enabled='no' name='secure-boot'/></firmware>"
         arch = 'aarch64' if aarch64 else overrides.get('arch', 'x86_64')
-        if not aarch64:
+        if not aarch64 or sriov_nic:
             acpixml = '<acpi/>\n<apic/>'
         elif aarch64_full:
             acpixml = "<gic version='3'/>"
@@ -1253,9 +1255,13 @@ class Kvirt(object):
             except:
                 warning(f"couldn't use {uuid} as uuid")
         metadataxml += "</kvirt:info></metadata>"
-        iommumemxml = "<memtune><hard_limit unit='KiB'>104857600</hard_limit></memtune>" if enableiommu else ''
-        iommufeaturesxml = "<acpi/><apic/><pae/><apic/><pae/><ioapic driver='qemu'/>" if enableiommu else ''
-        iommudevicexml = "<iommu model='intel'><driver intremap='on' caching_mode='on'/></iommu>" if enableiommu else ''
+        iommumemxml = ''
+        iommufeaturesxml = ''
+        iommudevicexml = ''
+        if enableiommu:
+            iommumemxml = "<memtune><hard_limit unit='KiB'>104857600</hard_limit></memtune>"
+            iommufeaturesxml = "<acpi/><apic/><pae/><apic/><pae/><ioapic driver='qemu'/>"
+            iommudevicexml = f"<iommu model='{iommu_model}'><driver intremap='on' caching_mode='on'/></iommu>"
         controllerxml = ''
         if uefi or uefi_legacy:
             controllerxml = "<controller type='pci' model='pcie-root'/>"
