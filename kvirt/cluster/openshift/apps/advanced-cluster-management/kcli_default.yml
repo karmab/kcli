@@ -3,6 +3,7 @@ acm_disable_hub: false
 pull_secret: openshift_pull.json
 acm_hypershift: true
 acm_mce_catalog:
+acm_siteconfig: true
 assisted: false
 assisted_converged_flow: false
 assisted_disable_validations: false
