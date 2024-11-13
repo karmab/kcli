@@ -10,5 +10,3 @@ spec:
     components:
     - name: hypershift
       enabled: {{ mce_hypershift }}
-    - name: siteconfig
-      enabled: {{ mce_siteconfig }}

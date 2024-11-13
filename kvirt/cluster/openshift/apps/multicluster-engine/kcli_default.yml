@@ -1,5 +1,4 @@
 mce_hypershift: true
-mce_siteconfig: true
 mce_ha_config: true
 assisted: false
 assisted_disable_validations: false

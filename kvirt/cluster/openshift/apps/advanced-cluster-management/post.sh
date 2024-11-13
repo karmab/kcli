@@ -20,6 +20,6 @@ bash assisted-service.sh
 oc -n open-cluster-management patch multiclusterhub multiclusterhub --type=merge -p '{"spec":{"overrides":{"components":[{"name":"hypershift","enabled": false}]}}}'
 {% endif %}
 
-{% if not acm_siteconfig %}
-oc -n open-cluster-management patch multiclusterhub multiclusterhub --type=merge -p '{"spec":{"overrides":{"components":[{"name":"siteconfig","enabled": false}]}}}'
+{% if acm_siteconfig %}
+oc -n open-cluster-management patch multiclusterhub multiclusterhub --type=merge -p '{"spec":{"overrides":{"components":[{"name":"siteconfig","enabled": true}]}}}'
 {% endif %}
