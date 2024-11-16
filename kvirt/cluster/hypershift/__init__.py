@@ -638,6 +638,7 @@ def create(config, plandir, cluster, overrides):
                 pprint(f"Injecting manifest {f}")
                 mc_data = json.dumps(mc_data)
                 manifests.append({'name': mc_name, 'data': mc_data})
+    ingress_metallb = data['assisted_ingress_metallb']
     if assisted:
         keepalived_yml_data = config.process_inputfile(cluster, f"{plandir}/staticpods/keepalived.yml", overrides=data)
         keepalived_yml_data = b64encode(keepalived_yml_data.encode()).decode("UTF-8")
@@ -657,9 +658,11 @@ def create(config, plandir, cluster, overrides):
         assisted_data['cluster'] = cluster
         assisted_data['sslip'] = sslip
         assisted_data['coredns'] = coredns
-        assisted_data = config.process_inputfile(cluster, f'{plandir}/assisted_ingress.yml', overrides=assisted_data)
-        assisted_data = json.dumps(assisted_data)
-        manifests.append({'name': f'assisted-ingress-{cluster}', 'data': assisted_data})
+        if not ingress_metallb:
+            assisted_data = config.process_inputfile(cluster, f'{plandir}/assisted_ingress.yml',
+                                                     overrides=assisted_data)
+            assisted_data = json.dumps(assisted_data)
+            manifests.append({'name': f'assisted-ingress-{cluster}', 'data': assisted_data})
     async_files = []
     async_tempdir = TemporaryDirectory()
     asyncdir = async_tempdir.name
@@ -965,6 +968,16 @@ def create(config, plandir, cluster, overrides):
     apps = overrides.get('apps', [])
     overrides['hypershift'] = True
     overrides['cluster'] = cluster
+    if ingress_metallb:
+        if 'metallb-operator' not in apps:
+            apps.append('metallb-operator')
+        if 'metallb_ranges' not in overrides:
+            overrides['metallb_ranges'] = [ingress_ip]
+        ingress_file = config.process_inputfile('xxx', f'{plandir}/assisted_ingress_service.yml.j2',
+                                                overrides={'ingress_ip': ingress_ip})
+        with open(f"{clusterdir}/assisted_ingress_service.yml", 'w') as f:
+            f.write(ingress_file)
+        call(f'oc create -f {clusterdir}/assisted_ingress_service.yml', shell=True)
     process_apps(config, clusterdir, apps, overrides)
     if autoscale:
         config.import_in_kube(network=network, secure=True)
