@@ -651,6 +651,9 @@ class Kvirt(object):
         vhostindex = 0
         need_guestagent = False
         sriov_nic = False
+        default_netmask = overrides.get('netmask') or overrides.get('prefix')
+        default_gateway = overrides.get('gateway')
+        default_dns = overrides.get('dns')
         for index, net in enumerate(nets):
             if usermode:
                 continue
@@ -686,9 +689,9 @@ class Kvirt(object):
                 if 'ip' in nets[index] and index == 0:
                     metadataxml += f"<kvirt:ip >{nets[index]['ip']}</kvirt:ip>"
                     ip = nets[index].get('ip')
-                    netmask = net.get('mask') or net.get('netmask') or net.get('prefix')
-                    gateway = nets[index].get('gateway')
-                    nameserver = nets[index].get('dns') or gateway
+                    netmask = net.get('mask') or net.get('netmask') or net.get('prefix') or default_netmask
+                    gateway = nets[index].get('gateway') or default_gateway
+                    nameserver = nets[index].get('dns') or default_dns or gateway
                     nic = nets[index].get('nic', 'ens3')
                     if needs_ignition and ip is not None and netmask is not None and gateway is not None:
                         nameservers = [nameserver] if isinstance(nameserver, str) else nameserver
