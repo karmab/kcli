@@ -1070,7 +1070,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     static_networking_ctlplane, static_networking_worker = False, False
     macentries = []
     custom_names = {}
-    vmrules = [] if config.k.type == 'kvm' else overrides.get('vmrules', [])
+    vmrules = [] if provider == 'kvm' else overrides.get('vmrules', [])
     for entry in vmrules:
         if isinstance(entry, dict):
             hostname = list(entry.keys())[0]
