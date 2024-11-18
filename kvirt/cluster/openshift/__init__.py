@@ -724,13 +724,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         no_proxy = os.environ.get('NO_PROXY') or os.environ.get('no_proxy')
         if 'no_proxy' not in data and no_proxy is not None:
             data['no_proxy'] = no_proxy
-    clustervalue = overrides.get('cluster') or cluster or 'myopenshift'
     if data['ctlplanes'] == 1 and data['workers'] == 0\
        and 'ctlplane_memory' not in overrides and 'memory' not in overrides:
         overrides['ctlplane_memory'] = 32768
         warning("Forcing memory of single ctlplane vm to 32G")
     retries = data['retries']
-    data['cluster'] = clustervalue
+    data['cluster'] = cluster
     domain = data['domain']
     dns_k = dnsconfig.k if dnsconfig is not None else k
     if provider in cloud_providers:
@@ -748,14 +747,14 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     baremetal_hosts = data['baremetal_hosts']
     notify = data['notify']
     postscripts = data['postscripts']
-    pprint(f"Deploying cluster {clustervalue}")
-    plan = cluster if cluster is not None else clustervalue
+    pprint(f"Deploying cluster {cluster}")
+    plan = cluster
     overrides['kubetype'] = 'openshift'
     apps = overrides.get('apps', [])
     disks = overrides.get('disks', [30])
     overrides['kube'] = data['cluster']
     installparam = overrides.copy()
-    installparam['cluster'] = clustervalue
+    installparam['cluster'] = cluster
     baremetal_sno = workers == 0 and len(baremetal_hosts) == 1
     baremetal_ctlplane = data['workers'] == 0 and len(baremetal_hosts) > 1
     sno_vm = data['sno_vm']
@@ -1071,7 +1070,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     static_networking_ctlplane, static_networking_worker = False, False
     macentries = []
     custom_names = {}
-    vmrules = overrides.get('vmrules', [])
+    vmrules = [] if config.k.type == 'kvm' else overrides.get('vmrules', [])
     for entry in vmrules:
         if isinstance(entry, dict):
             hostname = list(entry.keys())[0]

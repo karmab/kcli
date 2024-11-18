@@ -942,9 +942,18 @@ class Kconfig(Kbaseconfig):
             if confpool is None:
                 continue
             if confpool not in self.confpools:
-                error(f"{confpool} is not a valid confpool")
-                sys.exit(1)
+                warning(f"{confpool} is not a valid confpool")
+                continue
             currentconfpool = self.confpools[confpool]
+            netmask = net.get('netmask') or net.get('prefix') or currentconfpool.get('netmask')\
+                or currentconfpool.get('prefix')
+            gateway = net.get('gateway') or currentconfpool.get('gateway')
+            if netmask is None:
+                warning(f"Ignoring confpool {confpool} as netmask isnt specified")
+                continue
+            elif gateway is None:
+                warning(f"Ignoring confpool {confpool} as gateway isnt specified")
+                continue
             ip_reservations = currentconfpool.get('ip_reservations', {})
             reserved_ips = list(ip_reservations.values())
             if 'ips' in currentconfpool:
@@ -962,8 +971,8 @@ class Kconfig(Kbaseconfig):
                     if not onlyassets:
                         self.update_confpool(confpool, {'ip_reservations': ip_reservations})
                 else:
-                    error(f"No available ip in confpool {confpool}")
-                    sys.exit(1)
+                    warning(f"No available ip in confpool {confpool}")
+                    continue
         if onlyassets:
             image = image or profilename
             result = {'result': 'success'}
@@ -2601,44 +2610,46 @@ class Kconfig(Kbaseconfig):
         os.popen(sshcmd).read()
 
     def threaded_create_kube(self, cluster, kubetype, kube_overrides):
+        cluster = kube_overrides.get('cluster') or cluster or f"my{kubetype}"
         ippool = kube_overrides.get('ippool') or kube_overrides.get('confpool')
         baremetalpool = kube_overrides.get('ippool') or kube_overrides.get('confpool')
         if ippool is not None:
-            self.get_vip_from_confpool(cluster, ippool, overrides=kube_overrides)
+            self.get_vip_from_confpool(ippool, cluster, kube_overrides)
         if baremetalpool is not None:
-            self.get_baremetal_hosts_from_confpool(cluster, baremetalpool, overrides=kube_overrides)
+            self.get_baremetal_hosts_from_confpool(baremetalpool, cluster, kube_overrides)
         self.create_kube(cluster, kubetype, kube_overrides)
 
     def create_kube(self, cluster, kubetype, overrides={}):
+        cluster = overrides.get('cluster') or cluster or f"my{kubetype}"
         if self.type == 'web' and self.k.localkube:
-            return self.k.create_kube(cluster, kubetype, overrides=overrides)
+            return self.k.create_kube(cluster, kubetype, overrides)
         ippool = overrides.get('ippool') or overrides.get('confpool')
         baremetalpool = overrides.get('ippool') or overrides.get('confpool')
         if ippool is not None:
-            self.get_vip_from_confpool(cluster, ippool, overrides=overrides)
+            self.get_vip_from_confpool(ippool, cluster, overrides)
         if baremetalpool is not None:
-            self.get_baremetal_hosts_from_confpool(cluster, baremetalpool, overrides=overrides)
+            self.get_baremetal_hosts_from_confpool(baremetalpool, cluster, overrides)
         if kubetype == 'openshift':
-            result = self.create_kube_openshift(cluster, overrides=overrides)
+            result = self.create_kube_openshift(cluster, overrides)
         elif kubetype == 'openshift-sno':
             overrides['sno'] = True
-            result = self.create_kube_openshift(cluster, overrides=overrides)
+            result = self.create_kube_openshift(cluster, overrides)
         elif kubetype == 'hypershift':
-            result = self.create_kube_hypershift(cluster, overrides=overrides)
+            result = self.create_kube_hypershift(cluster, overrides)
         elif kubetype == 'microshift':
-            result = self.create_kube_microshift(cluster, overrides=overrides)
+            result = self.create_kube_microshift(cluster, overrides)
         elif kubetype == 'k3s':
-            result = self.create_kube_k3s(cluster, overrides=overrides)
+            result = self.create_kube_k3s(cluster, overrides)
         elif kubetype == 'rke2':
-            result = self.create_kube_rke2(cluster, overrides=overrides)
+            result = self.create_kube_rke2(cluster, overrides)
         elif kubetype == 'gke':
-            result = self.create_kube_gke(cluster, overrides=overrides)
+            result = self.create_kube_gke(cluster, overrides)
         elif kubetype == 'eks':
-            result = self.create_kube_eks(cluster, overrides=overrides)
+            result = self.create_kube_eks(cluster, overrides)
         elif kubetype == 'aks':
-            result = self.create_kube_aks(cluster, overrides=overrides)
+            result = self.create_kube_aks(cluster, overrides)
         else:
-            result = self.create_kube_generic(cluster, overrides=overrides)
+            result = self.create_kube_generic(cluster, overrides)
         return result
 
     def create_kube_aks(self, cluster, overrides={}):

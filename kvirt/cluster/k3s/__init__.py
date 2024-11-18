@@ -124,8 +124,8 @@ def create(config, plandir, cluster, overrides):
     cloud_lb = data['cloud_lb']
     cloud_storage = data['cloud_storage']
     cloud_native = data['cloud_native']
-    data['cluster'] = overrides.get('cluster') or cluster or 'myk3s'
-    plan = cluster if cluster is not None else data['cluster']
+    data['cluster'] = cluster
+    plan = cluster
     data['kube'] = data['cluster']
     data['kubetype'] = 'k3s'
     autoscale = data['autoscale']

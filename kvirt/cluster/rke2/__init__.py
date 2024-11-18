@@ -91,8 +91,8 @@ def create(config, plandir, cluster, overrides):
     if data['sdn'].lower() not in valid_sdns:
         msg = f"Invalid sdn, Choose between {','.join(valid_sdns)}"
         return {'result': 'failure', 'reason': msg}
-    data['cluster'] = overrides.get('cluster') or cluster or 'mykube'
-    plan = cluster if cluster is not None else data['cluster']
+    data['cluster'] = cluster
+    plan = cluster
     data['kube'] = data['cluster']
     data['kubetype'] = 'rke2'
     autolabel = data['autolabel']

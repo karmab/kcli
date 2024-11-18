@@ -95,11 +95,10 @@ def create(config, cluster, overrides, dnsconfig=None):
     else:
         msg = f"Publickey file {pub_key} not found"
         return {'result': 'failure', 'reason': msg}
-    clustervalue = overrides.get('cluster') or cluster or 'myaks'
-    plan = cluster if cluster is not None else clustervalue
-    tags = {'plan': clustervalue, 'kube': clustervalue, 'kubetype': 'aks'}
-    cluster_data = {'name': clustervalue, 'tags': tags}
-    clusterdir = os.path.expanduser(f"~/.kcli/clusters/{clustervalue}")
+    plan = cluster
+    tags = {'plan': cluster, 'kube': cluster, 'kubetype': 'aks'}
+    cluster_data = {'name': cluster, 'tags': tags}
+    clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if os.path.exists(clusterdir):
         return {'result': 'failure', 'reason': f"Remove existing directory {clusterdir} or use --force"}
     else:
@@ -108,20 +107,20 @@ def create(config, cluster, overrides, dnsconfig=None):
         with open(f"{clusterdir}/kcli_parameters.yml", 'w') as p:
             installparam = overrides.copy()
             installparam['plan'] = plan
-            installparam['cluster'] = clustervalue
+            installparam['cluster'] = cluster
             installparam['kubetype'] = 'aks'
             installparam['client'] = config.client
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
-    tags = {'plan': clustervalue, 'kube': clustervalue, 'kubetype': 'aks'}
+    tags = {'plan': cluster, 'kube': cluster, 'kubetype': 'aks'}
     admin_username, location, subscription_id, app_id, tenant_id, secret = project_init(config)
-    agent_pool = {'name': clustervalue, 'vm_size': flavor, 'count': workers, 'min_count': workers, 'max_count': 30,
+    agent_pool = {'name': cluster, 'vm_size': flavor, 'count': workers, 'min_count': workers, 'max_count': 30,
                   'enable_auto_scaling': autoscaling, 'mode': 'System', 'osDiskSizeGB': disk_size,
                   'enableFIPS': fips}
     if network is not None:
         agent_pool['vnetSubnetID'] = network
     service_principal_profile = {'client_id': app_id, 'secret': secret}
     linux_profile = {'admin_username': admin_username, 'ssh': {'public_keys': [{'key_data': pub_key}]}}
-    cluster_data = {'location': location, 'dns_prefix': clustervalue, 'tags': tags,
+    cluster_data = {'location': location, 'dns_prefix': cluster, 'tags': tags,
                     'service_principal_profile': service_principal_profile,
                     'agent_pool_profiles': [agent_pool],
                     'linux_profile': linux_profile, 'enable_rbac': True}
@@ -136,15 +135,14 @@ def create(config, cluster, overrides, dnsconfig=None):
         cluster_data['network_profile'] = network_profile
     credential = ClientSecretCredential(tenant_id=tenant_id, client_id=app_id, client_secret=secret)
     containerservice_client = ContainerServiceClient(credential, subscription_id)
-    response = containerservice_client.managed_clusters.begin_create_or_update(resource_group, clustervalue,
-                                                                               cluster_data)
+    response = containerservice_client.managed_clusters.begin_create_or_update(resource_group, cluster, cluster_data)
     if config.debug:
         print(response.result())
-    pprint(f"Waiting for cluster {clustervalue} to be created")
+    pprint(f"Waiting for cluster {cluster} to be created")
     response.wait()
-    get_kubeconfig(config, clustervalue)
-    success(f"Kubernetes cluster {clustervalue} deployed!!!")
-    info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{clustervalue}/auth/kubeconfig")
+    get_kubeconfig(config, cluster)
+    success(f"Kubernetes cluster {cluster} deployed!!!")
+    info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{cluster}/auth/kubeconfig")
     info2("export PATH=$PWD:$PATH")
     return {'result': 'success'}
 

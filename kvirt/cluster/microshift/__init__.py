@@ -25,8 +25,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if 'keys' not in overrides and get_ssh_pub_key() is None:
         msg = "No usable public key found, which is required for the deployment. Create one using ssh-keygen"
         return {'result': 'failure', 'reason': msg}
-    data['cluster'] = overrides.get('cluster') or cluster or 'mymicroshift'
-    plan = cluster if cluster is not None else data['cluster']
+    data['cluster'] = cluster
+    plan = cluster
     data['kube'] = data['cluster']
     data['kubetype'] = 'microshift'
     cluster = data.get('cluster')

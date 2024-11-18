@@ -262,3 +262,5 @@ OVIRT = {'datacenter': 'Default', 'cluster': 'Default', 'user': 'admin@internal'
 
 VSPHERE = {'force_pool': False, 'dvs': True, 'restricted': False, 'import_network': 'VM Network',
            'filtervms': False, 'filteruser': False, 'category': 'kcli', 'timeout': 3600, 'serial': False}
+
+CLUSTERNAMES = {'openshift': 'myopenshift'}

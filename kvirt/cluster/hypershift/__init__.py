@@ -355,18 +355,12 @@ def create(config, plandir, cluster, overrides):
     data.update(overrides)
     fix_typos(data)
     retries = data.get('retries')
-    if 'cluster' in overrides:
-        clustervalue = overrides.get('cluster')
-    elif cluster is not None:
-        clustervalue = cluster
-    else:
-        clustervalue = 'myhypershift'
-    data['cluster'] = clustervalue
+    data['cluster'] = cluster
     data['kube'] = data['cluster']
     data['kubetype'] = 'hypershift'
     ignore_hosts = data['ignore_hosts'] or data['sslip']
-    pprint(f"Deploying cluster {clustervalue}")
-    plan = cluster if cluster is not None else clustervalue
+    pprint(f"Deploying cluster {cluster}")
+    plan = cluster
     upstream = data['upstream']
     platform = data.get('platform')
     assisted = platform == 'assisted'

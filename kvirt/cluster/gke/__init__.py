@@ -119,8 +119,7 @@ def create(config, cluster, overrides, dnsconfig=None):
     confidential = data['confidential']
     preemptible = data['preemptible']
     disk_type = data['disk_type']
-    clustervalue = overrides.get('cluster') or cluster or 'mygke'
-    plan = cluster if cluster is not None else clustervalue
+    plan = cluster
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if os.path.exists(clusterdir):
         msg = f"Remove existing directory {clusterdir} or use --force"

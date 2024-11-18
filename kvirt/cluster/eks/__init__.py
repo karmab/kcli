@@ -118,17 +118,16 @@ def create(config, cluster, overrides, dnsconfig=None):
     if not extra_networks:
         return {'result': 'failure', 'reason': 'You must define extra_networks'}
     sgid = data['security_group']
-    clustervalue = overrides.get('cluster') or cluster or 'myeks'
-    plan = cluster if cluster is not None else clustervalue
-    tags = {'plan': clustervalue, 'kube': clustervalue, 'kubetype': 'eks'}
-    cluster_data = {'name': clustervalue, 'tags': tags}
+    plan = cluster
+    tags = {'plan': cluster, 'kube': cluster, 'kubetype': 'eks'}
+    cluster_data = {'name': cluster, 'tags': tags}
     if version is not None:
         version = str(version)
         if version not in supported_versions:
             msg = f"Version needs to be one of those: {(',').join(supported_versions)}"
             return {'result': 'failure', 'reason': msg}
         cluster_data['version'] = version
-    clusterdir = os.path.expanduser(f"~/.kcli/clusters/{clustervalue}")
+    clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if os.path.exists(clusterdir):
         return {'result': 'failure', 'reason': f"Remove existing directory {clusterdir} or use --force"}
     else:
@@ -137,7 +136,7 @@ def create(config, cluster, overrides, dnsconfig=None):
         with open(f"{clusterdir}/kcli_parameters.yml", 'w') as p:
             installparam = overrides.copy()
             installparam['plan'] = plan
-            installparam['cluster'] = clustervalue
+            installparam['cluster'] = cluster
             installparam['kubetype'] = 'eks'
             installparam['client'] = config.client
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
@@ -174,15 +173,15 @@ def create(config, cluster, overrides, dnsconfig=None):
     cluster_data['resourcesVpcConfig'] = {'subnetIds': subnetids, 'securityGroupIds': [sgid]}
     eks = boto3.client('eks', aws_access_key_id=access_key_id, aws_secret_access_key=access_key_secret,
                        region_name=region, aws_session_token=session_token)
-    pprint(f"Creating cluster {clustervalue}")
+    pprint(f"Creating cluster {cluster}")
     response = eks.create_cluster(**cluster_data)
     if config.debug:
         print(response)
     pprint("Waiting for cluster to be created")
     waiter = eks.get_waiter("cluster_active")
-    waiter.wait(name=clustervalue)
-    get_kubeconfig(config, clustervalue)
-    nodegroup_data = {'clusterName': clustervalue, 'nodegroupName': clustervalue, 'scalingConfig':
+    waiter.wait(name=cluster)
+    get_kubeconfig(config, cluster)
+    nodegroup_data = {'clusterName': cluster, 'nodegroupName': cluster, 'scalingConfig':
                       {'minSize': workers, 'maxSize': 50, 'desiredSize': workers}, 'subnets': subnetids, 'tags': tags,
                       'nodeRole': worker_role}
     keypair = config.options.get('keypair')
@@ -198,14 +197,14 @@ def create(config, cluster, overrides, dnsconfig=None):
         nodegroup_data['amiType'] = ami_type
     if capacity_type is not None:
         nodegroup_data['capacityType'] = capacity_type
-    pprint(f"Creating nodegroup {clustervalue}")
+    pprint(f"Creating nodegroup {cluster}")
     response = eks.create_nodegroup(**nodegroup_data)
     if config.debug:
         print(response)
     waiter = eks.get_waiter("cluster_active")
-    waiter.wait(name=clustervalue)
-    success(f"Kubernetes cluster {clustervalue} deployed!!!")
-    info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{clustervalue}/auth/kubeconfig")
+    waiter.wait(name=cluster)
+    success(f"Kubernetes cluster {cluster} deployed!!!")
+    info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{cluster}/auth/kubeconfig")
     info2("export PATH=$PWD:$PATH")
     return {'result': 'success'}
 

@@ -1454,7 +1454,7 @@ class Kbaseconfig:
         cmd = "systemctl restart kweb" if update else "systemctl enable --now kweb"
         call(cmd, shell=True)
 
-    def get_vip_from_confpool(self, cluster, confpool, overrides):
+    def get_vip_from_confpool(self, confpool, cluster, overrides):
         if confpool not in self.confpools:
             error("Confpool {confpool} not found")
             sys.exit(1)
@@ -1484,7 +1484,7 @@ class Kbaseconfig:
                     error(f"No available ip in confpool {confpool}")
                     sys.exit(1)
 
-    def get_baremetal_hosts_from_confpool(self, cluster, confpool, overrides):
+    def get_baremetal_hosts_from_confpool(self, confpool, cluster, overrides):
         if confpool not in self.confpools:
             error("Confpool {confpool} not found")
             sys.exit(1)
