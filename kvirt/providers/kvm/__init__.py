@@ -2985,8 +2985,11 @@ class Kvirt(object):
     def add_nic(self, name, network, model='virtio'):
         conn = self.conn
         networks = {}
-        for interface in conn.listInterfaces():
-            networks[interface] = 'bridge'
+        try:
+            for interface in conn.listInterfaces():
+                networks[interface] = 'bridge'
+        except:
+            pass
         for net in conn.listAllNetworks():
             networks[net.name()] = 'network'
         try:
@@ -3006,6 +3009,8 @@ class Kvirt(object):
                     %s
                     </interface>""" % (networktype, modelxml, source)
         if vm.isActive() == 1:
+            controllerxml = "<controller type='pci' model='pcie-to-pci-bridge'/>"
+            vm.attachDeviceFlags(controllerxml, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
             vm.attachDeviceFlags(nicxml, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
         else:
             vm.attachDeviceFlags(nicxml, VIR_DOMAIN_AFFECT_CONFIG)
@@ -3536,7 +3541,6 @@ class Kvirt(object):
         try:
             interfaces = conn.listInterfaces()
         except:
-            warning("Issue parsing your interfaces. Check for weird characters in your ifcfg files")
             return networks
         for interface in interfaces:
             if interface == 'lo' or interface in networks:
