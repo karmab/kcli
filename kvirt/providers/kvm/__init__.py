@@ -1269,6 +1269,8 @@ class Kvirt(object):
         if uefi or uefi_legacy:
             controllerxml = "<controller type='pci' model='pcie-root'/>"
             controllerxml += ''.join(["<controller type='pci' model='pcie-root-port'/>" for i in range(5)])
+            pciexml = "<controller type='pci' model='pcie-to-pci-bridge'><model name='pcie-pci-bridge'/></controller>"
+            controllerxml += pciexml
         vmxml = """<domain type='{virttype}' {namespace}>
 <name>{name}</name>
 {uuidxml}
@@ -2187,17 +2189,18 @@ class Kvirt(object):
                 os.remove(ignitionpath)
         return {'result': 'success'}
 
-    def _xmldisk(self, diskpath, diskdev, diskbus='virtio', diskformat='qcow2', shareable=False):
-        if shareable:
-            sharexml = '<shareable/>'
-        else:
-            sharexml = ''
+    def _xmldisk(self, diskpath, diskdev, diskbus='virtio', diskformat='qcow2', shareable=False, bus=None, slot=None):
+        sharexml = '<shareable/>' if shareable else ''
+        addressxml = ''
+        if bus is not None and slot is not None:
+            addressxml = f"<address type='pci' domain='0x0000' bus='0x0{bus}' slot='0x{slot:02x}' function='0x0'/>"
         diskxml = """<disk type='file' device='disk'>
         <driver name='qemu' type='%s' cache='none'/>
         <source file='%s'/>
         <target bus='%s' dev='%s'/>
         %s
-        </disk>""" % (diskformat, diskpath, diskbus, diskdev, sharexml)
+        %s
+        </disk>""" % (diskformat, diskpath, diskbus, diskdev, addressxml, sharexml)
         return diskxml
 
     def _xmlvolume(self, path, size, pooltype='file', backing=None, diskformat='qcow2', owner=None):
@@ -2882,8 +2885,15 @@ class Kvirt(object):
             if '/' not in existing:
                 existing = f"{self.get_pool_path(pool)}/{existing}"
             diskpath = existing
+        bus, slot = None, None
+        if vm.isActive() == 1 and 'q35' in vm.XMLDesc(0):
+            bus, slot = self._get_pcie_data(vm)
+            if bus is None:
+                msg = f"Missing pcie-to-pci-bridge in vm. Shutdown {name} first"
+                error(msg)
+                return {'result': 'failure', 'reason': msg}
         diskxml = self._xmldisk(diskpath=diskpath, diskdev=diskdev, diskbus=diskbus, diskformat=diskformat,
-                                shareable=shareable)
+                                shareable=shareable, bus=bus, slot=slot)
         if vm.isActive() == 1:
             vm.attachDeviceFlags(diskxml, VIR_DOMAIN_AFFECT_LIVE)
             vm = conn.lookupByName(name)
@@ -3004,10 +3014,19 @@ class Kvirt(object):
             networktype = networks[network]
             source = f"<source {networktype}='{network}'/>"
         modelxml = f"<model type='{model}'/>"
+        addressxml = ""
+        if vm.isActive() == 1 and 'q35' in vm.XMLDesc(0):
+            bus, slot = self._get_pcie_data(vm)
+            if bus is None:
+                msg = f"Missing pcie-to-pci-bridge in vm. Shutdown {name} first"
+                error(msg)
+                return {'result': 'failure', 'reason': msg}
+            addressxml = f"<address type='pci' domain='0x0000' bus='0x0{bus}' slot='0x{slot:02x}' function='0x0'/>"
         nicxml = """<interface type='%s'>
                     %s
                     %s
-                    </interface>""" % (networktype, modelxml, source)
+                    %s
+                    </interface>""" % (networktype, modelxml, addressxml, source)
         if vm.isActive() == 1:
             vm.attachDeviceFlags(nicxml, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
         else:
@@ -4126,3 +4145,25 @@ class Kvirt(object):
             elif 'rhel9' in m:
                 return False
         return rhel7
+
+    def _get_pcie_data(self, vm):
+        bus, slot = None, None
+        if vm.isActive() == 1 and 'q35' in vm.XMLDesc(0):
+            vmxml = vm.XMLDesc(0)
+            root = ET.fromstring(vmxml)
+            bus, slot = None, 0
+            for element in list(root.iter('controller')):
+                if element.get('model') == 'pcie-to-pci-bridge':
+                    bus = int(element.get('index'))
+                    break
+            if bus is None:
+                return bus, slot
+            for element in list(root.iter('disk')) + list(root.iter('interface')):
+                address = element.find('address')
+                if int(address.get('bus'), 16) != bus:
+                    continue
+                current_slot = int(address.get('slot'), 16)
+                if current_slot > slot:
+                    slot = current_slot
+            slot += 1
+        return bus, slot
