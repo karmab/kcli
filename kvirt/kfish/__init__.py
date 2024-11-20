@@ -18,64 +18,55 @@ def valid_uuid(uuid):
         return False
 
 
-def get_info(url, user, password):
+def get_info(url, headers):
     match = re.match('.*/redfish/v1/Systems/(.*)', url)
     if '/redfish/v1/Systems' in url and\
        (valid_uuid(os.path.basename(url)) or (match is not None and len(match.group(1).split('/')) == 2)):
         model = 'virtual'
-        user = user or 'fake'
-        password = password or 'fake'
-        return model, url, user, password
+        return model, url
     oem_url = f"https://{url}" if '://' not in url else url
     p = urlparse(oem_url)
-    headers = {'Accept': 'application/json'}
-    request_url = f"{p.scheme}://{p.netloc}/redfish/v1"
-    request = Request(request_url, headers=headers)
+    chassis_url = f"{p.scheme}://{p.netloc}/redfish/v1/Chassis"
     try:
-        v1data = json.loads(urlopen(request).read())
+        request = Request(chassis_url, headers=headers)
+        chassis = json.loads(urlopen(request).read())['Members'][0]['@odata.id']
     except Exception as e:
-        print(f"Error: tried accessing URL {request_url}")
+        print(f"Hit issue when accessing url {chassis_url}")
         raise e
-    if 'Oem' in v1data:
-        oem = v1data['Oem']
-        if 'Dell' in oem:
-            model = 'dell'
-        elif 'Hpe' in oem or 'Hp' in oem:
-            model = 'hp'
-        elif 'Supermicro' in oem:
-            model = 'supermicro'
-        else:
-            model = 'N/A'
-    elif 'Vendor' in v1data:
-        model = v1data['Vendor'].lower()
+    request_url = f"{p.scheme}://{p.netloc}{chassis}"
+    request = Request(request_url, headers=headers)
+    manufacturer = json.loads(urlopen(request).read()).get('Manufacturer', '').lower()
+    if 'dell' in manufacturer:
+        model = 'dell'
+    elif 'hp' in manufacturer:
+        model = 'hp'
+    elif 'supermicro' in manufacturer:
+        model = 'supermicro'
+    else:
+        print(f"Failed to detect model from url '{url}'")
+        sys.exit(1)
     if '://' not in url:
         if model in ['hp', 'supermicro', 'lenovo']:
             url = f"https://{url}/redfish/v1/Systems/1"
         elif model == 'dell':
             url = f"https://{url}/redfish/v1/Systems/System.Embedded.1"
-            user = user or 'root'
-            password = password or 'calvin'
-        else:
-            print(f"Failed to autodetect redfish URL for '{url}'")
-            print(f"JSON query to {request_url} returned '{model}' as ['Oem'] value")
-            sys.exit(1)
-    return model, url, user, password
+    return model, url
 
 
 class Redfish(object):
     def __init__(self, url, user='root', password='calvin', insecure=True, debug=False, model=None, legacy=False):
         self.debug = debug
         self.headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
+        credentials = base64.b64encode(bytes(f'{user}:{password}', 'ascii')).decode('utf-8')
+        self.headers["Authorization"] = f"Basic {credentials}"
         if insecure:
             ssl._create_default_https_context = ssl._create_unverified_context
         url = url.replace('idrac-virtualmedia', 'https').replace('ilo5-virtualmedia', 'https')
-        self.model, self.url, self.user, self.password = get_info(url, user, password)
+        self.model, self.url = get_info(url, self.headers)
         if self.debug:
             print(f"Using base url {self.url}")
         p = urlparse(self.url)
         self.baseurl = f"{p.scheme}://{p.netloc}"
-        credentials = base64.b64encode(bytes(f'{self.user}:{self.password}', 'ascii')).decode('utf-8')
-        self.headers["Authorization"] = f"Basic {credentials}"
         self.manager_url = None
         self.legacy = False
         if self.model == 'supermicro':

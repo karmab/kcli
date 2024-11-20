@@ -2177,165 +2177,133 @@ def get_rhcos_url_from_file(filename, _type='kvm'):
     return url
 
 
-def info_baremetal_hosts(baremetal_hosts, overrides={}, debug=False, full=False):
-    failures = []
-    for host in baremetal_hosts:
-        bmc_url = host.get('url') or host.get('bmc_url')
-        bmc_user = host.get('user') or host.get('bmc_user') or overrides.get('bmc_user')
-        bmc_password = host.get('password') or host.get('bmc_password') or overrides.get('bmc_password')
-        if bmc_url is not None:
-            red = Redfish(bmc_url, bmc_user, bmc_password, debug=debug)
-            node_name = host['name'] if 'name' in host else f"with url {bmc_url}"
-            pprint(f"Reporting info on Host {node_name}")
-            try:
-                info = red.info()
-            except Exception as e:
-                msg = f'Hit {e} when getting info on host {node_name}'
-                error(msg)
-                failures.append(msg)
-                continue
-            if full:
-                pretty_print(info)
-            else:
-                keys = ['UUID', 'SERIAL', 'BOOT', 'HostName', 'IndicatorLED', 'Manufacturer', 'Model', 'MemorySummary',
-                        'PowerState', 'PartNumber', 'SKU', 'SystemType']
-                data = {key: info[key] for key in keys if key in info}
-                pretty_print(data)
-    if failures:
-        return {'result': 'failure', 'reason': '\n'.join(failures)}
+def info_baremetal_host(url, user, password, debug=False, full=False):
+    red = Redfish(url, user, password, debug=debug)
+    pprint(f"Reporting info on host with url {url}")
+    try:
+        info = red.info()
+    except Exception as e:
+        msg = f'Hit {e} when getting info on host with url {url}'
+        error(msg)
+        return {'result': 'failure', 'reason': msg}
+    if full:
+        pretty_print(info)
+    else:
+        keys = ['UUID', 'SERIAL', 'BOOT', 'HostName', 'IndicatorLED', 'Manufacturer', 'Model', 'MemorySummary',
+                'PowerState', 'PartNumber', 'SKU', 'SystemType']
+        data = {key: info[key] for key in keys if key in info}
+        pretty_print(data)
     return {'result': 'success'}
 
 
-def reset_baremetal_hosts(baremetal_hosts, overrides={}, debug=False):
-    failures = []
-    for host in baremetal_hosts:
-        bmc_url = host.get('url') or host.get('bmc_url')
-        bmc_user = host.get('user') or host.get('bmc_user') or overrides.get('bmc_user')
-        bmc_password = host.get('password') or host.get('bmc_password') or overrides.get('bmc_password')
-        if bmc_url is not None:
-            red = Redfish(bmc_url, bmc_user, bmc_password, debug=debug)
-            node_name = host['name'] if 'name' in host else f"with url {bmc_url}"
-            pprint(f"Resetting Host {node_name}")
-            try:
-                red.reset()
-            except Exception as e:
-                msg = f'Hit {e} when resetting host {node_name}'
-                error(msg)
-                failures.append(msg)
-    if failures:
-        return {'result': 'failure', 'reason': '\n'.join(failures)}
+def reset_baremetal_host(url, user, password, debug=False):
+    red = Redfish(url, user, password, debug=debug)
+    pprint(f"Resetting host with url {url}")
+    try:
+        red.reset()
+    except Exception as e:
+        msg = f'Hit {e} when resetting host with url {url}'
+        error(msg)
+        return {'result': 'failure', 'reason': msg}
     return {'result': 'success'}
 
 
-def start_baremetal_hosts(baremetal_hosts, iso_url, overrides={}, debug=False):
-    failures = []
+def start_baremetal_host(url, user, password, overrides={}, debug=False):
+    iso_url = overrides.get('iso_url')
+    reset = overrides.get('reset', False)
     sno = iso_url is not None and iso_url.endswith('-sno.iso')
-    for index, host in enumerate(baremetal_hosts):
-        index_iso_url = iso_url
-        bmc_url = host.get('url') or host.get('bmc_url')
-        if sno and index > 0:
-            role = host.get('role') or overrides.get('role') or 'worker'
-            index_iso_url = iso_url.replace('-sno.iso', f'-{role}.iso')
-        bmc_user = host.get('username') or host.get('user') or host.get('bmc_username') or host.get('bmc_user')\
-            or overrides.get('bmc_user') or overrides.get('bmc_username')\
-            or overrides.get('user') or overrides.get('username')
-        bmc_password = host.get('password') or host.get('bmc_password') or overrides.get('bmc_password')
-        bmc_reset = host.get('reset') or host.get('bmc_reset') or overrides.get('bmc_reset', False)
-        if bmc_url is not None:
-            red = Redfish(bmc_url, bmc_user, bmc_password, debug=debug)
-            if bmc_reset:
-                red.reset()
-                sleep(240)
-            node_name = host['name'] if 'name' in host else f"with url {bmc_url}"
-            if index_iso_url is not None:
-                pprint(f"Booting Host {node_name} with {index_iso_url}")
-                try:
-                    red.set_iso(index_iso_url)
-                except Exception as e:
-                    msg = f"Hit {e} when plugging iso to host {node_name}"
-                    error(msg)
-                    failures.append(msg)
+    index_iso_url = iso_url
+    if sno:
+        role = overrides.get('role') or 'worker'
+        index_iso_url = iso_url.replace('-sno.iso', f'-{role}.iso')
+    red = Redfish(url, user, password, debug=debug)
+    if reset:
+        red.reset()
+        sleep(240)
+    if index_iso_url is not None:
+        pprint(f"Booting host with url {url} with {index_iso_url}")
+        try:
+            red.set_iso(index_iso_url)
+        except Exception as e:
+            msg = f"Hit {e} when plugging iso to host with url {url}"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
+    else:
+        pprint(f"Booting host with url {url}")
+        try:
+            red.start()
+        except Exception as e:
+            msg = f"Hit {e} when starting host with url {url}"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
+    return {'result': 'success'}
+
+
+def start_baremetal_hosts_with_iso(hosts, iso_url, overrides={}, debug=False):
+    for host in hosts:
+        url = host.get('url') or host.get('bmc_url')
+        user = host.get('user') or host.get('bmc_user') or overrides.get('user') or overrides.get('bmc_user')
+        password = host.get('password') or host.get('bmc_password') or overrides.get('password')\
+            or overrides.get('bmc_password')
+        if url is not None and user is not None and password is not None:
+            overrides['iso_url'] = iso_url
+            start_baremetal_host(url, user, password, overrides=overrides, debug=debug)
+
+
+def stop_baremetal_host(url, user, password, debug=False):
+    red = Redfish(url, user, password, debug=debug)
+    try:
+        if red.status() != 'Off':
+            pprint(f"Stopping host with url {url}")
+            red.stop()
+        else:
+            pprint(f"host with url {url} already stopped")
+    except Exception as e:
+        msg = f'Hit {e} when stopping host with url {url}'
+        error(msg)
+        return {'result': 'failure', 'reason': msg}
+    return {'result': 'success'}
+
+
+def update_baremetal_host(url, user, password, overrides={}, debug=False):
+    secureboot = overrides.get('secureboot') or overrides.get('bmc_secureboot')
+    iso_none = 'iso' in overrides and overrides['iso'] is None
+    red = Redfish(url, user, password, debug=debug)
+    if secureboot is not None:
+        try:
+            if secureboot:
+                pprint(f"Enabling secureboot in host with url {url}")
+                red.enable_secureboot()
             else:
-                pprint(f"Booting Host {node_name}")
-                try:
-                    red.start()
-                except Exception as e:
-                    msg = f"Hit {e} when starting host {node_name}"
-                    error(msg)
-                    failures.append(msg)
-        else:
-            warning(f"Skipping entry {index} because either bmc_url, bmc_user or bmc_password is not set")
-    if failures:
-        return {'result': 'failure', 'reason': '\n'.join(failures)}
+                pprint(f"Disabling secureboot in host with url {url}")
+                red.disable_secureboot()
+        except Exception as e:
+            msg = f"Hit {e} when updating secureboot in host with url {url}"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
+    if iso_none:
+        try:
+            current_iso = red.get_iso_status()
+            if current_iso != '':
+                pprint(f"Setting iso from {current_iso} to None in host with url {url}")
+                red.eject_iso()
+            else:
+                pprint(f"Iso already set to None in host with url {url}")
+        except Exception as e:
+            msg = f"Hit {e} when setting iso to None in host with url {url}"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
     return {'result': 'success'}
 
 
-def stop_baremetal_hosts(baremetal_hosts, overrides={}, debug=False):
-    failures = []
-    for host in baremetal_hosts:
-        bmc_url = host.get('url') or host.get('bmc_url')
-        bmc_user = host.get('user') or host.get('bmc_user') or overrides.get('bmc_user')
-        bmc_password = host.get('password') or host.get('bmc_password') or overrides.get('bmc_password')
-        if bmc_url is not None:
-            red = Redfish(bmc_url, bmc_user, bmc_password, debug=debug)
-            node_name = host['name'] if 'name' in host else f"with url {bmc_url}"
-            try:
-                if red.status() != 'Off':
-                    pprint(f"Stopping Host {node_name}")
-                    red.stop()
-                else:
-                    pprint(f"Host {node_name} already stopped")
-            except Exception as e:
-                msg = f'Hit {e} when stopping host {node_name}'
-                error(msg)
-                failures.append(msg)
-    if failures:
-        return {'result': 'failure', 'reason': '\n'.join(failures)}
-    return {'result': 'success'}
-
-
-def update_baremetal_hosts(baremetal_hosts, overrides={}, debug=False):
-    failures = []
-    for index, host in enumerate(baremetal_hosts):
-        bmc_url = host.get('url') or host.get('bmc_url')
-        bmc_user = host.get('username') or host.get('user') or host.get('bmc_username') or host.get('bmc_user')\
-            or overrides.get('bmc_user') or overrides.get('bmc_username')\
-            or overrides.get('user') or overrides.get('username')
-        bmc_password = host.get('password') or host.get('bmc_password') or overrides.get('bmc_password')
-        secureboot = host.get('secureboot') or host.get('bmc_secureboot') or overrides.get('secureboot')
-        iso_none = ('iso' in host and host['iso'] is None) or ('iso' in overrides and overrides['iso'] is None)
-        if bmc_url is not None:
-            red = Redfish(bmc_url, bmc_user, bmc_password, debug=debug)
-            if secureboot is not None:
-                node_name = host['name'] if 'name' in host else f"with url {bmc_url}"
-                try:
-                    if secureboot:
-                        pprint(f"Enabling secureboot in Host {node_name}")
-                        red.enable_secureboot()
-                    else:
-                        pprint(f"Disabling secureboot in Host {node_name}")
-                        red.disable_secureboot()
-                except Exception as e:
-                    msg = f"Hit {e} when updating secureboot in host {node_name}"
-                    error(msg)
-                    failures.append(msg)
-            if iso_none:
-                node_name = host['name'] if 'name' in host else f"with url {bmc_url}"
-                try:
-                    current_iso = red.get_iso_status()
-                    if current_iso != '':
-                        pprint(f"Setting iso from {current_iso} to None in Host {node_name}")
-                        red.eject_iso()
-                    else:
-                        pprint(f"Iso already set to None in Host {node_name}")
-                except Exception as e:
-                    msg = f"Hit {e} when setting iso to None in host {node_name}"
-                    error(msg)
-        else:
-            warning(f"Skipping entry {index} because either bmc_url, bmc_user or bmc_password is not set")
-    if failures:
-        return {'result': 'failure', 'reason': '\n'.join(failures)}
-    return {'result': 'success'}
+def update_baremetal_hosts(hosts, overrides={}, debug=False):
+    for host in hosts:
+        url = host.get('url') or host.get('bmc_url')
+        user = host.get('user') or host.get('bmc_user') or overrides.get('user') or overrides.get('bmc_user')
+        password = host.get('password') or host.get('bmc_password') or overrides.get('password')\
+            or overrides.get('bmc_password')
+        if url is not None and user is not None and password is not None:
+            update_baremetal_host(url, user, password, overrides=overrides, debug=debug)
 
 
 def get_changelog(diff, data=False):

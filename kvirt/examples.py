@@ -559,93 +559,41 @@ $ kcli update network mynetwork --domain superdomain.com
 $ kcli update network mynetwork -P plan=newplan
 """
 
-resethosts = """# Reset bare metal hosts declared in a parameter file
-
-$ kcli reset baremetal-hosts --pf baremetal_hosts.yml
-
-baremetal_hosts.yml contains
-bmc_user: admin
-bmc_password: admin
-baremetal_hosts:
-- bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/vm1
-- bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/vm2
-
-# Reset a single host
+resethost = """# Reset a baremetal host
 $ kcli reset baremetal-host -P user=admin -P password=admin 10.10.10.10
 
-# Reset a single host with dedicated flags for credentials
+# Reset a baremetal host with dedicated flags for credentials
 $ kcli reset baremetal-host -u admin -p admin 10.10.10.10
 """
 
-starthosts = """# Start bare metal hosts declared in a parameter file from specific ISO url
-
-$ kcli start baremetal-hosts --pf baremetal_hosts.yml -P iso_url=http://192.168.122.1/my.iso
-
-baremetal_hosts.yml contains
-bmc_user: admin
-bmc_password: admin
-baremetal_hosts:
-- bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/vm1
-- bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/vm2
-
-# Start a single host
+starthost = """# Start a baremetal host
 $ kcli start baremetal-host -P user=admin -P password=admin 10.10.10.10
 
-# Start a single host with dedicated flags for credentials
+# Start a baremetal host with dedicated flags for credentials
 $ kcli start baremetal-host -u admin -p admin 10.10.10.10
+
+# Start a baremetal host with a specific iso
+$ kcli start baremetal-host -u admin -p admin -p iso_url=http://192.168.122.1/my.iso 10.10.10.10
 """
 
-stophosts = """# Stop bare metal hosts declared in a parameter file
-
-$ kcli stop baremetalhosts --pf baremetal_hosts.yml
-
-baremetal_hosts.yml contains
-bmc_user: admin
-bmc_password: admin
-baremetal_hosts:
-- bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/vm1
-- bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/vm2
-
-# Stop a single host
+stophost = """# Stop a baremetal host
 $ kcli stop baremetal-host -P user=admin -P password=admin 10.10.10.10
 
-# Stop a single host with dedicated flags for credentials
+# Stop a baremetal host with dedicated flags for credentials
 $ kcli stop baremetal-host -u admin -p admin 10.10.10.10
 """
 
-infohosts = """# Report info on Baremetal hosts declared in a parameter file
-
-$ kcli info baremetalhosts --pf baremetal_hosts.yml
-
-baremetal_hosts.yml contains
-bmc_user: admin
-bmc_password: admin
-baremetal_hosts:
-- bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/vm1
-- bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/vm2
-
-# Report info on a single host
+infohost = """# Get info on a baremetal host
 $ kcli info baremetal-host -P user=admin -P password=admin 10.10.10.10
 
-# Report info on a single host with dedicated flags for credentials
+# Report info on a baremetal host with dedicated flags for credentials
 $ kcli info baremetal-host -u admin -p admin 10.10.10.10
 """
 
-updatehosts = """# Update bare metal hosts declared in a parameter file
-
-$ kcli update baremetal-hosts --pf baremetal_hosts.yml -P secureboot=true
-
-baremetal_hosts.yml contains
-bmc_user: admin
-bmc_password: admin
-baremetal_hosts:
-- bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/vm1
-- bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/vm2
-
-# Update a single host
+updatehost = """# Update a baremetal host
 $ kcli update baremetal-host -P user=admin -P password=admin 10.10.10.10 -P secureboot=true
 
-# Update a single host with dedicated flags for credentials
+# Update a baremetal host with dedicated flags for credentials
 $ kcli update baremetal-host -u admin -p admin 10.10.10.10 -P secureboot=true
 """
 

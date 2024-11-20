@@ -3009,8 +3009,6 @@ class Kvirt(object):
                     %s
                     </interface>""" % (networktype, modelxml, source)
         if vm.isActive() == 1:
-            controllerxml = "<controller type='pci' model='pcie-to-pci-bridge'/>"
-            vm.attachDeviceFlags(controllerxml, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
             vm.attachDeviceFlags(nicxml, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
         else:
             vm.attachDeviceFlags(nicxml, VIR_DOMAIN_AFFECT_CONFIG)
