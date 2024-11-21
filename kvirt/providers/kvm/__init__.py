@@ -242,7 +242,7 @@ class Kvirt(object):
         capabilities = self.get_capabilities(overrides.get('arch'))
         if 'arch' not in overrides:
             overrides['arch'] = capabilities['arch']
-        iommu_model = 'intel' if overrides.get('arch', 'x86_64') == 'x86_64' else 'virtio'
+        iommu_model = 'intel' if overrides.get('arch', 'x86_64') == 'x86_64' else 'smmuv3'
         custom_emulator = overrides.get('emulator')
         if custom_emulator is not None:
             if os.path.exists(custom_emulator):
