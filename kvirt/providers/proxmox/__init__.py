@@ -1,31 +1,45 @@
 # -*- coding: utf-8 -*-
 
-from kvirt.common import (
-    pprint,
-    warning,
-    get_user,
-    cloudinit as gen_cloudinit,
-    ignition as gen_ignition,
-    needs_ignition,
-    netmask_to_prefix,
-    ignition_version,
-)
-
+from datetime import datetime
+from kvirt import common
+from kvirt.common import error, pprint, warning, sdn_ip
+from kvirt.defaults import METADATA_FIELDS, UBUNTUS
 from kvirt.providers.sampleprovider import Kbase
+import os
+from pathlib import Path
 import proxmoxer
 from proxmoxer.tools import Tasks
-import urllib3
 import re
+from subprocess import call
 import time
 from textwrap import dedent
-import os
-from subprocess import call
-from pprint import pprint as pp
 from tempfile import TemporaryDirectory
-from pathlib import Path
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+import webbrowser
+from yaml import safe_dump
 
 
 VM_STATUS = {"running": "up", "stopped": "down", "unknown": "unk"}
+
+
+def patch_cmds(image, cmds):
+    gcmds = []
+    lower = image.lower()
+    if lower.startswith('fedora') or lower.startswith('rhel') or lower.startswith('centos'):
+        gcmds.append('yum -y install qemu-guest-agent')
+        gcmds.append('systemctl enable --now qemu-guest-agent')
+    elif lower.startswith('debian') or [x for x in UBUNTUS if x in lower] or 'ubuntu' in lower:
+        gcmds.append('apt-get update')
+        gcmds.append('apt-get -y install qemu-guest-agent')
+        gcmds.append('/etc/init.d/qemu-guest-agent start')
+        gcmds.append('update-rc.d qemu-guest-agent defaults')
+    index = 1 if cmds and 'sleep' in cmds[0] else 0
+    if image.startswith('rhel'):
+        subindex = [i for i, value in enumerate(cmds) if value.startswith('subscription-manager')]
+        if subindex:
+            index = subindex.pop() + 1
+    return cmds[:index] + gcmds + cmds[index:]
 
 
 def sizeof_fmt(num, suffix="B"):
@@ -51,9 +65,6 @@ class Kproxmox(Kbase):
         imagepool=None,
         debug=False,
     ):
-        if not verify_ssl:
-            urllib3.disable_warnings()
-
         self.conn = proxmoxer.ProxmoxAPI(
             host,
             port=port,
@@ -74,12 +85,13 @@ class Kproxmox(Kbase):
                     break
         self.node = node
         self.imagepool = imagepool
-        # self.host = host
+        self.host = host
+        self.user = user
+        self.debug = debug
 
     def info_host(self):
         nodes = self.conn.cluster.resources.get(type="node")
         cl_status = self.conn.cluster.status.get()
-
         data = {
             "cluster_name": "",
             "nodes_online": 0,
@@ -118,52 +130,18 @@ class Kproxmox(Kbase):
 
     def list(self):
         vms = []
-        all_vms = self._get_vms()
-        for vm in all_vms:
-            ips = []
-            if vm["status"] == "running":
-                try:
-                    nets = (
-                        self.conn.nodes(vm["node"])
-                        .qemu(vm["vmid"])
-                        .agent("network-get-interfaces")
-                        .get()["result"]
-                    )
-                except proxmoxer.core.ResourceException:
-                    nets = []
-                    pass
-                for net in nets:
-                    if net["name"] != "lo" and "ip-addresses" in net:
-                        for nic in net["ip-addresses"]:
-                            if nic["ip-address-type"] == "ipv4":
-                                ips.append(nic["ip-address"])
+        for vm in self._get_all_vms():
+            name, _type, template = vm['name'], vm['type'], vm['template']
+            if _type == 'lxc' or template == 1:
+                continue
             try:
-                vm_config = self.conn.nodes(vm["node"]).qemu(vm["vmid"]).config.get()
+                vms.append(self.info(name, vm=vm))
             except:
                 continue
-            metadata = self._parse_notes(vm_config.get("description"))
-
-            vms.append(
-                dict(
-                    {
-                        "name": vm["name"],
-                        "status": VM_STATUS.get(vm["status"]),
-                        "ip": ",".join(ips),
-                    },
-                    **metadata,
-                )
-            )
-        return vms
+        return sorted(vms, key=lambda x: x['name'])
 
     def volumes(self, iso=False):
-        # return iso or vm templates
-        vols = []
-        if iso:
-            vols = [t["name"] for t in self._get_isos()]
-        else:
-            vols = [t["name"] for t in self._get_templates()]
-
-        return vols
+        return [t["name"] for t in self._get_isos()] if iso else [t["name"] for t in self._get_templates()]
 
     def _check_node(self, node):
         # Check target node
@@ -198,7 +176,7 @@ class Kproxmox(Kbase):
 
         # Check if template already exists
         if self._get_template_info(name):
-            pprint(f"Template {name} already there")
+            pprint(f"Image {name} already there")
             return {"result": "success", "found": True}
 
         new_vmid = self.conn.cluster.nextid.get()
@@ -223,17 +201,11 @@ class Kproxmox(Kbase):
         # Check target node
         pve_node = self._check_node(self.node)
         if not pve_node:
-            return {
-                "result": "failure",
-                "reason": f"node {self.node} not found.",
-            }
+            return {"result": "failure", "reason": f"node {self.node} not found."}
 
         # Check that template storage is available on this node
         if not self._check_storage(pool, node=pve_node["name"]):
-            return {
-                "result": "failure",
-                "reason": f"storage {pool} not found on {pve_node['name']}.",
-            }
+            return {"result": "failure", "reason": f"storage {pool} not found on {pve_node['name']}."}
 
         # Download image in /var/lib/vz/images/0
         downloadpath = "/var/lib/vz/images/0"
@@ -253,9 +225,7 @@ class Kproxmox(Kbase):
             return {"result": "failure", "reason": "Unable to download indicated image"}
 
         now = time.strftime("%d-%m-%Y %H:%M", time.gmtime())
-        description = f"""
-            Template created with kcli from {shortimage} on {now}
-            """
+        description = f"Image created with kcli from {shortimage} on {now}"
 
         # Create template
         ok, status = self._wait_for(
@@ -271,7 +241,7 @@ class Kproxmox(Kbase):
             return {"result": "failure", "reason": status}
 
         self._wait_for(self.conn.nodes(pve_node["name"]).qemu(new_vmid).template.post())
-        pprint(f"Template {name} created on {pve_node['name']}")
+        pprint(f"Image {name} created on {pve_node['name']}")
 
         # Remove image in /var/lib/vz/images/0
         pprint(f"Removing image {downloadpath}/{shortimage} on {pve_node['name']}...")
@@ -291,7 +261,7 @@ class Kproxmox(Kbase):
             return self.delete_iso(image, pool=pool)
         # Check if template exists
         template = self._get_template_info(image)
-        if not template:
+        if template is None:
             return {"result": "failure", "reason": f"Image {image} not found"}
 
         ok, status = self._wait_for(
@@ -310,7 +280,7 @@ class Kproxmox(Kbase):
 
         isos = [i for i in self._get_isos() if i["name"] == image and i["pool"] == pool]
         if not isos:
-            pprint(f"ISO {image} not found")
+            error(f"ISO {image} not found")
             return {"result": "failure", "reason": f"ISO {image} not found"}
 
         ok, status = self._wait_for(
@@ -335,17 +305,11 @@ class Kproxmox(Kbase):
         # Check target node
         pve_node = self.node
         if not self._check_node(pve_node):
-            return {
-                "result": "failure",
-                "reason": f"node {pve_node} not found.",
-            }
+            return {"result": "failure", "reason": f"node {pve_node} not found."}
 
         # Check that template storage is available on this node
         if not self._check_storage(pool, node=pve_node):
-            return {
-                "result": "failure",
-                "reason": f"storage {pool} not found on {pve_node}.",
-            }
+            return {"result": "failure", "reason": f"storage {pool} not found on {pve_node}."}
 
         # All good, upload ISO
         if os.path.exists(url):
@@ -425,61 +389,72 @@ class Kproxmox(Kbase):
         vmuser=None,
         guestagent=True,
     ):
-        # pp(locals())
-
+        imagepool = self.imagepool or pool
+        if overrides.get('lxc', False):
+            if image is None:
+                return {"result": "failure", "reason": "Image not specified"}
+            if '/' not in image:
+                image = f'{imagepool}:vztmpl/{image}'
+            if image not in self.list_images():
+                return {"result": "failure", "reason": f"Image {image} not found"}
+            disk = disks[0] if disks else [disksize]
+            disksize = disk.get('size', disksize) if isinstance(disk, dict) else disk
+            password = overrides.get('rootpassword', 'root')
+            params = {'vmid': self.conn.cluster.nextid.get(), 'hostname': name, 'memory': memory, 'swap': 512,
+                      'cores': numcpus, 'rootfs': f'{imagepool}:{disksize}', 'ostemplate': image,
+                      'password': password, 'net0': 'name=eth0,bridge=vmbr0,ip=dhcp', 'start': 1}
+            self._wait_for(self.conn.nodes(self.node).lxc.post(**params))
+            return {"result": "success"}
+        qemuextra = overrides.get('qemuextra')
+        if qemuextra is not None and not self.user.startswith('root'):
+            return {"result": "failure", "reason": "Adjusting arg requires root user"}
+        enableiommu = overrides.get('iommu', False)
+        default_diskinterface = diskinterface
+        needs_ignition = image is not None and (common.needs_ignition(image) or 'ignition_file' in overrides)
+        if cpumodel == "host-model":
+            cpumodel = "host"
+        machine = None
+        uefi = overrides.get('uefi', False)
+        uefi_legacy = overrides.get('uefi_legacy', False)
+        secureboot = overrides.get('secureboot', False)
+        if (uefi or uefi_legacy or secureboot or enableiommu):
+            machine = 'q35'
         # Check if vm already exists
-        vm = self._get_vm_info(name)
-        if vm:
-            return {"result": "failure", "reason": f"VM {name} already exists."}
+        if self._get_vm_id(name) is not None:
+            return {"result": "failure", "reason": f"VM {name} already exists"}
 
         # Get next available ID
         new_vmid = self.conn.cluster.nextid.get()
-        imagepool = self.imagepool if self.imagepool else pool
 
-        if image:
+        if image is not None:
             # Get image template
             template = self._get_template_info(image)
-            if not template:
-                return {
-                    "result": "failure",
-                    "reason": f"image {image} not found. Use kcli download image {image}.",
-                }
-        if iso:
-            isos = [
-                i
-                for i in self._get_isos()
-                if i["name"] == iso and i["pool"] == imagepool
-            ]
-            if not isos:
-                pprint(f"ISO {iso} not found")
+            if template is None:
+                return {"result": "failure", "reason": f"image {image} not found. Use kcli download image {image}."}
+        if iso is not None:
+            if not [i for i in self._get_isos() if i["name"] == iso and i["pool"] == imagepool]:
                 return {"result": "failure", "reason": f"ISO {iso} not found"}
 
         # Check target node
-        new_vmnode = overrides.get("node") or self.node or template["node"]
+        node = overrides.get("node") or self.node or template["node"]
         cluster_status = self.conn.cluster.status.get()
         for n in cluster_status:
-            if n["type"] == "node" and n["name"] == new_vmnode:
+            if n["type"] == "node" and n["name"] == node:
                 pve_node = n
                 break
         if not pve_node:
-            return {
-                "result": "failure",
-                "reason": f"node {new_vmnode} not found.",
-            }
+            return {"result": "failure", "reason": f"node {node} not found."}
 
         # Check pool storage
-        storages = self.conn.nodes(new_vmnode).storage.get(content="images")
+        storages = self.conn.nodes(node).storage.get(content="images")
         storage = None
         for s in storages:
             if s["storage"] == pool:
                 storage = s
         if not storage:
-            return {
-                "result": "failure",
-                "reason": f"storage {pool} not found on {new_vmnode}.",
-            }
+            return {"result": "failure", "reason": f"storage {pool} not found on {node}."}
 
-        if image:
+        if image is not None:
             # Clone template
             linked_clone = True
             if (self.imagepool and self.imagepool != pool) or overrides.get("pool"):
@@ -491,27 +466,19 @@ class Kproxmox(Kbase):
                 .clone.post(
                     newid=new_vmid,
                     name=name,
-                    target=new_vmnode,
+                    target=node,
                     storage=pool if not linked_clone else None,
                     full=int(not linked_clone),
                 )
             )
-        elif iso:
+        else:
             # Create empty VM
-            ok, status = self._wait_for(
-                self.conn.nodes(new_vmnode).qemu.post(
-                    vmid=new_vmid,
-                    name=name,
-                    scsihw="virtio-scsi-pci",
-                    virtio0=f"file={pool}:{disksize},format=qcow2",
-                )
-            )
+            ok, status = self._wait_for(self.conn.nodes(node).qemu.post(vmid=new_vmid, name=name,
+                                                                        scsihw="virtio-scsi-pci"))
             if not ok:
                 return {"result": "failure", "reason": status}
-        else:
-            return {"result": "failure", "reason": "No ISO or image specified."}
 
-        new_vm = self.conn.nodes(new_vmnode).qemu(new_vmid)
+        new_vm = self.conn.nodes(node).qemu(new_vmid)
 
         # Add tag
         if self.filtertag:
@@ -520,181 +487,247 @@ class Kproxmox(Kbase):
         # Metadata
         now = time.strftime("%d-%m-%Y %H:%M", time.gmtime())
         metadata["creationdate"] = now
-        metadata["user"] = vmuser or get_user(image) if image is not None else "root"
-        description = ""
-        for entry in [field for field in metadata]:
-            description += f"  \nkvirt:{entry}: {metadata[entry]}"
+        description = []
+        for entry in [field for field in metadata if field in METADATA_FIELDS]:
+            description.append(f"{entry}={metadata[entry]}")
+        description = ','.join(description)
 
-        if metadata["user"] == "root":
-            enableroot = True
-
-        if image:
-            if needs_ignition(image):
-                self._set_ignition(
-                    vmid=new_vmid,
-                    name=name,
-                    node_name=new_vmnode,
-                    node_ip=pve_node["ip"],
-                    pool=pool,
-                    keys=keys,
-                    cmds=cmds,
-                    nets=nets,
-                    gateway=gateway,
-                    dns=dns,
-                    domain=domain,
-                    files=files,
-                    enableroot=enableroot,
-                    overrides=overrides,
-                    storemetadata=storemetadata,
-                    image=image,
-                    vmuser=vmuser,
-                )
-            else:
-                # Cloud-Init
-                self._set_cloudinit(
-                    vmid=new_vmid,
-                    name=name,
-                    node_name=new_vmnode,
-                    node_ip=pve_node["ip"],
-                    pool=pool,
-                    keys=keys,
-                    cmds=cmds,
-                    nets=nets,
-                    gateway=gateway,
-                    dns=dns,
-                    domain=domain,
-                    files=files,
-                    enableroot=enableroot,
-                    overrides=overrides,
-                    storemetadata=storemetadata,
-                    image=image,
-                    vmuser=vmuser,
-                )
-
-        if cpumodel == "host-model":
-            cpumodel = "host"
-
+        vm_data = {'name': name, 'cores': numcpus, 'memory': memory, 'cpu': cpumodel, 'agent': 'enabled=1',
+                   'description': dedent(description), 'onboot': 1}
         # Network
-        net0 = []
-        net0.append("model=virtio")
+        userdata, netdata = None, None
+        if image is not None:
+            node_ip = pve_node["ip"]
+            noname = overrides.get('noname', False)
+            meta = safe_dump({"instance-id": name, "local-hostname": name} if not noname else {})
+            code = self._upload_file(node_ip, f"{name}-metadata.yaml", meta)
+            if code != 0:
+                return {"result": "failure", "reason": "Unable to upload metadata"}
+            if needs_ignition:
+                ignition = 'qemu' in image
+                if not self.user.startswith('root'):
+                    return {"result": "failure", "reason": "Adjusting arg requires root user"}
+                ignition_path = f"{name}.ign" if ignition else f"{name}-userdata.yaml"
+                version = common.ignition_version(image)
+                userdata = common.ignition(name=name, keys=keys, cmds=cmds, nets=nets, gateway=gateway, dns=dns,
+                                           domain=domain, files=files, enableroot=enableroot,
+                                           overrides=overrides, version=version, plan=plan, image=image,
+                                           vmuser=vmuser)
+                code = self._upload_file(node_ip, ignition_path, userdata)
+                if code != 0:
+                    return {"result": "failure", "reason": "Unable to upload userdata"}
+                if not ignition:
+                    vm_data['citype'] = 'configdrive2'
+                else:
+                    arg = f" -fw_cfg name=opt/com.coreos/config,file=snippets/{ignition_path}"
+                    qemuextra = qemuextra + arg if qemuextra is not None else arg
+                    userdata = None
+            else:
+                cmds = patch_cmds(image, cmds)
+                userdata, meta, netdata = common.cloudinit(name=name, keys=keys, cmds=cmds, nets=nets,
+                                                           gateway=gateway, dns=dns, domain=domain,
+                                                           files=files, enableroot=enableroot, overrides=overrides,
+                                                           storemetadata=storemetadata, machine='proxmox',
+                                                           image=image, vmuser=vmuser)
+                code = self._upload_file(node_ip, f"{name}-userdata.yaml", userdata)
+                if code != 0:
+                    return {"result": "failure", "reason": "Unable to upload userdata"}
+                code = self._upload_file(node_ip, f"{name}-netdata.yaml", netdata)
+                if code != 0:
+                    return {"result": "failure", "reason": "Unable to upload netdata"}
+        if userdata is not None:
+            vm_data['cicustom'] = f'meta=local:snippets/{name}-metadata.yaml'
+            vm_data['cicustom'] += f',user=local:snippets/{name}-userdata.yaml'
+            if netdata is not None:
+                vm_data['cicustom'] += f',network=local:snippets/{name}-netdata.yaml'
+            vm_data['ide0'] = f"{pool}:cloudinit"
 
-        if nets and "name" in nets[0] and nets[0]["name"] != "default":
-            bridge = nets[0]["name"]
-        else:
-            # Take the first bridge available on the target node
-            networks = self.list_networks()
-            for n_name, n in networks.items():
-                if n_name.split("/")[0] == new_vmnode:
-                    bridge = n_name.split("/")[1]
-                    break
-        if bridge:
-            net0.append(f"bridge={bridge}")
+        sriov_nic = False
+        for index, net in enumerate(nets):
+            if isinstance(net, str):
+                netname = net
+                net = {'name': netname}
+            if net.get('sriov', False):
+                nets[index]['type'] = 'igb'
+                nets[index]['vfio'] = True
+                nets[index]['noconf'] = True
+                sriov_nic = True
+                if machine is None:
+                    machine = 'q35'
+                    warning("Forcing machine type to q35")
+            nettype = net.get('type', 'virtio')
+            mac = net.get('mac')
+            bridge = self._get_default_network(node) if net['name'] == 'default' else net["name"]
+            vm_data[f'net{index}'] = f"model={nettype},bridge={bridge}"
+            if mac is not None:
+                vm_data[f'net{index}'] += f",macaddr={mac}"
 
-        # Configure VM
-        self._wait_for(
-            new_vm.config.post(
-                name=name,
-                cores=numcpus,
-                memory=memory,
-                cpu=cpumodel,
-                agent="enabled=1",
-                net0=",".join(net0),
-                description=dedent(description),
-            )
-        )
+        # ISO
+        if iso is not None:
+            vm_data['cdrom'] = f"file={imagepool}:iso/{iso},media=cdrom"
 
+        initial_disks = self._get_current_disks(new_vm.config.get())
         # Disks
         default_disksize = disksize
         for index, disk in enumerate(disks):
-            diskname = f"virtio{index}"
-            if isinstance(disk, int):
+            diskinterface = default_diskinterface
+            diskserial = None
+            diskwwn = None
+            if isinstance(disk, str) and disk.isdigit():
+                disksize = int(disk)
+            elif isinstance(disk, int):
                 disksize = disk
             elif isinstance(disk, dict):
                 disksize = disk.get("size", default_disksize)
+                diskinterface = disk.get('interface', default_diskinterface)
+                diskwwn = disk.get('wwn')
+                diskserial = disk.get('serial')
             else:
                 disksize = default_disksize
-            if index == 0:
-                # Extend main disk
-                new_vm.resize.put(disk=diskname, size=f"{disksize}G")
+            diskname = f"{diskinterface}{index}"
+            if index < len(initial_disks):
+                current_diskname = initial_disks[index]['name']
+                current_disksize = int(initial_disks[index]['size'])
+                if disksize != current_disksize:
+                    pprint(f"Waiting for image disk {index} to be resized")
+                    new_vm.resize.put(disk=diskname, size=f"{disksize}G")
+                vm_data[current_diskname] = initial_disks[index]['full']
             else:
-                self._wait_for(
-                    new_vm.config.post(
-                        **{diskname: f"file={pool}:{disksize},format=qcow2"}
-                    )
-                )
+                vm_data[diskname] = f"file={pool}:{disksize},format=qcow2"
+                if diskwwn is not None:
+                    vm_data[diskname] += ',wwn={diskwwn}'
+                if diskserial is not None:
+                    vm_data[diskname] += ',serial={diskserial}'
 
-        # Add ISO
-        if iso:
-            self._wait_for(
-                new_vm.config.post(cdrom=f"file={imagepool}:iso/{iso},media=cdrom")
-            )
+        if machine is not None:
+            vm_data['machine'] = f'type={machine}'
+            if enableiommu:
+                vm_data['machine'] += ',viommu=intel'
+
+        if uefi or uefi_legacy or secureboot:
+            vm_data['bios'] = 'ovmf'
+            if secureboot:
+                vm_data['efidisk0'] = f"{pool}:32"
+                vm_data['smbios1'] = 'uuid=auto'
+            if tpm:
+                vm_data['tpmstate'] = f"{pool}:4"
+                vm_data['tpmversion'] = '2.0'
+
+        if qemuextra is not None:
+            vm_data['args'] = qemuextra
+
+        qemuextra = overrides.get('rng', False)
+        if rng:
+            vm_data['rng'] = 'source=/dev/urandom'
+
+        if sriov_nic:
+            vm_data['acpi'] = 1
+
+        for index, cell in enumerate(numa):
+            cellid = cell.get('id', index)
+            cellcpus = cell.get('vcpus')
+            cellmemory = cell.get('memory')
+            # siblings = cell.get('siblings', [])
+            if cellcpus is None or cellmemory is None:
+                msg = f"Can't properly use cell {index} in numa block"
+                return {'result': 'failure', 'reason': msg}
+            new_numa = f"cpus={cellcpus},memory={cellmemory},hostnodes={cellid}"
+            if numamode is not None:
+                new_numa += f',policy={numamode}'
+            vm_data[f'numa{cellid}'] = new_numa
+
+        for index, pcidevice in enumerate(pcidevices):
+            vm_data['hostpci{index}'] = pcidevices
+
+        # Configure VM
+        self._wait_for(new_vm.config.post(**vm_data))
 
         # Start VM
         if start:
-            ok, status = self._wait_for(
-                self.conn.nodes(new_vmnode).qemu(new_vmid).status.start.post()
-            )
+            ok, status = self._wait_for(self.conn.nodes(node).qemu(new_vmid).status.start.post())
             if not ok:
                 return {"result": "failure", "reason": status}
-
         # Wait until vm info are up-to-date
-        while not self._get_vm_info(name):
+        while self._get_vm_id(name) is None:
             time.sleep(1)
-
         return {"result": "success"}
 
     def info(self, name, output="plain", fields=[], values=False, vm=None, debug=False):
-        vm_info = self._get_vm_info(name)
-        if not vm_info:
-            return {"result": "failure", "reason": f"VM {name} does not exists."}
-
-        vm = self.conn.nodes(vm_info["node"]).qemu(vm_info["vmid"])
-        info = {
-            "name": vm_info["name"],
-            "node": vm_info["node"],
-            "vmid": vm_info["vmid"],
-            "status": VM_STATUS.get(vm_info["status"]),
-            "numcpus": vm_info["maxcpu"],
-            "memory": int(vm_info["maxmem"] / 1024 / 1024),
-        }
+        if vm is None:
+            listinfo = False
+            vm_info = self._get_vm_info(name)
+            if vm_info is None:
+                error(f"VM {name} not found")
+                return {}
+        else:
+            listinfo = True
+            vm_info = vm
+        vm = self._get_vm(name)
         vm_config = vm.config.get()
+        if 'meta' not in vm_config:
+            return self._get_lxc_info(name, vm_config)
+        yamlinfo = {"name": vm_info["name"], "node": vm_info["node"], "id": vm_info["vmid"],
+                    "status": VM_STATUS.get(vm_info["status"]), "numcpus": vm_info["maxcpu"],
+                    "memory": int(vm_info["maxmem"] / 1024 / 1024), 'nets': [], 'disks': []}
+        timestamp = int(self._parse_notes(vm_config['meta'])['ctime'])
+        yamlinfo['creationdate'] = datetime.fromtimestamp(timestamp).strftime('%d-%m-%Y %H:%M')
+        description_data = self._parse_notes(vm_config.get("description"))
+        metadata = {k: description_data[k] for k in description_data if k in METADATA_FIELDS}
+        yamlinfo.update(metadata)
+        if 'image' in yamlinfo:
+            yamlinfo['user'] = common.get_user(yamlinfo['image'])
+        kubetype = yamlinfo.get('kubetype')
+        cluster_network = yamlinfo.get('cluster_network')
 
-        net0 = vm_config.get("net0")
-        mac = None
-        if net0:
-            mac = re.search(r"(\w+:\w+:\w+:\w+:\w+:\w+)", net0)
-            if mac:
-                mac = mac.group(0).lower()
-
-        if vm_info["status"] == "running" and mac:
+        if vm_info["status"] == "running":
             try:
                 nets = vm.agent("network-get-interfaces").get().get("result")
             except proxmoxer.core.ResourceException:
                 nets = []
+            ips = []
             for net in nets:
-                if net["hardware-address"] == mac:
-                    for nic in net.get("ip-addresses", []):
-                        if nic["ip-address-type"] == "ipv4":
-                            info["ip"] = nic["ip-address"]
-                            break
-
-        # metadata
-        metadata = self._parse_notes(vm_config.get("description"))
-        info.update(metadata)
-
-        return info
+                for nic in net.get("ip-addresses", []):
+                    ip = nic["ip-address"]
+                    if not nic["ip-address"].startswith(tuple(['127.0.0.1', '::1', 'fe80::', '169.254.169', 'fd69']))\
+                       and not sdn_ip(ip, kubetype, cluster_network):
+                        ips.append(ip)
+            if ips and 'ip' not in yamlinfo:
+                ip4s = [i for i in ips if ':' not in i]
+                ip6s = [i for i in ips if i not in ip4s]
+                yamlinfo['ip'] = ip4s[0] if ip4s else ip6s[0]
+            if len(ips) > 1:
+                yamlinfo['ips'] = ips
+        if listinfo:
+            return yamlinfo
+        for entry in vm_config:
+            if re.findall(r"net\d+", entry):
+                device = entry
+                nic_data = vm_config[entry].split(',')
+                network = nic_data[1].split('=')[1]
+                networktype, mac = nic_data[0].split('=')
+                yamlinfo['nets'].append({'device': device, 'mac': mac.lower(), 'net': network, 'type': networktype})
+            if re.findall(r"(scsi|ide|virtio)\d+", entry):
+                device, diskformat, drivertype = entry, entry, entry
+                disk_data = vm_config[entry].split(',')
+                path = disk_data[0]
+                disktype, disksize = disk_data[-1].split('=')
+                if disktype == 'media':
+                    continue
+                yamlinfo['disks'].append({'device': device, 'size': disksize, 'format': diskformat, 'type': drivertype,
+                                          'path': path})
+        yamlinfo['nets'] = sorted(yamlinfo['nets'], key=lambda x: x['device'])
+        yamlinfo['disks'] = sorted(yamlinfo['disks'], key=lambda x: x['device'])
+        if debug:
+            yamlinfo['debug'] = vm_config
+        return yamlinfo
 
     def delete(self, name, snapshots=False):
-        info = self._get_vm_info(name)
-        if not info:
+        vm_info = self._get_vm_info(name)
+        if not vm_info:
             return {"result": "failure", "reason": f"VM {name} not found."}
-
-        if info["status"] == "running":
-            # stop vm
+        if vm_info["status"] == "running":
             self.stop(name, soft=False)
-
-        vm = self.conn.nodes(info["node"]).qemu(info["vmid"])
-        # delete
+        vm = self.conn.nodes(vm_info["node"]).qemu(vm_info["vmid"])
         ok, status = self._wait_for(vm.delete())
         if not ok:
             return {"result": "failure", "reason": status}
@@ -702,9 +735,8 @@ class Kproxmox(Kbase):
 
     def stop(self, name, soft=False):
         vm = self._get_vm(name)
-        if not vm:
+        if vm is None:
             return {"result": "failure", "reason": f"VM {name} not found."}
-
         if soft:
             self._wait_for(vm.status.shutdown.post())
         else:
@@ -713,17 +745,15 @@ class Kproxmox(Kbase):
 
     def start(self, name):
         vm = self._get_vm(name)
-        if not vm:
+        if vm is None:
             return {"result": "failure", "reason": f"VM {name} not found."}
-
         self._wait_for(vm.status.start.post())
         return {"result": "success"}
 
     def update_memory(self, name, memory):
         vm = self._get_vm(name)
-        if not vm:
+        if vm is None:
             return {"result": "failure", "reason": f"VM {name} not found."}
-
         self._wait_for(vm.config.post(memory=memory))
         return {"result": "success"}
 
@@ -765,7 +795,6 @@ class Kproxmox(Kbase):
 
     def ip(self, name):
         info = self.info(name)
-        pp(info)
         if info and "ip" in info:
             return info["ip"]
         return None
@@ -820,26 +849,28 @@ class Kproxmox(Kbase):
         return storages
 
     def exists(self, name):
-        return True if self._get_vm(name) else False
+        return self._get_vm(name) is not None
 
     def _get_vm_info(self, name):
-        all_vms = self._get_vms()
+        all_vms = self._get_all_vms()
         for vm in all_vms:
             if "name" in vm and vm["name"] == name:
                 return vm
-        return None
+
+    def _get_vm_id(self, name):
+        vm_info = self._get_vm_info(name)
+        return vm_info['vmid'] if vm_info is not None else None
 
     def _get_vm(self, name):
-        vm = self._get_vm_info(name)
-        if vm:
-            return self.conn.nodes(vm["node"]).qemu(vm["vmid"])
+        for vm in self._get_all_vms():
+            if vm.get("name", '') == name:
+                _id, _type, _node = vm['vmid'], vm['type'], vm['node']
+                return self.conn.nodes(_node).lxc(_id) if _type == 'lxc' else self.conn.nodes(_node).qemu(_id)
 
-    def _get_vms(self):
+    def _get_all_vms(self):
         all_vms = self.conn.cluster.resources.get(type="vm")
         if self.filtertag is not None:
-            return filter(
-                lambda v: "tags" in v and self.filtertag in v["tags"], all_vms
-            )
+            return filter(lambda v: "tags" in v and self.filtertag in v["tags"], all_vms)
         else:
             return filter(lambda v: v["status"] != "unknown", all_vms)
 
@@ -848,7 +879,6 @@ class Kproxmox(Kbase):
         for template in all_templates:
             if template["name"] == name:
                 return template
-        return None
 
     def _get_templates(self):
         all_vms = self.conn.cluster.resources.get(type="vm")
@@ -885,171 +915,24 @@ class Kproxmox(Kbase):
         for iso in all_isos:
             if iso["name"] == name:
                 return iso
-        return None
 
     def _wait_for(self, task):
         ret = Tasks.blocking_status(self.conn, task, polling_interval=1)
-        if not ret["exitstatus"].endswith("OK"):
-            return False, ret["exitstatus"]
-
-        return True, None
+        exitstatus = ret["exitstatus"]
+        if exitstatus.endswith("OK") or exitstatus.startswith("WARNING"):
+            return True, None
+        return False, exitstatus
 
     def _parse_notes(self, notes):
-        values = {}
-        if notes:
-            for line in notes.splitlines():
-                match = re.search(r"^kvirt:(\w+): (.*)$", line)
-                if match:
-                    values[match.group(1)] = match.group(2).strip()
-
-        return values
-
-    def _set_cloudinit(
-        self,
-        vmid,
-        name=None,
-        node_name=None,
-        node_ip=None,
-        pool=None,
-        keys=[],
-        cmds=[],
-        nets=[],
-        gateway=None,
-        dns=None,
-        domain=None,
-        files=[],
-        enableroot=False,
-        overrides={},
-        storemetadata=True,
-        image=None,
-        vmuser=None,
-    ):
-        # Make sure guest-agent is installed on debian/ubuntu as we need it to retrieve IP
-        if "ubuntu" in image or "debian" in image:
-            gcmds = ["ip a > /dev/tty1; sleep 5"]
-            gcmds.append("apt-get update")
-            gcmds.append("apt-get -y install qemu-guest-agent")
-            gcmds.append("/etc/init.d/qemu-guest-agent start")
-            gcmds.append("update-rc.d qemu-guest-agent defaults")
-            cmds = gcmds + cmds
-
-        # Generate userdata & metadata
-        userdata, metadata, _ = gen_cloudinit(
-            name=name,
-            keys=keys,
-            cmds=cmds,
-            files=files,
-            enableroot=enableroot,
-            overrides=overrides,
-            storemetadata=storemetadata,
-            image=image,
-            vmuser=vmuser,
-        )
-
-        # Use proxmox's buitin network configuration
-        vm = self.conn.nodes(node_name).qemu(vmid)
-        net0 = []
-        if nets and "ip" in nets[0] and "mask" in nets[0]:
-            cidr = netmask_to_prefix(nets[0]["mask"])
-            net0.append(f"ip={nets[0]['ip']}/{cidr}")
-        else:
-            net0.append("ip=dhcp")
-        if nets and "gateway" in nets[0]:
-            net0.append(f"gw={nets[0]['gateway']}")
-
-        # Send generated cloudinit files to pve node
-        with TemporaryDirectory() as tmpdir:
-            with open(f"{tmpdir}/{vmid}-cloudinit-userdata.yaml", "w") as f:
-                f.write(userdata)
-            with open(f"{tmpdir}/{vmid}-cloudinit-metadata.yaml", "w") as f:
-                f.write(metadata)
-
-            snippetspath = "/var/lib/vz/snippets/"
-            ssh_user = "root"
-
-            scpcmd = f"scp {tmpdir}/{vmid}-cloudinit-*.yaml {ssh_user}@{node_ip}:{snippetspath}"
-            pprint(f"Uploading cloudinit files for {name} on {node_name}...")
-            code = call(scpcmd, shell=True)
-            if code != 0:
-                return {
-                    "result": "failure",
-                    "reason": "Unable to upload cloudinit files",
-                }
-
-        ci = f"meta=local:snippets/{vmid}-cloudinit-metadata.yaml,user=local:snippets/{vmid}-cloudinit-userdata.yaml"
-        self._wait_for(
-            vm.config.post(
-                cicustom=ci,
-                ipconfig0=",".join(net0),
-                ide0=f"{pool}:cloudinit",
-                serial0="socket",
-            )
-        )
-
-    def _set_ignition(
-        self,
-        vmid,
-        name=None,
-        node_name=None,
-        node_ip=None,
-        pool=None,
-        keys=[],
-        cmds=[],
-        nets=[],
-        gateway=None,
-        dns=None,
-        domain=None,
-        files=[],
-        enableroot=False,
-        overrides={},
-        storemetadata=True,
-        image=None,
-        vmuser=None,
-    ):
-        # Generate ignition data
-        version = ignition_version(image)
-        ignitiondata = gen_ignition(
-            name=name,
-            keys=keys,
-            cmds=cmds,
-            nets=nets,
-            gateway=gateway,
-            dns=dns,
-            domain=domain,
-            files=files,
-            enableroot=enableroot,
-            overrides=overrides,
-            version=version,
-            image=image,
-            vmuser=vmuser,
-        )
-
-        # Send generated ignition file to pve node
-        with TemporaryDirectory() as tmpdir:
-            with open(f"{tmpdir}/{vmid}-ignition.ign", "w") as f:
-                f.write(ignitiondata)
-
-            snippetspath = "/var/lib/vz/snippets/"
-            ssh_user = "root"
-
-            scpcmd = (
-                f"scp {tmpdir}/{vmid}-ignition.ign {ssh_user}@{node_ip}:{snippetspath}"
-            )
-            pprint(f"Uploading ignition file for {name} on {node_name}...")
-            code = call(scpcmd, shell=True)
-            if code != 0:
-                return {
-                    "result": "failure",
-                    "reason": "Unable to upload ignition file",
-                }
-
-        # Configure Ignition through fw_cfg arg
-        vm = self.conn.nodes(node_name).qemu(vmid)
-        self._wait_for(
-            vm.config.post(
-                args=f"-fw_cfg name=opt/com.coreos/config,file={snippetspath}{vmid}-ignition.ign"
-            )
-        )
+        data = {}
+        if notes is None:
+            return data
+        for entry in notes.split(','):
+            desc = entry.split('=')
+            if len(desc) == 2:
+                field, value = desc
+                data[field] = value
+        return data
 
     def create_subnet(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
         print("not implemented")
@@ -1084,7 +967,148 @@ class Kproxmox(Kbase):
         return {'result': 'success'}
 
     def console(self, name, tunnel=False, tunnelhost=None, tunnelport=22, tunneluser='root', web=False):
-        print("not implemented")
+        vm_info = self._get_vm_info(name)
+        if vm_info is None:
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
+        vm_id = os.path.basename(vm_info['id'])
+        vmurl = f"https://{self.host}:8006/?console=kvm&novnc=1&vmid={vm_id}&vmname={name}&node=pve&resize=off"
+        if self.debug or os.path.exists("/i_am_a_container"):
+            msg = f"Open the following url:\n{vmurl}" if os.path.exists("/i_am_a_container") else vmurl
+            pprint(msg)
+        else:
+            pprint(f"Opening url {vmurl}")
+            webbrowser.open(vmurl, new=2, autoraise=True)
 
     def serialconsole(self, name, web=False):
-        print("not implemented")
+        return self.console(name)
+
+    def _get_default_network(self, node):
+        networks = self.list_networks()
+        for n_name, n in networks.items():
+            if n_name.split("/")[0] == node:
+                return n_name.split("/")[1]
+
+    def update_metadata(self, name, metatype, metavalue, append=False):
+        vm = self._get_vm(name)
+        if vm is None:
+            return {"result": "failure", "reason": f"VM {name} not found."}
+        vm_config = vm.config.get()
+        description = self._parse_notes(vm_config.get("description"))
+        if metatype not in description or metavalue is None or description[metatype] != metavalue:
+            if metavalue is None:
+                del description[metatype]
+            else:
+                description[metatype] = metavalue
+            description = [f"{key}={description[key]}" for key in description]
+            description = ','.join(description)
+            vm_data = {'name': name, 'description': description}
+            self._wait_for(vm.config.post(**vm_data))
+
+    def _upload_file(self, node_ip, path, data):
+        with TemporaryDirectory() as tmpdir:
+            with open(f"{tmpdir}/{path}", "w") as f:
+                f.write(data)
+            scpcmd = f"scp -q {tmpdir}/{path} root@{node_ip}:/var/lib/vz/snippets"
+            return call(scpcmd, shell=True)
+
+    def _get_current_disks(self, vm_config):
+        disks = []
+        for entry in vm_config:
+            if re.findall(r"(scsi|ide|virtio)\d+", entry):
+                device = entry
+                disk_data = vm_config[entry].split(',')
+                path = disk_data[0]
+                disktype, disksize = disk_data[-1].split('=')
+                disksize = int(disksize.replace('G', ''))
+                if disktype == 'media':
+                    continue
+                disks.append({'name': device, 'size': disksize, 'path': path, 'full': vm_config[entry]})
+        return disks
+
+    def _get_lxc(self, name):
+        for container in self.conn.nodes(self.node).lxc.get():
+            if container['name'] == name:
+                container_id = container['vmid']
+                return self.conn.nodes(self.node).lxc(container_id)
+
+    def create_container(self, name, image, nets=None, cmds=[], ports=[], volumes=[], environment=[], label=None,
+                         overrides={}):
+        print("NOT IMPLEMENTED")
+        return {'result': 'success'}
+
+    def delete_container(self, name):
+        container = self._get_lxc(name)
+        if container is None:
+            return {"result": "failure", "reason": f"Container {name} not found."}
+        self._wait_for(container.delete())
+        return {'result': 'success'}
+
+    def start_container(self, name):
+        container = self._get_lxc(name)
+        if container is None:
+            return {"result": "failure", "reason": f"Container {name} not found."}
+        self._wait_for(container.status.start.post())
+        return {'result': 'success'}
+
+    def stop_container(self, name):
+        container = self._get_lxc(name)
+        if container is None:
+            return {"result": "failure", "reason": f"Container {name} not found."}
+        self._wait_for(container.status.stop.post())
+        return {'result': 'success'}
+
+    def console_container(self, name):
+        container = self._get_lxc(name)
+        if container is None:
+            error(f"Container {name} not found")
+            return {'result': 'failure', 'reason': f"Container {name} not found"}
+        cont_id = container.status.current.get().get('vmid')
+        container_url = f"https://{self.host}:8006/?console=lxc&xtermjs=1&vmid={cont_id}&vmname={name}&node=pve&cmd="
+        if self.debug or os.path.exists("/i_am_a_container"):
+            msg = f"Open the following url:\n{container_url}" if os.path.exists("/i_am_a_container") else container_url
+            pprint(msg)
+        else:
+            pprint(f"Opening url {container_url}")
+            webbrowser.open(container_url, new=2, autoraise=True)
+        return {'result': 'success'}
+
+    def list_containers(self):
+        containers = []
+        for container in self.conn.nodes(self.node).lxc.get():
+            name = container['name']
+            state = container['status']
+            state = 'up' if state.split(' ')[0].startswith('running') else 'down'
+            lxc_info = self._get_lxc_info(name, self._get_vm(name).config.get())
+            ip, plan, command, ports, deploy = lxc_info['ip'], '', '', '', ''
+            containers.append([name, state, ip, plan, command, ports, deploy])
+        return containers
+
+    def exists_container(self, name):
+        return len([cont for cont in self.conn.nodes(self.node).lxc.get() if cont['name'] == name]) > 0
+
+    def list_images(self):
+        images = []
+        for storage in self.conn.nodes(self.node).storage.get(content="vztmpl"):
+            templates = self.conn.nodes(self.node).storage(storage['storage']).content.get()
+            images.extend([item['volid'] for item in templates if item.get("content") == "vztmpl"])
+        return sorted(images)
+
+    def _get_lxc_info(self, name, config=None):
+        ips = []
+        yamlinfo = {'name': config['hostname'], 'memory': config['memory'], 'numcpus': config['cores'], 'nets': []}
+        for net in [key for key in config if key.startswith('net')]:
+            net = self._parse_notes(config[net])
+            device, mac, network, networktype = net['name'], net['hwaddr'].lower(), net['bridge'], net['type']
+            yamlinfo['nets'].append({'device': device, 'mac': mac.lower(), 'net': network, 'type': networktype})
+            ip = net['ip'].split('/')[0]
+            if 'ip' not in yamlinfo:
+                yamlinfo['ip'] = ip
+            ips.append(ip)
+        if len(ips) > 1:
+            yamlinfo['ips'] = ips
+        path, size = config['rootfs'].split(',')
+        disksize = size.replace('size=', '')
+        disk = {'device': 'rootfs', 'size': disksize, 'format': 'raw', 'type': 'virtio', 'path': path}
+        yamlinfo['disks'] = [disk]
+        return yamlinfo

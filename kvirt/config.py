@@ -390,7 +390,8 @@ class Kconfig(Kbaseconfig):
                     node=node,
                     verify_ssl=verify_ssl,
                     imagepool=imagepool,
-                    debug=False)
+                    debug=False
+                )
             elif self.type == 'web':
                 port = options.get('port', 8000)
                 localkube = options.get('localkube', True)
@@ -516,6 +517,8 @@ class Kconfig(Kbaseconfig):
         elif profile == 'kvirt':
             vmprofiles[profile] = {}
         elif self.type == 'kubevirt' and '/' in profile:
+            vmprofiles[profile] = {'image': profile}
+        elif self.type == 'proxmox' and '/' in profile:
             vmprofiles[profile] = {'image': profile}
         else:
             return {'result': 'failure', 'reason': f'Image {profile} not found'}
@@ -2374,20 +2377,18 @@ class Kconfig(Kbaseconfig):
                 image_type = self.type
                 if kvm_openstack and self.type == 'kvm':
                     image_type = 'openstack'
-                if self.type == "proxmox":
-                    image_type = 'kvm'
-                if not kvm_openstack and self.type == 'kvm':
+                if kvm_openstack and self.type == "proxmox":
+                    image_type = 'openstack'
+                if not kvm_openstack and self.type in ['kvm', 'proxmox']:
                     image += "-qemu"
                 if 'rhcos' in image and not image.endswith('qcow2.gz'):
-                    if rhcos_commit is not None:
-                        url = common.get_commit_rhcos(rhcos_commit, _type=image_type)
-                    elif rhcos_installer:
+                    if rhcos_installer:
                         os.environ['PATH'] += f':{os.getcwd()}'
                         url = common.get_installer_rhcos(_type=image_type, arch=arch)
                     else:
                         if arch != 'x86_64':
                             url += f'-{arch}'
-                        url = common.get_latest_rhcos(url, _type=image_type, arch=arch)
+                        url = common.get_latest_rhcos(url, _type=image_type, arch=arch, qemu=not kvm_openstack)
                 if 'fcos' in image:
                     url = common.get_latest_fcos(url, _type=image_type)
                 if image == 'fedoralatest':

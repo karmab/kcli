@@ -913,7 +913,7 @@ def profilelist_container(args):
 
 def list_containerimage(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    if config.type != 'kvm':
+    if config.type not in ['kvm', 'proxmox']:
         error("Operation not supported on this kind of client.Leaving...")
         sys.exit(1)
     cont = Kcontainerconfig(config, client=args.containerclient).cont
@@ -3058,6 +3058,11 @@ def create_container(args):
     if image is None:
         error(f"Missing image in profile {profile}. Leaving...")
         sys.exit(1)
+    if config.type == 'proxmox':
+        overrides['lxc'] = True
+        config.create_vm(name, image, overrides=overrides)
+        success(f"container {name} created")
+        return
     cmd = profile.get('cmd')
     ports = profile.get('ports')
     environment = profile.get('environment')

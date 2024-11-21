@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from getpass import getuser
-from kvirt.defaults import IMAGES
-from kvirt.defaults import UBUNTUS, METADATA_FIELDS
+from kvirt.defaults import IMAGES, METADATA_FIELDS, UBUNTUS
 from kvirt import common
 from kvirt.common import error, pprint, warning, get_ssh_pub_key, success
 from kvirt.providers.kvm.helpers import DHCPKEYWORDS
@@ -763,7 +762,7 @@ class Kvirt(object):
                     ovsxml.format("")
             if nettype == 'igb' and machine == 'pc':
                 machine = 'q35'
-                warning(f"Forcing machine type to {machine}")
+                warning("Forcing machine type to q35")
             if nicnuma is not None:
                 slot = nicslots[nicnuma] + 1
                 nicslots[nicnuma] = slot
@@ -1173,25 +1172,24 @@ class Kvirt(object):
             guestxml = ""
             videoxml = """<video><model type='vmvga' vram='65536'/></video>"""
         hostdevxml = ""
-        if pcidevices:
-            for index, pcidevice in enumerate(pcidevices):
-                pcidevice = str(pcidevice)
-                if pcidevice.startswith('000'):
-                    newdomain = pcidevice.split(':')[0]
-                    pcidevice = pcidevice.replace(f'{newdomain}:', '')
-                else:
-                    newdomain = "0000"
-                if len(pcidevice.split(':')) != 2:
-                    return {'result': 'failure', 'reason': f"Incorrect pcidevice entry {index}"}
-                newbus = pcidevice.split(':')[0]
-                if len(pcidevice.split('.')) != 2:
-                    return {'result': 'failure', 'reason': "Incorrect pcidevice entry {index}"}
-                newslot = pcidevice.split('.')[0].replace('%s:' % newbus, '')
-                newfunction = pcidevice.split('.')[1]
-                newhostdev = """<hostdev mode='subsystem' type='pci' managed='yes'>
+        for index, pcidevice in enumerate(pcidevices):
+            pcidevice = str(pcidevice)
+            if pcidevice.startswith('000'):
+                newdomain = pcidevice.split(':')[0]
+                pcidevice = pcidevice.replace(f'{newdomain}:', '')
+            else:
+                newdomain = "0000"
+            if len(pcidevice.split(':')) != 2:
+                return {'result': 'failure', 'reason': f"Incorrect pcidevice entry {index}"}
+            newbus = pcidevice.split(':')[0]
+            if len(pcidevice.split('.')) != 2:
+                return {'result': 'failure', 'reason': "Incorrect pcidevice entry {index}"}
+            newslot = pcidevice.split('.')[0].replace('%s:' % newbus, '')
+            newfunction = pcidevice.split('.')[1]
+            newhostdev = """<hostdev mode='subsystem' type='pci' managed='yes'>
 <source><address domain='0x%s' bus='0x%s' slot='0x%s' function='0x%s'/></source>
 </hostdev>""" % (newdomain, newbus, newslot, newfunction)
-                hostdevxml += newhostdev
+            hostdevxml += newhostdev
         rngxml = ""
         if rng:
             rngxml = """<rng model='virtio'>

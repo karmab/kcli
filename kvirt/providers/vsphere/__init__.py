@@ -3,10 +3,9 @@ from binascii import hexlify
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
-from ipaddress import ip_address, ip_network
 import json
 from kvirt import common
-from kvirt.common import error, pprint, warning
+from kvirt.common import error, pprint, warning, sdn_ip
 from kvirt.defaults import UBUNTUS, METADATA_FIELDS
 from kvirt.providers.vsphere.helpers import find, collectproperties, findvm, createfolder, changecd, convert, waitForMe
 from kvirt.providers.vsphere.helpers import createscsispec, creatediskspec, createdvsnicspec, createclonespec
@@ -31,12 +30,6 @@ import urllib.request
 from uuid import UUID
 import webbrowser
 from zipfile import ZipFile
-
-
-def sdn_ip(ip, kubetype, cluster_network):
-    if cluster_network is None:
-        cluster_network = '10.132.0.0/14'
-    return kubetype is not None and kubetype == 'openshift' and ip_address(ip) in ip_network(cluster_network)
 
 
 class Ksphere:

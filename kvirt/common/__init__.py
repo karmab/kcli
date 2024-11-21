@@ -9,7 +9,7 @@ from kvirt.defaults import UBUNTUS, SSH_PUB_LOCATIONS, OPENSHIFT_TAG
 from kvirt.kfish import Redfish
 from kvirt.nameutils import get_random_name
 from kvirt import version
-from ipaddress import ip_address
+from ipaddress import ip_address, ip_network
 from random import randint
 import base64
 from glob import glob
@@ -1245,8 +1245,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
 
 
 def get_latest_fcos(url, _type='kvm', region=None):
-    keys = {'ovirt': 'openstack', 'kubevirt': 'openstack', 'kvm': 'qemu', 'vsphere': 'vmware'}
-    key = keys.get(_type, _type)
+    key = 'vmware' if _type is not None and _type == 'vsphere' else 'openstack'
     _format = 'ova' if _type == 'vsphere' else 'qcow2.xz'
     with urlopen(url) as u:
         data = json.loads(u.read().decode())
@@ -1258,19 +1257,9 @@ def get_latest_fcos(url, _type='kvm', region=None):
             return data['architectures']['x86_64']['artifacts'][key]["formats"][_format]['disk']['location']
 
 
-def get_latest_fcos_metal(url):
-    with urlopen(url) as u:
-        data = json.loads(u.read().decode())
-        formats = data['architectures']['x86_64']['artifacts']['metal']['formats']
-        kernel = formats['pxe']['kernel']['location']
-        initrd = formats['pxe']['initramfs']['location']
-        metal = formats['raw.xz']['disk']['location']
-        return kernel, initrd, metal
-
-
-def get_latest_rhcos(url, _type='kvm', arch='x86_64'):
-    if _type in ['openstack', 'ovirt', 'kubevirt']:
-        return f"{url}/latest/rhcos-openstack.{arch}.qcow2.gz"
+def get_latest_rhcos(url, _type='kvm', arch='x86_64', qemu=False):
+    if qemu:
+        return f"{url}/latest/rhcos-qemu.{arch}.qcow2.gz"
     elif _type == 'vsphere':
         return f"{url}/latest/rhcos-vmware.{arch}.ova"
     elif _type == 'aws':
@@ -1280,23 +1269,7 @@ def get_latest_rhcos(url, _type='kvm', arch='x86_64'):
     elif _type == 'ibm':
         return f"{url}/latest/rhcos-ibmcloud.{arch}.qcow2.gz"
     else:
-        return f"{url}/latest/rhcos-qemu.{arch}.qcow2.gz"
-
-
-def get_commit_rhcos(commitid, _type='kvm', region=None):
-    keys = {'ovirt': 'openstack', 'kubevirt': 'openstack', 'kvm': 'qemu', 'vsphere': 'vmware', 'ibm': 'ibmcloud'}
-    key = keys.get(_type, _type)
-    buildurl = f"https://raw.githubusercontent.com/openshift/installer/{commitid}/data/data/rhcos.json"
-    with urlopen(buildurl) as b:
-        data = json.loads(b.read().decode())
-        if _type == 'aws':
-            return data['amis'][region]['hvm']
-        elif _type == 'gcp':
-            return data['gcp']['image']
-        else:
-            baseuri = data['baseURI']
-            path = f"{baseuri}{data['images'][key]['path']}"
-            return path
+        return f"{url}/latest/rhcos-openstack.{arch}.qcow2.gz"
 
 
 def get_installer_rhcos(_type='kvm', region=None, arch='x86_64'):
@@ -1313,27 +1286,6 @@ def get_installer_rhcos(_type='kvm', region=None, arch='x86_64'):
     else:
         _format = 'ova' if _type == 'vsphere' else 'qcow2.gz'
         return data['architectures'][arch]['artifacts'][key]['formats'][_format]['disk']['location']
-
-
-def get_commit_rhcos_metal(commitid):
-    buildurl = f"https://raw.githubusercontent.com/openshift/installer/{commitid}/data/data/rhcos.json"
-    with urlopen(buildurl) as b:
-        data = json.loads(b.read().decode())
-        baseuri = data['baseURI']
-        kernel = f"{baseuri}{data['images']['kernel']['path']}"
-        initrd = f"{baseuri}{data['images']['initramfs']['path']}"
-        metal = f"{baseuri}{data['images']['metal']['path']}"
-        return kernel, initrd, metal
-
-
-def get_installer_rhcos_metal():
-    INSTALLER_COREOS = os.popen('openshift-install coreos print-stream-json 2>/dev/null').read()
-    data = json.loads(INSTALLER_COREOS)
-    base = data['architectures']['x86_64']['artifacts']['metal']['formats']['pxe']
-    kernel = base['kernel']['location']
-    initrd = base['initramfs']['location']
-    metal = base['rootfs']['location']
-    return kernel, initrd, metal
 
 
 def get_installer_iso():
@@ -2603,3 +2555,9 @@ def convert_yaml_to_cmd(data):
                 cmd += f' -P {key}={new_value}'
         cmd += f' {name}'
         print(cmd)
+
+
+def sdn_ip(ip, kubetype, cluster_network):
+    if cluster_network is None:
+        cluster_network = '10.132.0.0/14'
+    return kubetype is not None and kubetype == 'openshift' and ip_address(ip) in ip_network(cluster_network)

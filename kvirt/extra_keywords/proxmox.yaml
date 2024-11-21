@@ -1,0 +1,6 @@
+iommu: iommu flag
+machine: Custom machine type
+qemuextra: Extra cmdline for qemu
+secureboot: Enable secureboot
+uefi: Enable uefi
+uefi_legacy: Enable uefi for rhel8 hypervisors

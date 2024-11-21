@@ -5,7 +5,7 @@ from ipaddress import ip_address, ip_network
 import json
 from kvirt.common import error, pprint, success, warning, info2, fix_typos
 from kvirt.common import get_oc, pwd_path, get_oc_mirror
-from kvirt.common import get_latest_fcos, generate_rhcos_iso, olm_app, get_commit_rhcos
+from kvirt.common import get_latest_fcos, generate_rhcos_iso, olm_app
 from kvirt.common import get_installer_rhcos, wait_cloud_dns, delete_lastvm
 from kvirt.common import ssh, scp, _ssh_credentials, get_ssh_pub_key, separate_yamls
 from kvirt.common import start_baremetal_hosts_with_iso, update_baremetal_hosts, get_cluster_api_vips
@@ -1029,10 +1029,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 fcos_url = 'https://builds.coreos.fedoraproject.org/streams/stable.json'
                 image_url = get_latest_fcos(fcos_url, _type=image_type)
             else:
-                try:
-                    image_url = get_installer_rhcos(_type=image_type, region=region, arch=arch)
-                except:
-                    image_url = get_commit_rhcos(COMMIT_ID, _type=image_type, region=region)
+                image_url = get_installer_rhcos(_type=image_type, region=region, arch=arch)
         except:
             msg = f"Couldn't gather the {provider} image associated to commit {COMMIT_ID}. "
             msg += "Force an image in your parameter file"

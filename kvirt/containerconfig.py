@@ -31,11 +31,13 @@ class Kcontainerconfig():
                     sys.exit(1)
                 else:
                     currentconfig = config.ini[currentconfig['containerclient']]
-        if 'type' in currentconfig and currentconfig['type'] == 'kubevirt':
-            default_k8s = True
+        default_k8s = currentconfig.get('type', '') == 'kubevirt'
+        proxmox = currentconfig.get('type', '') == 'proxmox'
         k8s = currentconfig.get('k8s', default_k8s)
         host = currentconfig.get('host', '127.0.0.1')
-        if not k8s:
+        if proxmox:
+            cont = config.k
+        elif not k8s:
             from kvirt.container import Kcontainer
             engine = currentconfig.get('containerengine', 'podman')
             cont = Kcontainer(host, engine=engine, debug=debug, insecure=insecure)
