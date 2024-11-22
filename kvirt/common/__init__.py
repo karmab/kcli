@@ -2211,21 +2211,19 @@ def reset_baremetal_host(url, user, password, debug=False):
 def start_baremetal_host(url, user, password, overrides={}, debug=False):
     iso_url = overrides.get('iso_url')
     reset = overrides.get('reset', False)
-    sno = iso_url is not None and iso_url.endswith('-sno.iso')
-    index_iso_url = iso_url
-    if sno:
+    if iso_url is not None and overrides.get('sno_worker', False):
         role = overrides.get('role') or 'worker'
-        index_iso_url = iso_url.replace('-sno.iso', f'-{role}.iso')
+        iso_url = iso_url.replace('-sno.iso', f'-{role}.iso')
     red = Redfish(url, user, password, debug=debug)
     if reset:
         red.reset()
         sleep(240)
-    if index_iso_url is not None:
-        pprint(f"Booting host with url {url} with {index_iso_url}")
+    if iso_url is not None:
+        pprint(f"Booting host with url {url} with iso {iso_url}")
         try:
-            red.set_iso(index_iso_url)
+            red.set_iso(iso_url)
         except Exception as e:
-            msg = f"Hit {e} when plugging iso to host with url {url}"
+            msg = f"Hit {e} when plugging iso {iso_url} to host with url {url}"
             error(msg)
             return {'result': 'failure', 'reason': msg}
     else:
@@ -2240,13 +2238,14 @@ def start_baremetal_host(url, user, password, overrides={}, debug=False):
 
 
 def start_baremetal_hosts_with_iso(hosts, iso_url, overrides={}, debug=False):
-    for host in hosts:
+    for index, host in enumerate(hosts):
         url = host.get('url') or host.get('bmc_url')
         user = host.get('user') or host.get('bmc_user') or overrides.get('user') or overrides.get('bmc_user')
         password = host.get('password') or host.get('bmc_password') or overrides.get('password')\
             or overrides.get('bmc_password')
         if url is not None and user is not None and password is not None:
             overrides['iso_url'] = iso_url
+            overrides['sno_worker'] = index > 1 and iso_url.endswith('-sno.iso')
             start_baremetal_host(url, user, password, overrides=overrides, debug=debug)
 
 
