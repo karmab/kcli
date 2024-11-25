@@ -771,7 +771,7 @@ class Kproxmox(Kbase):
                     if "active" in net and net["active"]:
                         netname = f"{n['node']}/{net['iface']}"
                         nets[netname] = {
-                            "cidr": net["cidr"],
+                            "cidr": net.get("cidr", ""),
                             "dhcp": True,
                             "type": "bridged",
                             "mode": "N/A",
