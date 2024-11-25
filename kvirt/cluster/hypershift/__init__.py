@@ -351,8 +351,7 @@ def create(config, plandir, cluster, overrides):
     elif not os.path.isabs(os.environ['KUBECONFIG']):
         os.environ['KUBECONFIG'] = f"{os.getcwd()}/{os.environ['KUBECONFIG']}"
         if not os.path.exists(os.environ['KUBECONFIG']):
-            msg = "Kubeconfig not found. Leaving..."
-            return {'result': 'failure', 'reason': msg}
+            return {'result': 'failure', 'reason': "Kubeconfig not found. Leaving..."}
     data = safe_load(open(f'{plandir}/kcli_default.yml'))
     data.update(overrides)
     fix_typos(data)
@@ -371,8 +370,7 @@ def create(config, plandir, cluster, overrides):
     kubevirt = platform == 'kubevirt'
     data['kubevirt'] = kubevirt
     if platform not in [None, 'kubevirt', 'assisted']:
-        msg = "Incorrect platform. Choose between None, kubevirt and assisted"
-        return {'result': 'failure', 'reason': msg}
+        return {'result': 'failure', 'reason': "Incorrect platform. Choose between None, kubevirt and assisted"}
     baremetal_iso = data.get('baremetal_iso', False)
     baremetal_hosts = data.get('baremetal_hosts')
     async_install = data.get('async')
@@ -387,8 +385,7 @@ def create(config, plandir, cluster, overrides):
     use_management_version = False
     version = data.get('version')
     if version not in ['dev-preview', 'stable', 'ci', 'nightly', 'latest', 'cluster']:
-        msg = f"Invalid version {version}"
-        return {'result': 'failure', 'reason': msg}
+        return {'result': 'failure', 'reason': f"Invalid version {version}"}
     elif version == 'cluster':
         use_management_version = True
         version = 'stable'
@@ -399,8 +396,7 @@ def create(config, plandir, cluster, overrides):
         data['tag'] = tag
     pull_secret = os.path.expanduser(pwd_path(data.get('pull_secret')))
     if not os.path.exists(pull_secret):
-        msg = f"Missing pull secret file {pull_secret}"
-        return {'result': 'failure', 'reason': msg}
+        return {'result': 'failure', 'reason': f"Missing pull secret file {pull_secret}"}
     network_type = data['network_type']
     if network_type not in ['Calico', 'OVNKubernetes']:
         data['network_type'] = 'Other'
@@ -408,8 +404,7 @@ def create(config, plandir, cluster, overrides):
     namespace = data.get('namespace')
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     if os.path.exists(clusterdir):
-        msg = f"Remove existing directory {clusterdir} or use --force"
-        return {'result': 'failure', 'reason': msg}
+        return {'result': 'failure', 'reason': f"Remove existing directory {clusterdir} or use --force"}
     else:
         os.makedirs(f"{clusterdir}/auth")
     if which('oc') is None:
@@ -422,14 +417,15 @@ def create(config, plandir, cluster, overrides):
             pprint(f"Using default class {sc['metadata']['name']}")
             default_sc = True
     if not default_sc:
-        msg = "Default Storage class not found. Leaving..."
-        return {'result': 'failure', 'reason': msg}
+        return {'result': 'failure', 'reason': "Default Storage class not found. Leaving..."}
     kubevirt_crd_cmd = 'oc get crd hyperconvergeds.hco.kubevirt.io -o yaml 2>/dev/null'
     if kubevirt and safe_load(os.popen(kubevirt_crd_cmd).read()) is None:
         warning("Kubevirt not fully installed. Installing it for you")
         app_name, source, channel, csv, description, x_namespace, channels, crds = olm_app('kubevirt-hyperconverged')
         app_data = {'name': app_name, 'source': source, 'channel': channel, 'namespace': x_namespace, 'csv': csv}
-        config.create_app_openshift(app_name, app_data)
+        result = config.create_app_openshift(app_name, app_data)
+        if result != 0:
+            return {'result': 'failure', 'reason': "Couldnt install kubevirt properly"}
     kubeconfig = os.environ.get('KUBECONFIG')
     kubeconfigdir = os.path.dirname(kubeconfig) if kubeconfig is not None else os.path.expanduser("~/.kube")
     kubeconfig = os.path.basename(kubeconfig) if kubeconfig is not None else 'config'
@@ -448,16 +444,16 @@ def create(config, plandir, cluster, overrides):
         app_data = {'name': app_name, 'source': source, 'channel': channel, 'namespace': x_namespace, 'csv': csv,
                     'mce_hypershift': mce_hypershift, 'assisted': need_assisted, 'version': version, 'tag': tag,
                     'pull_secret': pull_secret}
-        config.create_app_openshift(app_name, app_data)
+        result = config.create_app_openshift(app_name, app_data)
+        if result != 0:
+            return {'result': 'failure', 'reason': "Couldnt install mce properly"}
         sleep(240)
         if assisted and safe_load(os.popen(assisted_crd_cmd).read()) is None:
-            msg = "Couldnt install assisted via mce properly"
-            return {'result': 'failure', 'reason': msg}
+            return {'result': 'failure', 'reason': "Couldnt install assisted via mce properly"}
     if need_hypershift and upstream:
         warning("Hypershift needed. Installing it for you")
         if which('podman') is None:
-            msg = "Please install podman first in order to install hypershift"
-            return {'result': 'failure', 'reason': msg}
+            return {'result': 'failure', 'reason': "Please install podman first in order to install hypershift"}
         else:
             hypercmd = f"podman pull {data['operator_image']}"
             call(hypercmd, shell=True)
@@ -467,8 +463,7 @@ def create(config, plandir, cluster, overrides):
             call(hypercmd, shell=True)
             sleep(120)
     if safe_load(os.popen(hosted_crd_cmd).read()) is None:
-        msg = "Couldnt install hypershift properly"
-        return {'result': 'failure', 'reason': msg}
+        return {'result': 'failure', 'reason': "Couldnt install hypershift properly"}
     registry = 'quay.io'
     management_image = os.popen("oc get clusterversion version -o jsonpath='{.status.desired.image}'").read()
     prefixes = ['quay.io', 'registry.ci']
@@ -510,8 +505,7 @@ def create(config, plandir, cluster, overrides):
         if version == 'latest':
             tag = versions[0]
         elif str(tag) not in versions:
-            msg = f"Invalid tag {tag}. Choose between {','.join(versions)}"
-            return {'result': 'failure', 'reason': msg}
+            return {'result': 'failure', 'reason': f"Invalid tag {tag}. Choose between {','.join(versions)}"}
     else:
         warning(f"Couldnt verify whether {tag} is a valid tag")
     management_cmd = "oc get ingresscontroller -n openshift-ingress-operator default -o jsonpath='{.status.domain}'"
@@ -555,8 +549,7 @@ def create(config, plandir, cluster, overrides):
     elif os.path.exists(pub_key):
         data['pub_key'] = open(pub_key).read().strip()
     else:
-        msg = f"Publickey file {pub_key} not found"
-        return {'result': 'failure', 'reason': msg}
+        return {'result': 'failure', 'reason': f"Public key file {pub_key} not found"}
     network = data.get('network')
     ingress_ip = data.get('ingress_ip')
     virtual_router_id = None
@@ -586,8 +579,7 @@ def create(config, plandir, cluster, overrides):
                     route_cmd += f"--hostname={hostname} --wildcard-policy=Subdomain --port=443"
                     call(route_cmd, shell=True)
                 elif ingress_ip is None:
-                    msg = f"Couldnt gather an ingress_ip from network {network}"
-                    return {'result': 'failure', 'reason': msg}
+                    return {'result': 'failure', 'reason': f"Couldnt gather an ingress_ip from network {network}"}
         elif provider == 'kvm' and networkinfo['type'] == 'routed':
             cidr = networkinfo['cidr']
             ingress_index = 3 if ':' in cidr else -4
@@ -595,8 +587,7 @@ def create(config, plandir, cluster, overrides):
             warning(f"Using {ingress_ip} as ingress_ip")
             data['ingress_ip'] = ingress_ip
         else:
-            msg = "You need to define ingress_ip in your parameters file"
-            return {'result': 'failure', 'reason': msg}
+            return {'result': 'failure', 'reason': "You need to define ingress_ip in your parameters file"}
     elif kubevirt:
         warning(f"Note that ingress_ip {ingress_ip} won't be configured as you're using kubevirt provider")
     if ingress_ip is not None and data.get('virtual_router_id') is None and not kubevirt_ingress_svc:
@@ -755,8 +746,7 @@ def create(config, plandir, cluster, overrides):
         elif version in ['dev-preview', 'stable', 'ci', 'nightly', 'latest']:
             assetsdata['hosted_image'] = offline_image(version=version, tag=tag, pull_secret=pull_secret)
         else:
-            msg = f"Invalid version {version}"
-            return {'result': 'failure', 'reason': msg}
+            return {'result': 'failure', 'reason': f"Invalid version {version}"}
     hostedclusterfile = config.process_inputfile(cluster, f"{plandir}/hostedcluster.yaml", overrides=assetsdata)
     with open(f"{clusterdir}/hostedcluster.yaml", 'w') as f:
         f.write(hostedclusterfile)
@@ -771,8 +761,7 @@ def create(config, plandir, cluster, overrides):
         elif version in ['dev-preview', 'stable', 'latest']:
             run = get_downstream_installer(version=version, tag=tag, pull_secret=pull_secret)
         else:
-            msg = f"Invalid version {version}"
-            return {'result': 'failure', 'reason': msg}
+            return {'result': 'failure', 'reason': f"Invalid version {version}"}
         if run != 0:
             msg = "Couldn't download openshift-install"
             return {'result': 'failure', 'reason': msg}

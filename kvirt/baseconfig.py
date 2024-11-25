@@ -986,11 +986,11 @@ class Kbaseconfig:
 
     def create_app_generic(self, app, overrides={}, outputdir=None):
         appdir = f"{os.path.dirname(kubeadm.create.__code__.co_filename)}/apps"
-        common.app_create_generic(self, app, appdir, overrides=overrides, outputdir=outputdir)
+        return common.app_create_generic(self, app, appdir, overrides=overrides, outputdir=outputdir)
 
     def delete_app_generic(self, app, overrides={}):
         appdir = f"{os.path.dirname(kubeadm.create.__code__.co_filename)}/apps"
-        common.delete_app_delete_generic(self, app, appdir, overrides=overrides)
+        return common.delete_app_delete_generic(self, app, appdir, overrides=overrides)
 
     def info_app_generic(self, app):
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
@@ -1007,16 +1007,16 @@ class Kbaseconfig:
     def create_app_openshift(self, app, overrides={}, outputdir=None):
         appdir = f"{os.path.dirname(openshift.create.__code__.co_filename)}/apps"
         if app in kdefaults.LOCAL_OPENSHIFT_APPS:
-            common.create_app_generic(self, app, appdir, overrides=overrides, outputdir=outputdir)
+            return common.create_app_generic(self, app, appdir, overrides=overrides, outputdir=outputdir)
         else:
-            common.create_app_openshift(self, app, appdir, overrides=overrides, outputdir=outputdir)
+            return common.create_app_openshift(self, app, appdir, overrides=overrides, outputdir=outputdir)
 
     def delete_app_openshift(self, app, overrides={}):
         appdir = f"{os.path.dirname(openshift.create.__code__.co_filename)}/apps"
         if app in kdefaults.LOCAL_OPENSHIFT_APPS:
-            common.delete_app_generic(self, app, appdir, overrides=overrides)
+            return common.delete_app_generic(self, app, appdir, overrides=overrides)
         else:
-            common.delete_app_openshift(self, app, appdir, overrides=overrides)
+            return common.delete_app_openshift(self, app, appdir, overrides=overrides)
 
     def info_app_openshift(self, app, overrides={}):
         plandir = os.path.dirname(openshift.create.__code__.co_filename)

@@ -466,7 +466,9 @@ def process_apps(config, clusterdir, apps, overrides):
             app_data = {'name': name, 'catalog': catalog, 'channel': channel, 'namespace': namespace, 'csv': csv}
             app_data.update(base_data)
         pprint(f"Adding app {name}")
-        config.create_app_openshift(name, app_data)
+        result = config.create_app_openshift(name, app_data)
+        if result != 0:
+            error(f"Issue adding app {name}")
 
 
 def process_postscripts(clusterdir, postscripts):
