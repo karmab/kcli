@@ -399,10 +399,11 @@ class Kproxmox(Kbase):
                 return {"result": "failure", "reason": f"Image {image} not found"}
             disk = disks[0] if disks else [disksize]
             disksize = disk.get('size', disksize) if isinstance(disk, dict) else disk
-            password = overrides.get('rootpassword', 'root')
+            password = overrides.get('rootpassword', 'password')
             params = {'vmid': self.conn.cluster.nextid.get(), 'hostname': name, 'memory': memory, 'swap': 512,
                       'cores': numcpus, 'rootfs': f'{imagepool}:{disksize}', 'ostemplate': image,
                       'password': password, 'net0': 'name=eth0,bridge=vmbr0,ip=dhcp', 'start': 1}
+            params['description'] = f'image={os.path.basename(image)},plan={plan},profile={profile}'
             self._wait_for(self.conn.nodes(self.node).lxc.post(**params))
             return {"result": "success"}
         qemuextra = overrides.get('qemuextra')
@@ -1080,8 +1081,9 @@ class Kproxmox(Kbase):
             state = container['status']
             state = 'up' if state.split(' ')[0].startswith('running') else 'down'
             lxc_info = self._get_lxc_info(name, self._get_vm(name).config.get())
-            ip, plan, command, ports, deploy = lxc_info['ip'], '', '', '', ''
-            containers.append([name, state, ip, plan, command, ports, deploy])
+            ip, ports, deploy = lxc_info['ip'], '', ''
+            plan, image = lxc_info.get('plan', ''), lxc_info.get('image', '')
+            containers.append([name, state, image, plan, ip, ports, deploy])
         return containers
 
     def exists_container(self, name):
@@ -1111,4 +1113,10 @@ class Kproxmox(Kbase):
         disksize = size.replace('size=', '')
         disk = {'device': 'rootfs', 'size': disksize, 'format': 'raw', 'type': 'virtio', 'path': path}
         yamlinfo['disks'] = [disk]
+        if 'description' in config:
+            description = self._parse_notes(config['description'])
+            if 'plan' in description:
+                yamlinfo['plan'] = description['plan']
+            if 'image' in description:
+                yamlinfo['image'] = description['image']
         return yamlinfo
