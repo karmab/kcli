@@ -10,6 +10,26 @@ from uuid import UUID
 import traceback
 
 
+def pprint(text):
+    color = '36'
+    print(f'\033[{color}m{text}\033[0m')
+
+
+def error(text):
+    color = '31'
+    print(f'\033[{color}m{text}\033[0m', file=sys.stderr)
+
+
+def success(text):
+    color = '32'
+    print(f'\033[{color}m{text}\033[0m')
+
+
+def warning(text):
+    color = '33'
+    print(f'\033[{color}m{text}\033[0m')
+
+
 def valid_uuid(uuid):
     try:
         UUID(uuid)
@@ -31,8 +51,8 @@ def get_info(url, headers):
         request = Request(chassis_url, headers=headers)
         chassis = json.loads(urlopen(request).read())['Members'][0]['@odata.id']
     except Exception as e:
-        print(f"Hit issue when accessing url {chassis_url}")
-        raise e
+        error(f"Hit issue {e.msg} when accessing url {chassis_url}")
+        sys.exit(1)
     request_url = f"{p.scheme}://{p.netloc}{chassis}"
     request = Request(request_url, headers=headers)
     manufacturer = json.loads(urlopen(request).read()).get('Manufacturer', '').lower()
@@ -43,7 +63,7 @@ def get_info(url, headers):
     elif 'supermicro' in manufacturer:
         model = 'supermicro'
     else:
-        print(f"Failed to detect model from url '{url}'")
+        error(f"Failed to detect model from url '{url}'")
         sys.exit(1)
     if '://' not in url:
         if model in ['hp', 'supermicro', 'lenovo']:
@@ -64,7 +84,7 @@ class Redfish(object):
         url = url.replace('idrac-virtualmedia', 'https').replace('ilo5-virtualmedia', 'https')
         self.model, self.url = get_info(url, self.headers)
         if self.debug:
-            print(f"Using base url {self.url}")
+            pprint(f"Using base url {self.url}")
         p = urlparse(self.url)
         self.baseurl = f"{p.scheme}://{p.netloc}"
         self.manager_url = None
@@ -79,7 +99,7 @@ class Redfish(object):
         response = json.loads(urlopen(request).read())
         ret_data = f"{self.baseurl}{response['Links']['ManagedBy'][0]['@odata.id']}"
         if self.debug:
-            print(f"Manager URL is {ret_data}")
+            pprint(f"Manager URL is {ret_data}")
         return ret_data
 
     def get_iso_url(self):
@@ -97,7 +117,7 @@ class Redfish(object):
         else:
             member_list = results['Members']
             if not member_list:
-                print(f"Error: VirtualMedia Member list in {self.baseurl}{virtual_media_url} is empty")
+                error(f"VirtualMedia Member list in {self.baseurl}{virtual_media_url} is empty")
                 sys.exit(1)
             for member in member_list:
                 odata = member['@odata.id']
@@ -105,19 +125,19 @@ class Redfish(object):
                     break
         ret_data = f'{self.baseurl}{odata}'
         if self.debug:
-            print(f"ISO URL is {ret_data}")
+            pprint(f"ISO URL is {ret_data}")
         return ret_data
 
     def get_iso_status(self):
         iso_url = self.get_iso_url()
         if self.debug:
-            print(f"Getting {iso_url}")
+            pprint(f"Getting {iso_url}")
         request = Request(iso_url, headers=self.headers)
         response = json.loads(urlopen(request).read())
         iso = f"{response['Image']}"
         inserted = response['Inserted']
         if self.debug:
-            print(f"ISO status is Image: {iso} Inserted: {inserted}")
+            pprint(f"ISO status is Image: {iso} Inserted: {inserted}")
         return iso, inserted
 
     def get_iso_eject_url(self):
@@ -130,7 +150,7 @@ class Redfish(object):
             target = '#IsoConfig.UnMount' if self.model == 'supermicro' and self.legacy else '#VirtualMedia.EjectMedia'
             ret_data = f"{self.baseurl}{actions[target]['target']}"
         if self.debug:
-            print(f"ISO eject URL is {ret_data}")
+            pprint(f"ISO eject URL is {ret_data}")
         return ret_data
 
     def get_iso_insert_url(self):
@@ -143,7 +163,7 @@ class Redfish(object):
             target = '#IsoConfig.Mount' if self.model == 'supermicro' and self.legacy else '#VirtualMedia.InsertMedia'
             ret_data = f"{self.baseurl}{actions[target]['target']}"
         if self.debug:
-            print(f"ISO insert URL is {ret_data}")
+            pprint(f"ISO insert URL is {ret_data}")
         return ret_data
 
     def eject_iso(self):
@@ -154,14 +174,14 @@ class Redfish(object):
             data = json.dumps(data).encode('utf-8')
             request = Request(eject_url, data=data, headers=headers, method='PATCH')
             if self.debug:
-                print(f"Sending PATCH to {eject_url} with data {data}")
+                pprint(f"Sending PATCH to {eject_url} with data {data}")
         else:
             data = json.dumps({}).encode('utf-8')
             if self.model == 'supermicro' and self.legacy:
                 headers['Content-Length'] = 0
             request = Request(eject_url, headers=headers, method='POST', data=data)
             if self.debug:
-                print(f"Sending POST to {eject_url} with empty data")
+                pprint(f"Sending POST to {eject_url} with empty data")
         return urlopen(request)
 
     def insert_iso(self, iso_url):
@@ -172,7 +192,7 @@ class Redfish(object):
             manager_url = self.get_manager_url()
             cd_url = f"{manager_url}/VM1/CfgCD"
             if self.debug:
-                print(f"Sending PATCH to {cd_url} with data {data}")
+                pprint(f"Sending PATCH to {cd_url} with data {data}")
             data = json.dumps(data).encode('utf-8')
             request = Request(cd_url, data=data, headers=self.headers, method='PATCH')
             urlopen(request)
@@ -183,11 +203,11 @@ class Redfish(object):
         if self.model == 'lenovo':
             request = Request(insert_url, data=data, headers=headers, method='PATCH')
             if self.debug:
-                print(f"Sending PATCH to {insert_url} with data {data}")
+                pprint(f"Sending PATCH to {insert_url} with data {data}")
         else:
             request = Request(insert_url, data=data, headers=headers)
             if self.debug:
-                print(f"Sending POST to {insert_url} with data {data}")
+                pprint(f"Sending POST to {insert_url} with data {data}")
         return urlopen(request)
 
     def set_iso_once(self):
@@ -203,7 +223,7 @@ class Redfish(object):
             newboot['BootSourceOverrideMode'] = 'UEFI'
         data = {"Boot": newboot}
         if self.debug:
-            print(f"Sending PATCH to {self.url} with data {data}")
+            pprint(f"Sending PATCH to {self.url} with data {data}")
         data = json.dumps(data).encode('utf-8')
         request = Request(self.url, data=data, headers=self.headers, method='PATCH')
         return urlopen(request)
@@ -215,7 +235,7 @@ class Redfish(object):
         data = {"ResetType": reset_type}
         reset_url = f"{self.url}/Actions/ComputerSystem.Reset"
         if self.debug:
-            print(f"Sending POST to {reset_url} with data {data}")
+            pprint(f"Sending POST to {reset_url} with data {data}")
         data = json.dumps(data).encode('utf-8')
         request = Request(reset_url, data=data, headers=self.headers)
         return urlopen(request)
@@ -223,12 +243,12 @@ class Redfish(object):
     def stop(self):
         current_status = self.status()
         if current_status == 'Off':
-            print("Node already powered off")
+            warning("Node already powered off")
             return
         data = {"ResetType": "ForceOff"}
         reset_url = f"{self.url}/Actions/ComputerSystem.Reset"
         if self.debug:
-            print(f"Sending POST to {reset_url} with data {data}")
+            pprint(f"Sending POST to {reset_url} with data {data}")
         data = json.dumps(data).encode('utf-8')
         request = Request(reset_url, data=data, headers=self.headers)
         return urlopen(request)
@@ -237,7 +257,7 @@ class Redfish(object):
         data = {"ResetType": "On"}
         reset_url = f"{self.url}/Actions/ComputerSystem.Reset"
         if self.debug:
-            print(f"Sending POST to {reset_url} with {data}")
+            pprint(f"Sending POST to {reset_url} with {data}")
         data = json.dumps(data).encode('utf-8')
         request = Request(reset_url, data=data, headers=self.headers)
         return urlopen(request)
@@ -256,7 +276,7 @@ class Redfish(object):
         reset_url = f"{manager_url}/Actions/Manager.Reset"
         data = {"ResetType": "GracefulRestart"}
         if self.debug:
-            print(f"Sending POST to {reset_url} with data {data}")
+            pprint(f"Sending POST to {reset_url} with data {data}")
         data = json.dumps(data).encode('utf-8')
         request = Request(reset_url, headers=self.headers, method='POST', data=data)
         return urlopen(request)
@@ -265,7 +285,7 @@ class Redfish(object):
         result = None
         current_iso, inserted = self.get_iso_status()
         if current_iso == iso_url and inserted:
-            print(f"Iso {iso_url} already set")
+            pprint(f"Iso {iso_url} already set")
         else:
             if current_iso != '':
                 try:
@@ -279,7 +299,7 @@ class Redfish(object):
                 if self.debug:
                     traceback.print_exception(e)
             if result.code not in [200, 202, 204]:
-                print(f"Hit {result.reason} When plugging {iso_url}")
+                error(f"Hit {result.reason} When plugging {iso_url}")
                 sys.exit(1)
         try:
             self.set_iso_once()
@@ -295,11 +315,11 @@ class Redfish(object):
         response = json.loads(urlopen(request).read())
         enabled = response['SecureBootEnable']
         if enabled:
-            print("Secureboot already enabled")
+            warning("Secureboot already enabled")
             return
         data = {"SecureBootEnable": True}
         if self.debug:
-            print(f"Sending PATCH to {secureboot_url} with data {data}")
+            pprint(f"Sending PATCH to {secureboot_url} with data {data}")
         data = json.dumps(data).encode('utf-8')
         request = Request(secureboot_url, headers=self.headers, method='PATCH', data=data)
         return urlopen(request)
@@ -310,11 +330,11 @@ class Redfish(object):
         response = json.loads(urlopen(request).read())
         enabled = response['SecureBootEnable']
         if not enabled:
-            print("Secureboot already disabled")
+            warning("Secureboot already disabled")
             return
         data = {"SecureBootEnable": False}
         if self.debug:
-            print(f"Sending PATCH to {secureboot_url} with data {data}")
+            pprint(f"Sending PATCH to {secureboot_url} with data {data}")
         data = json.dumps(data).encode('utf-8')
         request = Request(secureboot_url, headers=self.headers, method='PATCH', data=data)
         return urlopen(request)
