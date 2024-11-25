@@ -50,8 +50,10 @@ alias kcli >/dev/null 2>&1
 ALIAS="$?"
 
 if [ "$ALIAS" != "0" ]; then
+  TAG="latest"
+  [ "$(uname -m)" == "aarch64" ] && TAG="arm64"
   echo -e "${BLUE}Installing container alias ${NC}"
-  $engine pull quay.io/karmab/kcli:latest
+  $engine pull quay.io/karmab/kcli:$TAG
   SSHVOLUME="-v $(realpath $HOME/.ssh):/root/.ssh"
   if [ -d /var/lib/libvirt/images ] && [ -d /var/run/libvirt ]; then
     VOLUMES="-v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt"
@@ -62,27 +64,27 @@ if [ "$ALIAS" != "0" ]; then
 case $shell in
 bash|zsh)
   shellfile="$HOME/.bashrc"
-  [ "$shell" == zsh ] && shellfile="$HOME/.zshrc" 
-  grep -q kcli= $shellfile || echo alias kcli=\'$engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir quay.io/karmab/kcli'\' >> $shellfile
-  grep -q kclishell= $shellfile || echo alias kclishell=\'$engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir --entrypoint=/bin/sh quay.io/karmab/kcli'\' >> $shellfile
-  grep -q kcliweb= $shellfile || echo alias kweb=\'$engine run -p 9000:9000 --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir --entrypoint=/usr/local/bin/kweb quay.io/karmab/kcli'\' >> $shellfile
-  alias kcli="$engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES -v $PWD:/workdir quay.io/karmab/kcli"
+  [ "$shell" == zsh ] && shellfile="$HOME/.zshrc"
+  grep -q kcli= $shellfile || echo alias kcli=\'$engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir' quay.io/karmab/kcli:$TAG\' >> $shellfile
+  grep -q kclishell= $shellfile || echo alias kclishell=\'$engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir' --entrypoint=/bin/sh quay.io/karmab/kcli:$TAG\' >> $shellfile
+  grep -q kcliweb= $shellfile || echo alias kweb=\'$engine run -p 9000:9000 --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir' --entrypoint=/usr/local/bin/kweb quay.io/karmab/kcli:$TAG\' >> $shellfile
+  alias kcli="$engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES -v $PWD:/workdir quay.io/karmab/kcli:$TAG"
   ;;
 fish)
   shellfile="$HOME/.config/fish/config.fish"
   [ ! -d ~/.config/fish ] && mkdir -p ~/.config/fish
-  grep -q 'kcli ' $shellfile || echo alias kcli $engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir quay.io/karmab/kcli' >> $shellfile
-  grep -q kclishell $shellfile || echo alias kclishell $engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir --entrypoint=/bin/sh quay.io/karmab/kcli' >> $shellfile
-  grep -q kcliweb $shellfile || echo alias kweb $engine run -p 9000:9000 --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir --entrypoint=/usr/local/bin/kweb quay.io/karmab/kcli' >> $shellfile
-  alias kcli $engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES -v $PWD:/workdir quay.io/karmab/kcli
+  grep -q 'kcli ' $shellfile || echo alias kcli $engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir' quay.io/karmab/kcli:$TAG >> $shellfile
+  grep -q kclishell $shellfile || echo alias kclishell $engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir' --entrypoint=/bin/sh quay.io/karmab/kcli:$TAG >> $shellfile
+  grep -q kcliweb $shellfile || echo alias kweb $engine run -p 9000:9000 --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES '-v $PWD:/workdir' --entrypoint=/usr/local/bin/kweb quay.io/karmab/kcli:$TAG >> $shellfile
+  alias kcli $engine run --net host -it --rm --security-opt label=disable -v $HOME/.kcli:/root/.kcli $SSHVOLUME $VOLUMES -v $PWD:/workdir quay.io/karmab/kcli:$TAG
   ;;
 *)
   echo -e "${RED}Installing aliases for $shell is not supported ${NC}"
   ;;
 esac
   shopt -s expand_aliases
-  VERSION=$(kcli -v)
-  echo -e """${GREEN}Installed kcli $VERSION
+  COMMIT=$(kcli version | sed -n 's/.*commit: \([a-z0-9]\{7\}\).*/\1/p')
+  echo -e """${GREEN}Installed kcli $COMMIT
 Launch a new shell for aliases kcli, kclishell and kweb to work${NC}"""
 else
   echo -e "${BLUE}Skipping already installed kcli${NC}"
