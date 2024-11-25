@@ -2190,6 +2190,7 @@ def start_baremetal_host(url, user, password, overrides={}, debug=False):
 
 
 def start_baremetal_hosts_with_iso(hosts, iso_url, overrides={}, debug=False):
+    failures = []
     for index, host in enumerate(hosts):
         url = host.get('url') or host.get('bmc_url')
         user = host.get('user') or host.get('bmc_user') or overrides.get('user') or overrides.get('bmc_user')
@@ -2198,7 +2199,12 @@ def start_baremetal_hosts_with_iso(hosts, iso_url, overrides={}, debug=False):
         if url is not None and user is not None and password is not None:
             overrides['iso_url'] = iso_url
             overrides['sno_worker'] = index > 1 and iso_url.endswith('-sno.iso')
-            start_baremetal_host(url, user, password, overrides=overrides, debug=debug)
+            result = start_baremetal_host(url, user, password, overrides=overrides, debug=debug)
+            if result['result'] != 'success':
+                failures.append(result['reason'])
+    if failures:
+        return {'result': 'failure', 'reason': '\n'.join(failures)}
+    return {'result': 'success'}
 
 
 def stop_baremetal_host(url, user, password, debug=False):

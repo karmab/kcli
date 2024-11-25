@@ -327,7 +327,9 @@ def scale(config, plandir, cluster, overrides):
                 svcport_cmd = 'oc get svc -n default httpd-kcli-svc -o yaml'
                 svcport = safe_load(os.popen(svcport_cmd).read())['spec']['ports'][0]['nodePort']
                 iso_url = f'http://{svcip}:{svcport}/{cluster}-worker.iso'
-            start_baremetal_hosts_with_iso(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
+            result = start_baremetal_hosts_with_iso(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
+            if result['result'] != 'success':
+                return result
             worker_overrides['workers'] = workers - len(new_baremetal_hosts)
     if platform is not None:
         return {'result': 'success'}
@@ -894,7 +896,9 @@ def create(config, plandir, cluster, overrides):
                 f.write(json.dumps(new_ignition))
         elif baremetal_iso or baremetal_hosts:
             iso_url = handle_baremetal_iso(config, plandir, cluster, data, baremetal_hosts)
-            start_baremetal_hosts_with_iso(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
+            result = start_baremetal_hosts_with_iso(baremetal_hosts, iso_url, overrides=overrides, debug=config.debug)
+            if result['result'] != 'success':
+                return result
             data['workers'] = data.get('workers', 2) - len(baremetal_hosts)
     pprint("Waiting for kubeconfig to be available")
     call(f"until oc -n {namespace} get secret {cluster}-admin-kubeconfig >/dev/null 2>&1 ; do sleep 1 ; done",
