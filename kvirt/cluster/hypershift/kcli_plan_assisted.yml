@@ -5,8 +5,8 @@
   start: false
   kube: {{ cluster }}
   kubetype: hypershift
-  memory: {{ memory }}
-  numcpus: {{ numcpus }}
+  numcpus: {{ worker_numcpus | default(numcpus, numcpus) }}
+  memory:  {{ worker_memory | default(memory, memory) }}
   disks:
   - size: {{ disk_size }}
     interface: sata

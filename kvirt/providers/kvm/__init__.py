@@ -1017,7 +1017,7 @@ class Kvirt(object):
                         count += 1
                 cpuxml += f'{numaxml}</numa>'
                 if numamemory > memory:
-                    msg = "Can't use more memory for numa than assigned memory"
+                    msg = "Can't use more memory for numa than assigned one ({memory})"
                     return {'result': 'failure', 'reason': msg}
             elif memoryhotplug:
                 lastcpu = int(numcpus) - 1

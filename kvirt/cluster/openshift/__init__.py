@@ -24,7 +24,7 @@ from urllib.request import urlopen, Request
 from yaml import safe_dump, safe_load
 
 
-virt_providers = ['kvm', 'kubevirt', 'ovirt', 'openstack', 'vsphere', 'proxmox']
+virt_providers = ['kvm', 'kubevirt', 'openstack', 'ovirt', 'proxmox', 'vsphere']
 cloud_providers = ['aws', 'azure', 'gcp', 'ibm', 'hcloud']
 
 

@@ -57,7 +57,7 @@
  memory: {{ worker_memory | default(memory, memory) }}
  nets: {{ [net0] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
-{% if config_type in ['kvm', 'vsphere', 'ovirt', 'kubevirt'] %}
+{% if config_type in ['kvm', 'kubevirt', 'openstack', 'ovirt', 'proxmox', 'vsphere'] %}
  files: {{ files }}
 {% endif %}
 {% endfor %}

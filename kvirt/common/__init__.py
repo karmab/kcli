@@ -1273,7 +1273,8 @@ def get_latest_rhcos(url, _type='kvm', arch='x86_64', qemu=False):
 
 
 def get_installer_rhcos(_type='kvm', region=None, arch='x86_64'):
-    keys = {'ovirt': 'openstack', 'kubevirt': 'openstack', 'kvm': 'qemu', 'vsphere': 'vmware', 'ibm': 'ibmcloud'}
+    keys = {'ovirt': 'openstack', 'kubevirt': 'openstack', 'kvm': 'qemu', 'vsphere': 'vmware', 'ibm': 'ibmcloud',
+            'proxmox': 'openstack'}
     key = keys.get(_type, _type)
     INSTALLER_COREOS = os.popen('openshift-install coreos print-stream-json 2>/dev/null').read()
     data = json.loads(INSTALLER_COREOS)
