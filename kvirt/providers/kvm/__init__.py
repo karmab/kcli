@@ -238,11 +238,11 @@ class Kvirt(object):
         default_disksize = disksize
         default_pool = pool
         conn = self.conn
-        capabilities = self.get_capabilities(overrides.get('arch'))
-        if 'arch' not in overrides:
-            overrides['arch'] = capabilities['arch']
-        iommu_model = 'intel' if overrides.get('arch', 'x86_64') == 'x86_64' else 'smmuv3'
         custom_emulator = overrides.get('emulator')
+        default_arch = overrides.get('arch')
+        arch = 'aarch64' if custom_emulator is not None and custom_emulator.endswith('aarch64') else default_arch
+        capabilities = self.get_capabilities(arch)
+        arch = arch or capabilities['arch']
         if custom_emulator is not None:
             if os.path.exists(custom_emulator):
                 emulator = custom_emulator
@@ -251,17 +251,20 @@ class Kvirt(object):
             else:
                 emulator = which(custom_emulator)
         elif 'emulator' not in capabilities:
-            return {'result': 'failure', 'reason': "No valid emulator found for target arch"}
+            return {'result': 'failure', 'reason': f"No valid emulator found for target arch {arch}"}
         else:
             emulator = capabilities['emulator']
-        if 'machine' in overrides and overrides['machine'] not in capabilities['machines']:
-            machines = ','.join(sorted(capabilities['machines']))
-            return {'result': 'failure', 'reason': f"Incorrect machine. Choose between {machines}"}
-        aarch64 = capabilities['arch'] == 'aarch64'
+            if 'machine' in overrides and overrides['machine'] not in capabilities['machines']:
+                machines = ','.join(sorted(capabilities['machines']))
+                return {'result': 'failure', 'reason': f"Incorrect machine. Choose between {machines}"}
+        iommu_model = 'smmuv3' if arch == 'aarch64' else 'intel'
+        aarch64 = arch == 'aarch64'
         aarch64_full = aarch64 and capabilities['kvm']
-        as390x = capabilities['arch'] == 's390x'
+        as390x = arch == 's390x'
         if aarch64:
-            if 'machine' not in overrides:
+            if custom_emulator is not None:
+                warning("Not checking whether a valid machine is provided")
+            elif 'machine' not in overrides:
                 virtmachines = [m for m in sorted(capabilities['machines']) if m.startswith('virt-')]
                 if not virtmachines:
                     return {'result': 'failure', 'reason': "Couldn't find a valid machine"}
@@ -1206,11 +1209,11 @@ class Kvirt(object):
         ramxml = ""
         smmxml = ""
         osfirmware = ""
-        if uefi or uefi_legacy or secureboot or aarch64:
+        uefi_firmware = '/usr/share/OVMF/OVMF_CODE.secboot.fd' if uefi_legacy else overrides.get('uefi_firmware')
+        if uefi or uefi_firmware is not None or secureboot or aarch64:
             secure = 'yes' if secureboot else 'no'
-            if uefi_legacy:
-                firmware = '/usr/share/OVMF/OVMF_CODE.secboot.fd'
-                ramxml = f"<loader secure='{secure}' readonly='yes' type='pflash'>{firmware}</loader>"
+            if uefi_firmware is not None:
+                ramxml = f"<loader secure='{secure}' readonly='yes' type='pflash'>{uefi_firmware}</loader>"
                 if secureboot:
                     smmxml = "<smm state='on'/>"
                     sectemplate = '/usr/share/OVMF/OVMF_VARS.secboot.fd'
