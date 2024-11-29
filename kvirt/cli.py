@@ -723,6 +723,23 @@ def _list_output(_list, output):
     sys.exit(0)
 
 
+def _filter_list(_list, overrides={}):
+    if not overrides:
+        return _list
+    new_list = []
+    for vm in _list:
+        match = True
+        for key in overrides:
+            if (overrides[key] is None and vm.get(key) is not None)\
+               or (overrides[key] is not None and vm.get(key) is None)\
+               or vm[key] != overrides[key]:
+                match = False
+                break
+        if match:
+            new_list.append(vm)
+    return new_list
+
+
 def _filter_info_plan(_list, overrides={}):
     new_list = []
     name = overrides.get('name')
@@ -786,7 +803,7 @@ def list_vm(args):
             config = Kbaseconfig(client=client, debug=args.debug, quiet=True)
             config = Kconfig(client=client, debug=args.debug, region=args.region,
                              zone=args.zone, namespace=args.namespace)
-            _list = config.k.list()
+            _list = _filter_list(config.k.list(), overrides=overrides)
             if output is not None:
                 _list_output(_list, output)
             for vm in _list:
@@ -797,18 +814,7 @@ def list_vm(args):
                 plan = vm.get('plan', '')
                 profile = vm.get('profile', '')
                 vminfo = [name, client, status, ip, source, plan, profile]
-                if overrides:
-                    match = True
-                    for key in overrides:
-                        if (overrides[key] is None and vm.get(key) is not None)\
-                           or (overrides[key] is not None and vm.get(key) is None)\
-                           or not vm[key] in overrides[key]:
-                            match = False
-                            break
-                    if match:
-                        vmstable.add_row(vminfo)
-                else:
-                    vmstable.add_row(vminfo)
+                vmstable.add_row(vminfo)
         print(vmstable)
     else:
         vmstable = PrettyTable(["Name", "Status", "Ip", "Source", "Plan", "Profile"])
@@ -817,7 +823,7 @@ def list_vm(args):
                          zone=args.zone, namespace=args.namespace)
         if config.type == 'gcp' and config.k.zone is None:
             vmstable.add_column(['Zone'])
-        _list = config.k.list()
+        _list = _filter_list(config.k.list(), overrides=overrides)
         if output is not None:
             _list_output(_list, output)
         for vm in _list:
@@ -830,18 +836,7 @@ def list_vm(args):
             vminfo = [name, status, ip, source, plan, profile]
             if config.type == 'gcp' and config.k.zone is None:
                 vminfo.append(vm['az'])
-            if overrides:
-                match = True
-                for key in overrides:
-                    if (overrides[key] is None and vm.get(key) is not None)\
-                       or (overrides[key] is not None and vm.get(key) is None)\
-                       or not vm[key] in overrides[key]:
-                        match = False
-                        break
-                if match:
-                    vmstable.add_row(vminfo)
-            else:
-                vmstable.add_row(vminfo)
+            vmstable.add_row(vminfo)
         print(vmstable)
 
 
