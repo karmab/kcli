@@ -140,35 +140,14 @@ sshKey: |
   {{ pub_key }}
 {% if disconnected_url != None %}
 imageContentSources:
-{% if 'registry.build01.ci' in openshift_release_image %}
-{% set release = openshift_release_image.split('/')[1] %}
 - mirrors:
-  - {{ disconnected_url }}/openshift/release
-  - {{ disconnected_url }}/openshift/release-images
-  source: registry.build01.ci.openshift.org/{{ release }}/release
-- mirrors:
-  - {{ disconnected_url }}/openshift/release
-  - {{ disconnected_url }}/openshift/release-images
-  source: registry.build01.ci.openshift.org/{{ release }}/stable
-{% else %}
-- mirrors:
+  - {{ disconnected_url }}/openshift-release-dev/ocp-v4.0-art-dev
   - {{ disconnected_url }}/openshift/release
   source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
 - mirrors:
-  - {{ disconnected_url }}/openshift/release-images
-{% if ':' in tag|string %}
-  source: {{ openshift_release_image.split('/')[0] }}/{{ (tag|string).split(':')[0] }}
-{% elif 'registry.ci' in openshift_release_image %}
-  source: registry.ci.openshift.org/ocp/release
-{% else %}
-  source: quay.io/ocp-release
-{% endif %}
-{% endif %}
-{% elif imagecontentsources %}
-imageContentSources:
-{% for source in imagecontentsources %}
+  - {{ disconnected_url }}/openshift-release-dev
+  source: {{ 'registry.ci.openshift.org/ocp/release' if version == 'ci' else 'quay.io/openshift-release-dev' }}
 - mirrors:
-  - {{ source }}
-  source: image-registry.openshift-image-registry.svc:5000/openshift/{{ source | basename | replace("openshift-", "")}}
-{% endfor %}
+  - {{ disconnected_url }}/openshift/release-images
+  source: quay.io/openshift-release-dev/ocp-release
 {% endif %}

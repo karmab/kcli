@@ -1,23 +1,37 @@
-apiVersion: mirror.openshift.io/v1alpha2
+{% set release =  '4.' + (tag|string).split('.')[1] if tag|count('.') > 1 else tag %}
+{% set kcli_images = ["quay.io/karmab/curl:multi", "quay.io/karmab/origin-coredns:multi", "quay.io/karmab/haproxy:multi", "quay.io/karmab/origin-keepalived-ipfailover:multi", "quay.io/karmab/mdns-publisher:multi", "quay.io/karmab/kubectl:multi"] %}
+{% if async|default(False) %}
+{% do kcli_images.append("quay.io/karmab/kcli:latest") %}
+{% endif %}
+
+apiVersion: mirror.openshift.io/v2alpha1
 kind: ImageSetConfiguration
-storageConfig:
-  registry:
-    imageURL: {{ disconnected_url or '$LOCAL_REGISTRY' }}/openshift/release/metadata:latest
 mirror:
-{% if extra_images is defined %}
+  platform:
+    graph: false
+{% if version in ['ci', 'nightly'] %}
+    release: registry.ci.openshift.org/ocp/release:{{ tag }}
+{% else %}
+    channels:
+    - name: {{ 'candidate' if version == 'dev-preview' else 'stable' }}-{{ release }}
+{% if tag|count('.') > 1 %}
+      minVersion: {{ tag }}
+      maxVersion: {{ tag }}
+{% endif %}
+{% endif %}
+    architectures:
+#   - multi
+    - amd64
   additionalImages:
-{% for image in extra_images %}
+{% for image in kcli_images + extra_images|default([]) %}
   - name: {{ image }}
 {% endfor %}
-{% endif %}
-  operators: # Operators we want to mirror
+{% set operators = disconnected_operators|default([]) + disconnected_certified_operators|default([]) + disconnected_community_operators|default([]) + disconnected_marketplace_operators|default([]) %}
+{% if operators %}
+  operators:
 {% if disconnected_operators|default([]) %}
-{% if disconnected_operators_version %}
-{% set catalog = 'quay.io/prega/prega-operator-index' if prega else 'registry.redhat.io/redhat/redhat-operator-index' %}
-  - catalog: {{ catalog }}:{{ disconnected_operators_version }}
-{% else %}
-  - catalog: registry.redhat.io/redhat/redhat-operator-index:v{{ '4.' + (tag|string).split('.')[1] if tag|count('.') > 1 else tag }}
-{% endif %}
+{% set catalog = 'quay.io/prega/prega-operator-index' if prega|default(False) else 'registry.redhat.io/redhat/redhat-operator-index' %}
+  - catalog: {{ catalog }}:v{{ disconnected_operators_version or release_tag }}
     packages:
 {% for package in disconnected_operators %}
 {% if package.name is defined %}
@@ -46,11 +60,7 @@ mirror:
 {% endfor %}
 {% endif %}
 {% if disconnected_certified_operators|default([]) %}
-{% if disconnected_certified_operators_version %}
-  - catalog: registry.redhat.io/redhat/certified-operator-index:{{ disconnected_certified_operators_version }}
-{% else %}
-  - catalog: registry.redhat.io/redhat/certified-operator-index:v{{ tag }}
-{% endif %}
+  - catalog: registry.redhat.io/redhat/certified-operator-index:{{ disconnected_certified_operators_version or release_tag }}
     packages:
 {% for package in disconnected_certified_operators %}
 {% if package.name is defined %}
@@ -79,11 +89,7 @@ mirror:
 {% endfor %}
 {% endif %}
 {% if disconnected_community_operators|default([]) %}
-{% if disconnected_community_operators_version %}
-  - catalog: registry.redhat.io/redhat/community-operator-index:{{ disconnected_community_operators_version }}
-{% else %}
-  - catalog: registry.redhat.io/redhat/community-operator-index:v{{ tag }}
-{% endif %}
+  - catalog: registry.redhat.io/redhat/community-operator-index:v{{ disconnected_community_operators_version or release_tag }}
     packages:
 {% for package in disconnected_community_operators %}
 {% if package.name is defined %}
@@ -112,11 +118,7 @@ mirror:
 {% endfor %}
 {% endif %}
 {% if disconnected_marketplace_operators|default([]) %}
-{% if disconnected_marketplace_operators_version %}
-  - catalog: registry.redhat.io/redhat/redhat-marketplace-index:{{ disconnected_marketplace_operators_version }}
-{% else %}
-  - catalog: registry.redhat.io/redhat/redhat-marketplace-index:v{{ tag }}
-{% endif %}
+  - catalog: registry.redhat.io/redhat/redhat-marketplace-index:v{{ disconnected_marketplace_operators_version or tag }}
     packages:
 {% for package in disconnected_marketplace_operators %}
 {% if package.name is defined %}
@@ -143,6 +145,7 @@ mirror:
 {% endfor %}
 {% endif %}
 {% endfor %}
+{% endif %}
 {% endif %}
 {% if disconnected_extra_catalogs|default([]) %}
 {% for catalog_image in disconnected_extra_catalogs %}

@@ -7,14 +7,8 @@ bash /root/scripts/02_packages.sh
 echo -e "${blue}************ RUNNING 03_registry.sh ************${clear}"
 bash /root/scripts/03_registry.sh
 {% if disconnected_sync %}
-echo -e "${blue}************ RUNNING 03_mirror.sh ************${clear}"
-bash /root/scripts/03_mirror.sh
-echo -e "${blue}************ RUNNING 04_extras.sh ************${clear}"
-bash /root/scripts/04_extras.sh
-{% if disconnected_operators %}
-echo -e "${blue}************ RUNNING 05_olm.sh ************${clear}"
-bash /root/scripts/05_olm.sh
+echo -e "${blue}************ RUNNING 04_mirror.sh ************${clear}"
+bash /root/scripts/04_mirror.sh
 {% endif %}
-{% endif %}
-echo -e "${blue}************ RUNNING 06_web.sh ************${clear}"
-bash /root/scripts/06_web.sh
+echo -e "${blue}************ RUNNING 05_web.sh ************${clear}"
+bash /root/scripts/05_web.sh

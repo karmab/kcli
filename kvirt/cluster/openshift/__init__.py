@@ -21,11 +21,23 @@ import sys
 from tempfile import TemporaryDirectory
 from time import sleep
 from urllib.request import urlopen, Request
-from yaml import safe_dump, safe_load
+from yaml import safe_dump, safe_load, safe_load_all, safe_dump_all
 
 
 virt_providers = ['kvm', 'kubevirt', 'openstack', 'ovirt', 'proxmox', 'vsphere']
 cloud_providers = ['aws', 'azure', 'gcp', 'ibm', 'hcloud']
+
+
+def patch_oc_mirror(clusterdir):
+    for _fic in [f'{clusterdir}/idms-oc-mirror.yaml', f'{clusterdir}/itms-oc-mirror.yaml']:
+        if not os.path.exists(_fic):
+            continue
+        entries = []
+        for document in safe_load_all(open(_fic)):
+            if 'release' not in document['metadata']['name']:
+                entries.append(document)
+        with open(_fic, 'w') as f:
+            safe_dump_all(entries, f, default_flow_style=False, encoding='utf-8', allow_unicode=True)
 
 
 def aws_credentials(config):
@@ -140,8 +152,8 @@ def update_disconnected_registry(config, plandir, cluster, data):
          shell=True)
     pprint("Updating disconnected registry")
     synccmd = f"oc adm release mirror -a {pull_secret_path} --from={get_release_image()} "
-    synccmd += f"--to-release-image={disconnected_url}/openshift/release-images:{tag}-{arch} "
-    synccmd += f"--to={disconnected_url}/openshift/release"
+    synccmd += f"--to-release-image={disconnected_url}/openshift/release-dev/ocp-release:{tag}-{arch} "
+    synccmd += f"--to={disconnected_url}/openshift-release-dev/ocp-release"
     pprint(f"Running {synccmd}")
     call(synccmd, shell=True)
     extra_releases = data.get('disconnected_extra_releases', [])
@@ -150,8 +162,8 @@ def update_disconnected_registry(config, plandir, cluster, data):
         for extra_release in extra_releases:
             tag_and_arch = re.search(r":(.+)$", extra_release).group(1)
             synccmd = f"oc adm release mirror -a {pull_secret_path} --from={extra_release} "
-            synccmd += f"--to-release-image={disconnected_url}/openshift/release-images:{tag_and_arch} "
-            synccmd += f"--to={disconnected_url}/openshift/release"
+            synccmd += f"--to-release-image={disconnected_url}/openshift-release-dev/ocp-release:{tag_and_arch} "
+            synccmd += f"--to={disconnected_url}/openshift-release-dev/ocp-release"
             pprint(f"Running {synccmd}")
             call(synccmd, shell=True)
     if which('oc-mirror') is None:
@@ -793,13 +805,13 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     disconnected_update = data['disconnected_update']
     disconnected_reuse = data['disconnected_reuse']
     disconnected_operators = data['disconnected_operators']
-    disconnected_certified_operators = data['disconnected_certified_operators']
-    disconnected_community_operators = data['disconnected_community_operators']
-    disconnected_marketplace_operators = data['disconnected_marketplace_operators']
+    certified_operators = data['disconnected_certified_operators']
+    community_operators = data['disconnected_community_operators']
+    marketplace_operators = data['disconnected_marketplace_operators']
     disconnected_url = data['disconnected_url']
     disconnected_user = data['disconnected_user']
     disconnected_password = data['disconnected_password']
-    operators = len(disconnected_operators + disconnected_certified_operators + disconnected_marketplace_operators) > 0
+    operators = disconnected_operators + community_operators + certified_operators + marketplace_operators
     disconnected = data['disconnected']
     disconnected_vm = data['disconnected_vm'] or (disconnected_url is None and (disconnected or operators))
     ipsec = data['ipsec']
@@ -829,6 +841,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if str(tag) == '4.1':
         tag = '4.10'
         data['tag'] = tag
+    if '0-ec.' in str(tag):
+        version = 'dev-preview'
+        data['version'] = version
+    elif float(tag) > float(OPENSHIFT_TAG):
+        version = 'ci'
+        data['version'] = version
     if os.path.exists('coreos-installer'):
         pprint("Removing old coreos-installer")
         os.remove('coreos-installer')
@@ -1010,10 +1028,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         update_pull_secret(pull_secret, disconnected_url, disconnected_user, disconnected_password)
         data['ori_tag'] = tag
         if '/' not in str(tag):
-            tag = f'{disconnected_url}/openshift/release-images:{tag}-{arch}'
+            tag = f'{disconnected_url}/openshift-release-dev/ocp-release:{tag}-{arch}'
             os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = tag
-        pprint(f"Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to {tag}")
-        data['openshift_release_image'] = tag
         if 'ca' not in data and 'quay.io' not in disconnected_url:
             pprint(f"Trying to gather registry ca cert from {disconnected_url}")
             cacmd = f"openssl s_client -showcerts -connect {disconnected_url} </dev/null 2>/dev/null|"
@@ -1103,9 +1119,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         disconnected_overrides = data.copy()
         disconnected_overrides['kube'] = f"{cluster}-reuse" if disconnected_reuse else cluster
         disconnected_overrides['openshift_version'] = INSTALLER_VERSION
-        disconnected_overrides['disconnected_operators_version'] = 'v' + '.'.join(INSTALLER_VERSION.split('.')[:-1])
-        disconnected_overrides['openshift_release_image'] = get_release_image()
-        data['openshift_release_image'] = disconnected_overrides['openshift_release_image']
+        disconnected_overrides['disconnected_operators_version'] = f"4.{INSTALLER_VERSION.split('.')[1]}"
         x_apps = ['users', 'autolabeller', 'metal3', 'nfs']
         disconnected_operators_2 = [o['name'] for o in disconnected_operators if isinstance(o, dict) and 'name' in o]
         for app in apps:
@@ -1143,47 +1157,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                          tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
                          insecure=True, cmd=versioncmd, vmport=disconnected_vmport)
         disconnected_version = os.popen(versioncmd).read().strip()
-        if disconnected_operators or disconnected_certified_operators or disconnected_community_operators or\
-           disconnected_marketplace_operators:
-            source = "/root/imageContentSourcePolicy.yaml"
-            destination = f"{clusterdir}/imageContentSourcePolicy.yaml"
-            scpcmd = scp(disconnected_vm, ip=disconnected_ip, user='root', source=source,
-                         destination=destination, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
-                         tunnelport=config.tunnelport, tunneluser=config.tunneluser, download=True, insecure=True,
-                         vmport=disconnected_vmport)
+        for source in ["'cs-*.yaml'", "'i*oc-mirror.yaml'"]:
+            scpcmd = scp(disconnected_vm, ip=disconnected_ip, user='root', source=source, destination=clusterdir,
+                         tunnel=config.tunnel, tunnelhost=config.tunnelhost, tunnelport=config.tunnelport,
+                         tunneluser=config.tunneluser, download=True, insecure=True, vmport=disconnected_vmport)
             os.system(scpcmd)
-        if disconnected_operators:
-            source = "/root/catalogSource-cs-redhat-operator-index.yaml"
-            destination = f"{clusterdir}/catalogSource-redhat.yaml"
-            scpcmd = scp(disconnected_vm, ip=disconnected_ip, user='root', source=source,
-                         destination=destination, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
-                         tunnelport=config.tunnelport, tunneluser=config.tunneluser, download=True, insecure=True,
-                         vmport=disconnected_vmport)
-            os.system(scpcmd)
-        if disconnected_certified_operators:
-            source = "/root/catalogSource-certified-operator-index.yaml"
-            destination = f"{clusterdir}/catalogSource-certified.yaml"
-            scpcmd = scp(disconnected_vm, ip=disconnected_ip, user='root', source=source,
-                         destination=destination, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
-                         tunnelport=config.tunnelport, tunneluser=config.tunneluser, download=True, insecure=True,
-                         vmport=disconnected_vmport)
-            os.system(scpcmd)
-        if disconnected_community_operators:
-            source = "/root/catalogSource-community-operator-index.yaml"
-            destination = f"{clusterdir}/catalogSource-community.yaml"
-            scpcmd = scp(disconnected_vm, ip=disconnected_ip, user='root', source=source,
-                         destination=destination, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
-                         tunnelport=config.tunnelport, tunneluser=config.tunneluser, download=True, insecure=True,
-                         vmport=disconnected_vmport)
-            os.system(scpcmd)
-        if disconnected_marketplace_operators:
-            source = "/root/catalogSource-redhat-marketplace-index.yaml"
-            destination = f"{clusterdir}/catalogSource-marketplace.yaml"
-            scpcmd = scp(disconnected_vm, ip=disconnected_ip, user='root', source=source,
-                         destination=destination, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
-                         tunnelport=config.tunnelport, tunneluser=config.tunneluser, download=True, insecure=True,
-                         vmport=disconnected_vmport)
-            os.system(scpcmd)
+        patch_oc_mirror(clusterdir)
         os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = disconnected_version
         pprint(f"Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to {disconnected_version}")
     data['pull_secret_path'] = pull_secret
@@ -1266,7 +1245,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     for yamlfile in glob(f"{clusterdir}/*.yaml"):
         if os.stat(yamlfile).st_size == 0:
             warning(f"Skipping empty file {yamlfile}")
-        elif 'catalogSource' in yamlfile or 'imageContentSourcePolicy' in yamlfile:
+        elif yamlfile.startswith(f'{clusterdir}/cs-') or 'oc-mirror' in yamlfile:
             copy2(yamlfile, f"{clusterdir}/openshift")
     network_type = data['network_type']
     if network_type == 'Calico':
