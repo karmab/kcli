@@ -32,5 +32,7 @@
 {% endif %}
  - path: /root/haproxy.cfg
    origin: disconnected/haproxy.cfg
+ - path: /root/mirror-config.yaml
+   origin: disconnected/mirror-config.yaml
  cmds:
  - bash /root/scripts/deploy.sh

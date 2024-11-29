@@ -2041,10 +2041,7 @@ def need_fake():
     groups = [getgrgid(g).gr_name for g in os.getgroups()]
     if not glob(f"{kclidir}/config.y*ml") and\
        ((groups == ['root'] and not os.path.exists("/var/run/libvirt/libvirt-sock")) or 'libvirt' not in groups):
-        if os.path.exists('/i_am_a_container') and os.environ.get('KUBERNETES_SERVICE_HOST') is not None:
-            return False
-        else:
-            return True
+        return not os.path.exists('/i_am_a_container') or os.environ.get('KUBERNETES_SERVICE_HOST') is not None
     else:
         return False
 
