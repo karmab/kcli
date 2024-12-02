@@ -30,7 +30,7 @@ class Khcloud():
                files=[], enableroot=True, alias=[], overrides={}, tags=[], storemetadata=False,
                sharedfolders=[], cmdline=None, placement=[], autostart=False, cpuhotplug=False, memoryhotplug=False,
                numamode=None, numa=[], pcidevices=[], tpm=False, rng=False, metadata={}, securitygroups=[],
-               vmuser=None):
+               vmuser=None, guestagent=True):
         if self.exists(name):
             return {'result': 'failure', 'reason': f"VM {name} already exists"}
 
@@ -69,7 +69,7 @@ class Khcloud():
                 hashed_key = hashlib.md5(decoded_key).hexdigest()
                 md5_fingerprint = ':'.join(a + b for a, b in zip(hashed_key[::2], hashed_key[1::2]))
                 hetzner_ssh_key = self.conn.ssh_keys.get_by_fingerprint(md5_fingerprint)
-                if hetzner_ssh_keys is None:
+                if hetzner_ssh_key is None:
                     hetzner_ssh_key = self.conn.ssh_keys.create(name=f"kcli-uploaded-key-{hashed_key}", public_key=key)
 
                 hetzner_ssh_keys.append(hetzner_ssh_key)
