@@ -692,6 +692,8 @@ def scale(config, plandir, cluster, overrides):
             result = config.plan(plan, inputfile=f'{plandir}/cloud_{role}.yml', overrides=overrides, threaded=threaded)
         if result['result'] != 'success':
             return result
+        elif result.get('newvms', []):
+            pprint(f"{role.capitalize()} nodes will join the cluster in a few minutes")
     return {'result': 'success'}
 
 
