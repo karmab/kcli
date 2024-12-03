@@ -240,7 +240,10 @@ class Kvirt(object):
         conn = self.conn
         custom_emulator = overrides.get('emulator')
         default_arch = overrides.get('arch')
-        arch = 'aarch64' if custom_emulator is not None and custom_emulator.endswith('aarch64') else default_arch
+        arch = default_arch
+        if custom_emulator is not None and custom_emulator.endswith('aarch64'):
+            arch = 'aarch64'
+            pprint(f"Using arch {arch} as per custom emulator suffix")
         capabilities = self.get_capabilities(arch)
         arch = arch or capabilities['arch']
         if custom_emulator is not None:
@@ -1220,6 +1223,10 @@ class Kvirt(object):
                     ramxml += f'<nvram template="{sectemplate}">/var/lib/libvirt/qemu/nvram/{name}.fd</nvram>'
                 else:
                     ramxml += f'<nvram>/var/lib/libvirt/qemu/nvram/{name}.fd</nvram>'
+            elif 'arm' in uefi_firmware:
+                default_nvtemplate = overrides.get('uefi_nvtemplate')
+                nvtemplate = default_nvtemplate or uefi_firmware.replace('-code', '-vars')
+                ramxml += f'<nvram template="{nvtemplate}">/var/lib/libvirt/qemu/nvram/{name}.fd</nvram>'
             else:
                 osfirmware = "firmware='efi'"
                 if secureboot:
@@ -1651,7 +1658,11 @@ class Kvirt(object):
             xml = vm.XMLDesc(1)
             root = ET.fromstring(xml)
             host = self.host
-            for element in list(root.iter('graphics')):
+            graphics = list(root.iter('graphics'))
+            if not graphics:
+                error(f"No graphics found in vm {name}")
+                return
+            for element in graphics:
                 attributes = element.attrib
                 if attributes['listen'] == '127.0.0.1' and not os.path.exists("i_am_a_container")\
                    and self.host not in ['127.0.0.1', 'localhost']:
