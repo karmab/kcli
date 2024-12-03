@@ -147,7 +147,7 @@ class Khcloud():
         response = self.start(created_vm.name)
 
         if response["result"] == "failure":
-            return {'result': 'failure', 'reason': f"Could not start VM {created_vm.name}, after creation"}
+            return {'result': 'failure', 'reason': f"Could not start VM {created_vm.name}, after creation, with the following reason {response['reason']}"}
 
         lb = overrides.get('loadbalancer')
         if lb is not None:
@@ -181,8 +181,9 @@ class Khcloud():
         response = server.power_on()
         if response.error:
             return {'result': 'failure', 'reason': json.dumps(response.error)}
-        else:
-            response.wait_until_finished(300)
+
+        response.wait_until_finished(300)
+        return {'result': 'success'}
 
     def stop(self, name, soft=False):
         server = self.conn.servers.get_by_name(name)
