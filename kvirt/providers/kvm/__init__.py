@@ -914,10 +914,10 @@ class Kvirt(object):
                         return {'result': 'failure', 'reason': msg}
                     self._uploadimage(name, pool=default_storagepool, origin=tmpdir)
         listen = '0.0.0.0' if self.host not in ['localhost', '127.0.0.1'] else '127.0.0.1'
-        if not vnc or (aarch64 or as390x):
+        if not vnc:
             displayxml = ''
         else:
-            displayxml = """<input type='mouse' bus='ps2'/>"""
+            displayxml = """<input type='mouse' bus='virtio'/>"""
             vncviewerpath = '/Applications/VNC Viewer.app'
             passwd = "passwd='kcli'" if os.path.exists('/Applications') and not os.path.exists(vncviewerpath) else ''
             displayxml += """<graphics type='vnc' port='-1' autoport='yes' listen='%s' %s>
@@ -1221,12 +1221,12 @@ class Kvirt(object):
                     smmxml = "<smm state='on'/>"
                     sectemplate = '/usr/share/OVMF/OVMF_VARS.secboot.fd'
                     ramxml += f'<nvram template="{sectemplate}">/var/lib/libvirt/qemu/nvram/{name}.fd</nvram>'
+                elif 'arm' in uefi_firmware or 'aarch64' in uefi_firmware:
+                    default_nvtemplate = overrides.get('uefi_nvtemplate')
+                    nvtemplate = default_nvtemplate or uefi_firmware.replace('-code', '-vars')
+                    ramxml += f'<nvram template="{nvtemplate}">/var/lib/libvirt/qemu/nvram/{name}.fd</nvram>'
                 else:
                     ramxml += f'<nvram>/var/lib/libvirt/qemu/nvram/{name}.fd</nvram>'
-            elif 'arm' in uefi_firmware:
-                default_nvtemplate = overrides.get('uefi_nvtemplate')
-                nvtemplate = default_nvtemplate or uefi_firmware.replace('-code', '-vars')
-                ramxml += f'<nvram template="{nvtemplate}">/var/lib/libvirt/qemu/nvram/{name}.fd</nvram>'
             else:
                 osfirmware = "firmware='efi'"
                 if secureboot:
