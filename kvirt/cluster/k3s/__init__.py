@@ -16,13 +16,14 @@ cloud_providers = ['aws', 'azure', 'gcp', 'ibm', 'hcloud']
 
 
 def update_ip_alias(config, nodes):
+    failure = False
     timeout = 0
     cmd_one = ['kubectl', 'get', 'nodes', '-o=jsonpath={range .items[?(@.spec.podCIDR)]}{.metadata.name}{\'\\n\'}{end}']
     while True:
         if timeout > 240:
-            error(f"Timeout waiting for {nodes} nodes to have a Pod CIDR assigned")
-            return
-        pprint(f"Waiting 5s for {nodes} nodes to have a Pod CIDR assigned")
+            error(f"Timeout waiting for {nodes} nodes to have a Pod cidr assigned")
+            return 1
+        pprint(f"Waiting 5s for {nodes} nodes to have a Pod cidr assigned")
         result = run(cmd_one, capture_output=True, text=True)
         current_nodes = len(result.stdout.splitlines())
         if current_nodes == nodes:
@@ -31,11 +32,14 @@ def update_ip_alias(config, nodes):
             sleep(5)
             timeout += 5
     for node in safe_load(os.popen("kubectl get node -o yaml").read())['items']:
+        name, pod_cidr = node['metadata']['name']
         try:
-            name, pod_cidr = node['metadata']['name'], node['spec']['podCIDR']
+            pod_cidr = node['spec']['podCIDR']
             config.k.update_aliases(name, pod_cidr)
         except KeyError as e:
-            error(f"Hit Error: {e}")
+            error(f"Hit Error with node {name}: {e}")
+            failure = True
+    return 1 if failure else 0
 
 
 def scale(config, plandir, cluster, overrides):
@@ -104,11 +108,13 @@ def scale(config, plandir, cluster, overrides):
         result = config.plan(plan, inputfile=f'{plandir}/{role}.yml', overrides=overrides, threaded=threaded)
         if result['result'] != 'success':
             return result
-        else:
-            pprint(f"{role.capitalize()} Nodes will join the cluster in the following minutes")
+        elif result.get('newvms', []):
+            pprint(f"{role.capitalize()} nodes will join the cluster in a few minutes")
     if cloud_native and provider == 'gcp':
         pprint("Updating ip alias ranges")
-        update_ip_alias(config, ctlplanes + workers)
+        result = update_ip_alias(config, ctlplanes + workers)
+        if result != 0:
+            return {'result': 'failure', 'reason': "Issue when updating ip alias ranges"}
     return {'result': 'success'}
 
 
@@ -300,5 +306,7 @@ def create(config, plandir, cluster, overrides):
             deploy_cloud_storage(config, cluster)
         if cloud_native and provider == 'gcp':
             pprint("Updating ip alias ranges")
-            update_ip_alias(config, ctlplanes + workers)
+            result = update_ip_alias(config, ctlplanes + workers)
+            if result != 0:
+                return {'result': 'failure', 'reason': "Issue when updating ip alias ranges"}
     return {'result': 'success'}
