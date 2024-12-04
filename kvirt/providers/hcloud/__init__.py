@@ -4,7 +4,7 @@ import base64
 from getpass import getuser
 import glob
 import hashlib
-from hcloud import Client
+from hcloud import Client, APIException
 from hcloud.servers import ServerCreatePublicNetwork
 from hcloud.load_balancers import LoadBalancerAlgorithm, LoadBalancerService, LoadBalancerHealthCheck
 from hcloud.load_balancers import LoadBalancerTarget
@@ -91,12 +91,6 @@ class Khcloud():
                                             overrides=overrides, fqdn=True, storemetadata=storemetadata,
                                             vmuser=vmuser)[0]
 
-        servertype = self.conn.server_types.get_by_name(flavor)
-        if "snapshot_id" in overrides:
-            hetzner_image = self.conn.images.get_by_id(overrides.get("snapshot_id"))
-        else:
-            hetzner_image = self.conn.images.get_by_name_and_architecture(image, servertype.architecture)
-
         labels = {"kcli-managed": "vm"}
         for entry in [field for field in metadata if field in METADATA_FIELDS]:
             value = metadata[entry].replace('.', '-')
@@ -116,21 +110,44 @@ class Khcloud():
 
             placement_group = response.placement_group
 
-        created_vm = self.conn.servers.create(
-            name=name,
-            server_type=servertype,
-            image=hetzner_image,
-            start_after_create=False,
-            user_data=userdata,
-            volumes=[],
-            ssh_keys=hetzner_ssh_keys,
-            location=self.location,
-            public_net=ServerCreatePublicNetwork(enable_ipv4=False, enable_ipv6=False),
-            labels=labels,
-            placement_group=placement_group
-        )
+        if flavor is not None or "flavor_options" not in overrides:
+            flavor_options = [flavor]
+        else:
+            flavor_options = overrides.get("flavor_options")
 
-        created_vm.action.wait_until_finished(300)
+        for idx, flavor_option in enumerate(flavor_options):
+            servertype = self.conn.server_types.get_by_name(flavor_option)
+            if "snapshot_id" in overrides:
+                hetzner_image = self.conn.images.get_by_id(overrides.get("snapshot_id"))
+            else:
+                hetzner_image = self.conn.images.get_by_name_and_architecture(image, servertype.architecture)
+
+            try:
+                created_vm = self.conn.servers.create(
+                    name=name,
+                    server_type=servertype,
+                    image=hetzner_image,
+                    start_after_create=False,
+                    user_data=userdata,
+                    volumes=[],
+                    ssh_keys=hetzner_ssh_keys,
+                    location=self.location,
+                    public_net=ServerCreatePublicNetwork(enable_ipv4=False, enable_ipv6=False),
+                    labels=labels,
+                    placement_group=placement_group
+                )
+
+                created_vm.action.wait_until_finished(300)
+                break
+            except APIException as e:
+                if e.code == "resource_unavailable":
+                    if len(flavor_options) > (idx + 1):
+                        warning(f"Could not get server of type '{flavor_option}' in location '{self.location.name}' at current time, trying next flavor option")
+                    else:
+                        warning(f"Could not get server of type '{flavor_option}' in location '{self.location.name}' at current time")
+                        error(f"No more flavors available to try. Define more flavors in 'flavor_options' to have fallback options")
+                        
+
         created_vm = created_vm.server
 
         for volumeresponse in volumeresponses:
