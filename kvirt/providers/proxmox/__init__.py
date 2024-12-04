@@ -495,7 +495,51 @@ class Kproxmox(Kbase):
 
         vm_data = {'name': name, 'cores': numcpus, 'memory': memory, 'cpu': cpumodel, 'agent': 'enabled=1',
                    'description': dedent(description), 'onboot': 1}
-        # Network
+
+        sriov_nic = False
+        for index, net in enumerate(nets):
+            if isinstance(net, str):
+                netname = net
+                net = {'name': netname}
+            if net.get('sriov', False):
+                nets[index]['type'] = 'igb'
+                nets[index]['vfio'] = True
+                nets[index]['noconf'] = True
+                sriov_nic = True
+                if machine is None:
+                    machine = 'q35'
+                    warning("Forcing machine type to q35")
+            nettype = net.get('type', 'virtio')
+            bridge = self._get_default_network(node) if net['name'] == 'default' else net["name"]
+            vm_data[f'net{index}'] = f"model={nettype},bridge={bridge}"
+            mac = net.get('mac')
+            if mac is not None:
+                vm_data[f'net{index}'] += f",macaddr={mac}"
+            vlan = net.get('vlan')
+            if vlan is not None:
+                if not isinstance(vlan, int):
+                    return {'result': 'failure', 'reason': f"Invalid vlan value in nic {index}. Must be an int"}
+                vm_data[f'net{index}'] += f",tag={vlan}"
+                del nets[index]['vlan']
+            multiqueues = net.get('multiqueues')
+            if multiqueues is not None:
+                if not isinstance(multiqueues, int):
+                    return {'result': 'failure', 'reason': f"Invalid multiqueues value in nic {index}. Must be an int"}
+                elif not 0 < multiqueues < 257:
+                    return {'result': 'failure', 'reason': f"multiqueues value in nic {index} not between 0 and 256 "}
+                else:
+                    vm_data[f'net{index}'] += f",queues={multiqueues}"
+            mtu = net.get('mtu')
+            if mtu is not None:
+                if not isinstance(mtu, int):
+                    return {'result': 'failure', 'reason': f"Invalid mtu value in nic {index}. Must be an int"}
+                vm_data[f'net{index}'] += f",mtu={mtu}"
+
+        # ISO
+        if iso is not None:
+            vm_data['cdrom'] = f"file={imagepool}:iso/{iso},media=cdrom"
+
+        # Cloudinit
         userdata, netdata = None, None
         if image is not None:
             node_ip = pve_node["ip"]
@@ -542,48 +586,6 @@ class Kproxmox(Kbase):
             if netdata is not None:
                 vm_data['cicustom'] += f',network=local:snippets/{name}-netdata.yaml'
             vm_data['ide0'] = f"{pool}:cloudinit"
-
-        sriov_nic = False
-        for index, net in enumerate(nets):
-            if isinstance(net, str):
-                netname = net
-                net = {'name': netname}
-            if net.get('sriov', False):
-                nets[index]['type'] = 'igb'
-                nets[index]['vfio'] = True
-                nets[index]['noconf'] = True
-                sriov_nic = True
-                if machine is None:
-                    machine = 'q35'
-                    warning("Forcing machine type to q35")
-            nettype = net.get('type', 'virtio')
-            bridge = self._get_default_network(node) if net['name'] == 'default' else net["name"]
-            vm_data[f'net{index}'] = f"model={nettype},bridge={bridge}"
-            mac = net.get('mac')
-            if mac is not None:
-                vm_data[f'net{index}'] += f",macaddr={mac}"
-            vlan = net.get('vlan')
-            if vlan is not None:
-                if not isinstance(vlan, int):
-                    return {'result': 'failure', 'reason': f"Invalid vlan value in nic {index}. Must be an int"}
-                vm_data[f'net{index}'] += f",tag={vlan}"
-            multiqueues = net.get('multiqueues')
-            if multiqueues is not None:
-                if not isinstance(multiqueues, int):
-                    return {'result': 'failure', 'reason': f"Invalid multiqueues value in nic {index}. Must be an int"}
-                elif not 0 < multiqueues < 257:
-                    return {'result': 'failure', 'reason': f"multiqueues value in nic {index} not between 0 and 256 "}
-                else:
-                    vm_data[f'net{index}'] += f",queues={multiqueues}"
-            mtu = net.get('mtu')
-            if mtu is not None:
-                if not isinstance(mtu, int):
-                    return {'result': 'failure', 'reason': f"Invalid mtu value in nic {index}. Must be an int"}
-                vm_data[f'net{index}'] += f",mtu={mtu}"
-
-        # ISO
-        if iso is not None:
-            vm_data['cdrom'] = f"file={imagepool}:iso/{iso},media=cdrom"
 
         initial_disks = self._get_current_disks(new_vm.config.get())
         # Disks
@@ -1026,7 +1028,7 @@ class Kproxmox(Kbase):
 
     def _upload_file(self, node_ip, path, data):
         target_dir = "/var/lib/vz/snippets/"
-        
+
         # Ensure the target directory exists on the remote system
         try:
             check_call(
@@ -1035,13 +1037,13 @@ class Kproxmox(Kbase):
             )
         except CalledProcessError as e:
             raise RuntimeError(f"Failed to ensure directory {target_dir} exists on {node_ip}: {e}")
-        
+
         # Create a temporary file and upload it
         with TemporaryDirectory() as tmpdir:
             temp_file_path = os.path.join(tmpdir, path)
             with open(temp_file_path, "w") as f:
                 f.write(data)
-            
+
             scp_cmd = f"scp -q {temp_file_path} root@{node_ip}:{target_dir}{path}"
             try:
                 return call(scp_cmd, shell=True)
