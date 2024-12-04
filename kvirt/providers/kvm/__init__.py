@@ -335,7 +335,9 @@ class Kvirt(object):
         machine = 'pc'
         if 'machine' in overrides:
             machine = overrides['machine']
-        uefi = overrides.get('uefi', False)
+        uefi_firmware = overrides.get('uefi_firmware')
+        uefi_nvtemplate = overrides.get('uefi_nvtemplate')
+        uefi = overrides.get('uefi', False) or uefi_firmware is not None or uefi_nvtemplate is not None
         uefi_legacy = overrides.get('uefi_legacy', False) or (uefi and self._rhel_legacy(capabilities['machines']))
         secureboot = overrides.get('secureboot', False)
         if machine == 'pc' and (uefi or uefi_legacy or secureboot or aarch64 or enableiommu):
@@ -1212,9 +1214,9 @@ class Kvirt(object):
         ramxml = ""
         smmxml = ""
         osfirmware = ""
-        uefi_firmware = '/usr/share/OVMF/OVMF_CODE.secboot.fd' if uefi_legacy else overrides.get('uefi_firmware')
         if uefi or uefi_firmware is not None or secureboot:
             secure = 'yes' if secureboot else 'no'
+            uefi_firmware = '/usr/share/OVMF/OVMF_CODE.secboot.fd' if uefi_legacy else uefi_firmware
             if uefi_firmware is not None:
                 ramxml = f"<loader secure='{secure}' readonly='yes' type='pflash'>{uefi_firmware}</loader>"
                 if secureboot:
@@ -1222,8 +1224,7 @@ class Kvirt(object):
                     sectemplate = '/usr/share/OVMF/OVMF_VARS.secboot.fd'
                     ramxml += f'<nvram template="{sectemplate}">/var/lib/libvirt/qemu/nvram/{name}.fd</nvram>'
                 elif 'arm' in uefi_firmware or 'aarch64' in uefi_firmware:
-                    default_nvtemplate = overrides.get('uefi_nvtemplate')
-                    nvtemplate = default_nvtemplate or uefi_firmware.replace('-code', '-vars')
+                    nvtemplate = uefi_nvtemplate or uefi_firmware.replace('-code', '-vars')
                     ramxml += f'<nvram template="{nvtemplate}">/var/lib/libvirt/qemu/nvram/{name}.fd</nvram>'
                 else:
                     ramxml += f'<nvram>/var/lib/libvirt/qemu/nvram/{name}.fd</nvram>'
