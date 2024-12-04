@@ -557,11 +557,29 @@ class Kproxmox(Kbase):
                     machine = 'q35'
                     warning("Forcing machine type to q35")
             nettype = net.get('type', 'virtio')
-            mac = net.get('mac')
             bridge = self._get_default_network(node) if net['name'] == 'default' else net["name"]
             vm_data[f'net{index}'] = f"model={nettype},bridge={bridge}"
+            mac = net.get('mac')
             if mac is not None:
                 vm_data[f'net{index}'] += f",macaddr={mac}"
+            vlan = net.get('vlan')
+            if vlan is not None:
+                if not isinstance(vlan, int):
+                    return {'result': 'failure', 'reason': f"Invalid vlan value in nic {index}. Must be an int"}
+                vm_data[f'net{index}'] += f",tag={vlan}"
+            multiqueues = net.get('multiqueues')
+            if multiqueues is not None:
+                if not isinstance(multiqueues, int):
+                    return {'result': 'failure', 'reason': f"Invalid multiqueues value in nic {index}. Must be an int"}
+                elif not 0 < multiqueues < 257:
+                    return {'result': 'failure', 'reason': f"multiqueues value in nic {index} not between 0 and 256 "}
+                else:
+                    vm_data[f'net{index}'] += f",queues={multiqueues}"
+            mtu = net.get('mtu')
+            if mtu is not None:
+                if not isinstance(mtu, int):
+                    return {'result': 'failure', 'reason': f"Invalid mtu value in nic {index}. Must be an int"}
+                vm_data[f'net{index}'] += f",mtu={mtu}"
 
         # ISO
         if iso is not None:
