@@ -314,7 +314,6 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 cmds.append("systemctl restart sshd")
         validkeyfound = False
         if keys or publickeyfile is not None or publictempkeyfile is not None:
-            userdata += "ssh_authorized_keys:\n"
             validkeyfound = True
         elif which('ssh-add') is not None:
             agent_keys = os.popen('ssh-add -L 2>/dev/null | grep ssh | head -1').readlines()
@@ -323,6 +322,8 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 validkeyfound = True
         if not validkeyfound:
             warning("no valid public keys found in .ssh/.kcli directories, you might have trouble accessing the vm")
+        else:
+            userdata += "ssh_authorized_keys:\n"
         good_keys = []
         if keys:
             for key in list(set(keys)):
@@ -1273,7 +1274,8 @@ def get_latest_rhcos(url, _type='kvm', arch='x86_64', qemu=False):
 
 
 def get_installer_rhcos(_type='kvm', region=None, arch='x86_64'):
-    keys = {'ovirt': 'openstack', 'kubevirt': 'openstack', 'kvm': 'qemu', 'vsphere': 'vmware', 'ibm': 'ibmcloud'}
+    keys = {'ovirt': 'openstack', 'kubevirt': 'openstack', 'kvm': 'qemu', 'vsphere': 'vmware', 'ibm': 'ibmcloud',
+            'proxmox': 'openstack'}
     key = keys.get(_type, _type)
     INSTALLER_COREOS = os.popen('openshift-install coreos print-stream-json 2>/dev/null').read()
     data = json.loads(INSTALLER_COREOS)

@@ -30,7 +30,7 @@ class Khcloud():
                files=[], enableroot=True, alias=[], overrides={}, tags=[], storemetadata=False,
                sharedfolders=[], cmdline=None, placement=[], autostart=False, cpuhotplug=False, memoryhotplug=False,
                numamode=None, numa=[], pcidevices=[], tpm=False, rng=False, metadata={}, securitygroups=[],
-               vmuser=None):
+               vmuser=None, guestagent=True):
         if self.exists(name):
             return {'result': 'failure', 'reason': f"VM {name} already exists"}
 
@@ -69,7 +69,7 @@ class Khcloud():
                 hashed_key = hashlib.md5(decoded_key).hexdigest()
                 md5_fingerprint = ':'.join(a + b for a, b in zip(hashed_key[::2], hashed_key[1::2]))
                 hetzner_ssh_key = self.conn.ssh_keys.get_by_fingerprint(md5_fingerprint)
-                if hetzner_ssh_keys is None:
+                if hetzner_ssh_key is None:
                     hetzner_ssh_key = self.conn.ssh_keys.create(name=f"kcli-uploaded-key-{hashed_key}", public_key=key)
 
                 hetzner_ssh_keys.append(hetzner_ssh_key)
@@ -147,7 +147,7 @@ class Khcloud():
         response = self.start(created_vm.name)
 
         if response["result"] == "failure":
-            return {'result': 'failure', 'reason': f"Could not start VM {created_vm.name}, after creation"}
+            return {'result': 'failure', 'reason': f"Could not start VM {created_vm.name}, after creation, with the following reason {response['reason']}"}
 
         lb = overrides.get('loadbalancer')
         if lb is not None:
@@ -181,8 +181,9 @@ class Khcloud():
         response = server.power_on()
         if response.error:
             return {'result': 'failure', 'reason': json.dumps(response.error)}
-        else:
-            response.wait_until_finished(300)
+
+        response.wait_until_finished(300)
+        return {'result': 'success'}
 
     def stop(self, name, soft=False):
         server = self.conn.servers.get_by_name(name)

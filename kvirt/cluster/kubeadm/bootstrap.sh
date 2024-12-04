@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# set global variable
-CIDR="10.244.0.0/16"
+POD_CIDR={{ cluster_network_ipv4 }}
+SERVICE_CIDR={{ service_network_ipv4 }}
 
 {% if config_type in ['aws', 'gcp', 'ibm'] %}
 API_IP={{ "api.%s.%s" % (cluster, domain) }}
@@ -18,7 +18,7 @@ DOMAIN={{ domain }}
 CERTKEY={{ cert_key }}
 TOKEN={{ token }}
 K8SVERSION='{{ "--kubernetes-version %s" % minor_version if minor_version is defined else "" }}'
-kubeadm init --control-plane-endpoint "${API_IP}:6443" --pod-network-cidr $CIDR --certificate-key $CERTKEY --upload-certs --token $TOKEN --token-ttl 0 --apiserver-cert-extra-sans ${API_IP} $K8SVERSION
+kubeadm init --control-plane-endpoint "${API_IP}:6443" --pod-network-cidr $POD_CIDR --service-cidr $SERVICE_CIDR --certificate-key $CERTKEY --upload-certs --token $TOKEN --token-ttl 0 --apiserver-cert-extra-sans ${API_IP} $K8SVERSION
 
 # config cluster credentials
 cp /etc/kubernetes/admin.conf /root/kubeconfig
@@ -42,7 +42,7 @@ kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=`kubectl version
 CALICO_VERSION={{ 'projectcalico/calico'|github_version(calico_version) }}
 curl -L https://raw.githubusercontent.com/projectcalico/calico/$CALICO_VERSION/manifests/tigera-operator.yaml > /root/tigera-operator.yaml
 curl -L https://raw.githubusercontent.com/projectcalico/calico/$CALICO_VERSION/manifests/custom-resources.yaml > /root/tigera-custom-resources.yaml
-sed -i "s@192.168.0.0/16@$CIDR@" /root/tigera-custom-resources.yaml
+sed -i "s@192.168.0.0/16@$POD_CIDR@" /root/tigera-custom-resources.yaml
 kubectl create -f /root/tigera-operator.yaml
 kubectl create -f /root/tigera-custom-resources.yaml
 {% elif sdn == 'canal' %}

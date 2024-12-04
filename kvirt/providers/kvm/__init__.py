@@ -238,11 +238,14 @@ class Kvirt(object):
         default_disksize = disksize
         default_pool = pool
         conn = self.conn
-        capabilities = self.get_capabilities(overrides.get('arch'))
-        if 'arch' not in overrides:
-            overrides['arch'] = capabilities['arch']
-        iommu_model = 'intel' if overrides.get('arch', 'x86_64') == 'x86_64' else 'smmuv3'
         custom_emulator = overrides.get('emulator')
+        default_arch = overrides.get('arch')
+        arch = default_arch
+        if custom_emulator is not None and custom_emulator.endswith('aarch64'):
+            arch = 'aarch64'
+            pprint(f"Using arch {arch} as per custom emulator suffix")
+        capabilities = self.get_capabilities(arch)
+        arch = arch or capabilities['arch']
         if custom_emulator is not None:
             if os.path.exists(custom_emulator):
                 emulator = custom_emulator
@@ -251,17 +254,20 @@ class Kvirt(object):
             else:
                 emulator = which(custom_emulator)
         elif 'emulator' not in capabilities:
-            return {'result': 'failure', 'reason': "No valid emulator found for target arch"}
+            return {'result': 'failure', 'reason': f"No valid emulator found for target arch {arch}"}
         else:
             emulator = capabilities['emulator']
-        if 'machine' in overrides and overrides['machine'] not in capabilities['machines']:
-            machines = ','.join(sorted(capabilities['machines']))
-            return {'result': 'failure', 'reason': f"Incorrect machine. Choose between {machines}"}
-        aarch64 = capabilities['arch'] == 'aarch64'
+            if 'machine' in overrides and overrides['machine'] not in capabilities['machines']:
+                machines = ','.join(sorted(capabilities['machines']))
+                return {'result': 'failure', 'reason': f"Incorrect machine. Choose between {machines}"}
+        iommu_model = 'smmuv3' if arch == 'aarch64' else 'intel'
+        aarch64 = arch == 'aarch64'
         aarch64_full = aarch64 and capabilities['kvm']
-        as390x = capabilities['arch'] == 's390x'
+        as390x = arch == 's390x'
         if aarch64:
-            if 'machine' not in overrides:
+            if custom_emulator is not None:
+                warning("Not checking whether a valid machine is provided")
+            elif 'machine' not in overrides:
                 virtmachines = [m for m in sorted(capabilities['machines']) if m.startswith('virt-')]
                 if not virtmachines:
                     return {'result': 'failure', 'reason': "Couldn't find a valid machine"}
@@ -908,10 +914,10 @@ class Kvirt(object):
                         return {'result': 'failure', 'reason': msg}
                     self._uploadimage(name, pool=default_storagepool, origin=tmpdir)
         listen = '0.0.0.0' if self.host not in ['localhost', '127.0.0.1'] else '127.0.0.1'
-        if not vnc or (aarch64 or as390x):
+        if not vnc:
             displayxml = ''
         else:
-            displayxml = """<input type='mouse' bus='ps2'/>"""
+            displayxml = """<input type='mouse' bus='virtio'/>"""
             vncviewerpath = '/Applications/VNC Viewer.app'
             passwd = "passwd='kcli'" if os.path.exists('/Applications') and not os.path.exists(vncviewerpath) else ''
             displayxml += """<graphics type='vnc' port='-1' autoport='yes' listen='%s' %s>
@@ -1017,7 +1023,7 @@ class Kvirt(object):
                         count += 1
                 cpuxml += f'{numaxml}</numa>'
                 if numamemory > memory:
-                    msg = "Can't use more memory for numa than assigned memory"
+                    msg = "Can't use more memory for numa than assigned one ({memory})"
                     return {'result': 'failure', 'reason': msg}
             elif memoryhotplug:
                 lastcpu = int(numcpus) - 1
@@ -1206,15 +1212,19 @@ class Kvirt(object):
         ramxml = ""
         smmxml = ""
         osfirmware = ""
-        if uefi or uefi_legacy or secureboot or aarch64:
+        uefi_firmware = '/usr/share/OVMF/OVMF_CODE.secboot.fd' if uefi_legacy else overrides.get('uefi_firmware')
+        if uefi or uefi_firmware is not None or secureboot or aarch64:
             secure = 'yes' if secureboot else 'no'
-            if uefi_legacy:
-                firmware = '/usr/share/OVMF/OVMF_CODE.secboot.fd'
-                ramxml = f"<loader secure='{secure}' readonly='yes' type='pflash'>{firmware}</loader>"
+            if uefi_firmware is not None:
+                ramxml = f"<loader secure='{secure}' readonly='yes' type='pflash'>{uefi_firmware}</loader>"
                 if secureboot:
                     smmxml = "<smm state='on'/>"
                     sectemplate = '/usr/share/OVMF/OVMF_VARS.secboot.fd'
                     ramxml += f'<nvram template="{sectemplate}">/var/lib/libvirt/qemu/nvram/{name}.fd</nvram>'
+                elif 'arm' in uefi_firmware or 'aarch64' in uefi_firmware:
+                    default_nvtemplate = overrides.get('uefi_nvtemplate')
+                    nvtemplate = default_nvtemplate or uefi_firmware.replace('-code', '-vars')
+                    ramxml += f'<nvram template="{nvtemplate}">/var/lib/libvirt/qemu/nvram/{name}.fd</nvram>'
                 else:
                     ramxml += f'<nvram>/var/lib/libvirt/qemu/nvram/{name}.fd</nvram>'
             else:
@@ -1648,7 +1658,11 @@ class Kvirt(object):
             xml = vm.XMLDesc(1)
             root = ET.fromstring(xml)
             host = self.host
-            for element in list(root.iter('graphics')):
+            graphics = list(root.iter('graphics'))
+            if not graphics:
+                error(f"No graphics found in vm {name}")
+                return
+            for element in graphics:
                 attributes = element.attrib
                 if attributes['listen'] == '127.0.0.1' and not os.path.exists("i_am_a_container")\
                    and self.host not in ['127.0.0.1', 'localhost']:
