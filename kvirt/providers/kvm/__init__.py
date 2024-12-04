@@ -1213,7 +1213,7 @@ class Kvirt(object):
         smmxml = ""
         osfirmware = ""
         uefi_firmware = '/usr/share/OVMF/OVMF_CODE.secboot.fd' if uefi_legacy else overrides.get('uefi_firmware')
-        if uefi or uefi_firmware is not None or secureboot or aarch64:
+        if uefi or uefi_firmware is not None or secureboot:
             secure = 'yes' if secureboot else 'no'
             if uefi_firmware is not None:
                 ramxml = f"<loader secure='{secure}' readonly='yes' type='pflash'>{uefi_firmware}</loader>"
