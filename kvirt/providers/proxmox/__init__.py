@@ -10,7 +10,7 @@ from pathlib import Path
 import proxmoxer
 from proxmoxer.tools import Tasks
 import re
-from subprocess import call
+from subprocess import CalledProcessError, call, check_call
 import time
 from textwrap import dedent
 from tempfile import TemporaryDirectory
@@ -1007,11 +1007,28 @@ class Kproxmox(Kbase):
             self._wait_for(vm.config.post(**vm_data))
 
     def _upload_file(self, node_ip, path, data):
+        target_dir = "/var/lib/vz/snippets/"
+        
+        # Ensure the target directory exists on the remote system
+        try:
+            check_call(
+                f"ssh -q root@{node_ip} 'mkdir -p {target_dir} && test -d {target_dir}'",
+                shell=True
+            )
+        except CalledProcessError as e:
+            raise RuntimeError(f"Failed to ensure directory {target_dir} exists on {node_ip}: {e}")
+        
+        # Create a temporary file and upload it
         with TemporaryDirectory() as tmpdir:
-            with open(f"{tmpdir}/{path}", "w") as f:
+            temp_file_path = os.path.join(tmpdir, path)
+            with open(temp_file_path, "w") as f:
                 f.write(data)
-            scpcmd = f"scp -q {tmpdir}/{path} root@{node_ip}:/var/lib/vz/snippets"
-            return call(scpcmd, shell=True)
+            
+            scp_cmd = f"scp -q {temp_file_path} root@{node_ip}:{target_dir}{path}"
+            try:
+                return call(scp_cmd, shell=True)
+            except CalledProcessError as e:
+                raise RuntimeError(f"Failed to upload file {temp_file_path} to {target_dir}: {e}")
 
     def _get_current_disks(self, vm_config):
         disks = []
