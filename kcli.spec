@@ -58,6 +58,6 @@ rm -rf %{buildroot}
 %attr(0755,root,root) %{_bindir}/gketoken
 
 %post
-systemctl is-active --quiet ksushy.service && systemctl daemon-reload && systemctl restart ksushy.service || true
+! systemctl is-active --quiet ksushy.service || (systemctl daemon-reload && systemctl restart ksushy.service)
 
 %changelog
