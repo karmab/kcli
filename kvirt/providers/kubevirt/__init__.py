@@ -751,7 +751,7 @@ class Kubevirt():
             profile = annotations.get('kcli/profile', 'N/A')
             plan = annotations.get('kcli/plan', 'N/A')
             ip = annotations.get('kcli/ip')
-            kube = annotations.ge('kcli/kube')
+            kube = annotations.get('kcli/kube')
             kubetype = annotations.get('kcli/kubetype')
             if 'kcli/image' in annotations:
                 image = annotations['kcli/image']
