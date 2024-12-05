@@ -315,12 +315,10 @@ def scale(config, plandir, cluster, overrides):
         if assisted:
             all_baremetal_hosts = old_baremetal_hosts + baremetal_hosts
             create_bmh_objects(config, plandir, cluster, namespace, all_baremetal_hosts, overrides)
-            total = f'oc get nodepool -n {namespace} -o jsonpath='
-            total += '"{range .items[?(@.spec.clusterName==\\"%s\\")]}{.spec.replicas}{\'\\n\'}{end}"' % cluster
-            total += " | awk '{sum += $1} END {print sum}'"
-            total_replicas = int(os.popen(total).read())
-            number = overrides.get('workers', 2) - total_replicas if nodepool != cluster else len(all_baremetal_hosts)
-            cmcmd = f"oc -n {data['namespace']} scale nodepool {nodepool} --replicas {number}"
+            replicas_cmd = "oc get nodepool -n %s %s -o jsonpath='{.spec.replicas}'" % (namespace, nodepool)
+            replicas = int(os.popen(replicas_cmd).read()) + len(baremetal_hosts)
+            pprint(f"Setting replicas to {replicas} in nodepool {nodepool}")
+            cmcmd = f"oc -n {data['namespace']} scale nodepool {nodepool} --replicas {replicas}"
             call(cmcmd, shell=True)
             return {'result': 'success'}
         else:
