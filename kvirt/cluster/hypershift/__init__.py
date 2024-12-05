@@ -226,20 +226,25 @@ def scale(config, plandir, cluster, overrides):
         overrides['cluster'] = cluster
         overrides['clusterdir'] = clusterdir
         plan = overrides.get('plan') or plan
-        if 'ingress_ip' not in overrides and provider != 'kubevirt':
-            msg = "Missing ingress_ip..."
-            return {'result': 'failure', 'reason': msg}
-        domain = overrides.get('domain')
-        if domain is None:
-            msg = "Missing domain..."
-            return {'result': 'failure', 'reason': msg}
-        if 'management_ingress_domain' not in overrides:
-            overrides['management_ingress_domain'] = f'apps.{cluster}.{domain}'
-        os.mkdir(clusterdir)
-        ignitionscript = config.process_inputfile(cluster, f"{plandir}/ignition.sh", overrides=overrides)
-        with open(f"{clusterdir}/ignition.sh", 'w') as f:
-            f.write(ignitionscript)
-        call(f'bash {clusterdir}/ignition.sh', shell=True)
+        namespace = data['namespace']
+        assisted = cluster in os.popen(f'oc get -n {namespace}-{cluster} infraenv {cluster}').read().strip()
+        if not assisted:
+            if 'ingress_ip' not in overrides and provider != 'kubevirt':
+                msg = "Missing ingress_ip..."
+                return {'result': 'failure', 'reason': msg}
+            domain = overrides.get('domain')
+            if domain is None:
+                msg = "Missing domain..."
+                return {'result': 'failure', 'reason': msg}
+            if 'management_ingress_domain' not in overrides:
+                overrides['management_ingress_domain'] = f'apps.{cluster}.{domain}'
+            ignitionscript = config.process_inputfile(cluster, f"{plandir}/ignition.sh", overrides=overrides)
+            with open(f"{clusterdir}/ignition.sh", 'w') as f:
+                f.write(ignitionscript)
+            call(f'bash {clusterdir}/ignition.sh', shell=True)
+        else:
+            os.mkdir(clusterdir)
+            data['assisted'] = True
     old_extra_nodepools = []
     old_assisted_vms_number = 2
     if storedparameters and os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
