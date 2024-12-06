@@ -564,7 +564,7 @@ class Kproxmox(Kbase):
                 if not ignition:
                     vm_data['citype'] = 'configdrive2'
                 else:
-                    arg = f" -fw_cfg name=opt/com.coreos/config,file=snippets/{ignition_path}"
+                    arg = f" -fw_cfg name=opt/com.coreos/config,file=/var/lib/vz/snippets/{ignition_path}"
                     qemuextra = qemuextra + arg if qemuextra is not None else arg
                     userdata = None
             else:
