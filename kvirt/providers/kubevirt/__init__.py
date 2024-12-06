@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import base64
 from ipaddress import ip_address
 from kvirt import common
 from kvirt.common import error, pprint, warning
 from kvirt.kubecommon import _create_resource, _delete_resource, _patch_resource, _replace_resource
-from kvirt.kubecommon import _get_resource, _get_all_resources, _put
+from kvirt.kubecommon import _get_resource, _get_all_resources, _put, _create_secret
 from kvirt.defaults import IMAGES, UBUNTUS, METADATA_FIELDS
 import datetime
 import os
@@ -453,13 +452,13 @@ class Kubevirt():
                     cloudinitvolume[cloudinitsource]['networkData'] = netdata
             else:
                 userdatasecretname = f"{name}-userdata-secret"
-                self.create_secret(userdatasecretname, namespace, userdata, field='userdata')
+                _create_secret(kubectl, userdatasecretname, namespace, userdata, field='userdata')
                 cloudinitvolume[cloudinitsource] = {'secretRef': {'name': userdatasecretname}}
                 owners.append(userdatasecretname)
                 if netdata is not None and netdata != '':
                     netdatasecretname = f"{name}-netdata-secret"
                     cloudinitvolume[cloudinitsource]['networkDataSecretRef'] = {'name': netdatasecretname}
-                    self.create_secret(netdatasecretname, namespace, netdata, field='networkdata')
+                    _create_secret(kubectl, netdatasecretname, namespace, netdata, field='networkdata')
                     owners.append(netdatasecretname)
             vm['spec']['template']['spec']['volumes'].append(cloudinitvolume)
         if windows:
@@ -1664,14 +1663,6 @@ class Kubevirt():
             return ssh_service['status']['loadBalancer']['ingress'][0]['ip']
         except:
             return None
-
-    def create_secret(self, name, namespace, data, field='userdata'):
-        kubectl = self.kubectl
-        data = base64.b64encode(data.encode()).decode("UTF-8")
-        data = {field: data}
-        spec = {'kind': 'Secret', 'apiVersion': 'v1', 'metadata': {'namespace': namespace, 'name': name},
-                'data': data, 'type': 'Opaque'}
-        _create_resource(kubectl, spec, namespace, debug=self.debug)
 
     def delete_secret(self, name, namespace):
         kubectl = self.kubectl
