@@ -1023,10 +1023,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         pass
     elif image is None:
         image_type = provider
-        if data['kvm_openstack'] and provider == 'kvm':
-            image_type = 'openstack'
-        if provider == "proxmox":
-            image_type = 'kvm'
         region = k.region if provider == 'aws' else None
         try:
             if upstream:

@@ -130,7 +130,6 @@ sno_extra_args:
 metal3: false
 baremetal_user: root
 baremetal_password: calvin
-kvm_openstack: true
 kvm_forcestack: false
 ipsec: false
 ipsec_mode:
