@@ -1150,7 +1150,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                          vmport=disconnected_vmport)
             os.system(scpcmd)
         if disconnected_operators:
-            source = "/root/catalogSource-redhat-operator-index.yaml"
+            source = "/root/catalogSource-cs-redhat-operator-index.yaml"
             destination = f"{clusterdir}/catalogSource-redhat.yaml"
             scpcmd = scp(disconnected_vm, ip=disconnected_ip, user='root', source=source,
                          destination=destination, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
