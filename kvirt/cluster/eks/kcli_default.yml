@@ -1,5 +1,7 @@
 info: |
   Deploy kubernetes using eks on $workers
+  network to use can either be a vpc or a specific subnet
+  extra_networks/extra_subnets array can be used to specify which subnet use to spread the worker nodes across several availability zones 
 workers: 2
 version:
 network: default

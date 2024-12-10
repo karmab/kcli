@@ -1867,29 +1867,30 @@ class Kaws(object):
         vpcs = conn.describe_vpcs()
         subnets = conn.describe_subnets()
         if netname in [subnet['SubnetId'] for subnet in subnets['Subnets']]:
-            subnet_id = netname
-            vpc_id = [subnet['VpcId'] for subnet in subnets['Subnets'] if subnet['SubnetId'] == netname][0]
+            subnet = [s for s in subnets['Subnets'] if s['SubnetId'] == netname][0]
+            vpc_id = subnet['VpcId']
         elif netname == 'default':
             vpc_ids = [vpc['VpcId'] for vpc in vpcs['Vpcs'] if vpc['IsDefault']]
             if not vpc_ids:
                 error("Couldn't find default vpc")
                 sys.exit(1)
             vpc_id = vpc_ids[0]
-            subnet_id = [subnet['SubnetId'] for subnet in subnets['Subnets']
-                         if subnet['DefaultForAz'] and subnet['VpcId'] == vpc_id][0]
-            pprint(f"Using subnet {subnet_id} as default")
+            subnet = [s for s in subnets['Subnets'] if s['DefaultForAz'] and s['VpcId'] == vpc_id][0]
         else:
             vpc_id = self.get_vpc_id(netname, vpcs) if not netname.startswith('vpc-') else netname
             if vpc_id is None:
                 error(f"Couldn't find vpc {netname}")
                 sys.exit(1)
-            subnet_ids = [subnet['SubnetId'] for subnet in subnets['Subnets'] if subnet['VpcId'] == vpc_id]
-            if subnet_ids:
-                subnet_id = subnet_ids[0]
-            else:
+            subnets = [s['SubnetId'] for s in subnets['Subnets'] if s['VpcId'] == vpc_id]
+            if not subnets:
                 error(f"Couldn't find valid subnet for vpc {netname}")
                 sys.exit(1)
-        return vpc_id, subnet_id
+            else:
+                subnet = subnets[0]
+        subnet_id = subnet['SubnetId']
+        az = subnet['AvailabilityZone']
+        pprint(f"Using subnet {subnet_id} as default")
+        return vpc_id, subnet_id, az
 
     def create_instance_profile(self, name, role):
         iam = boto3.client('iam', aws_access_key_id=self.access_key_id, aws_secret_access_key=self.access_key_secret,

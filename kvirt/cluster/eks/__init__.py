@@ -118,8 +118,6 @@ def create(config, cluster, overrides, dnsconfig=None):
     capacity_type = data['capacity_type']
     network = data['subnet'] or data['network']
     extra_networks = data['extra_subnets'] or data['extra_networks']
-    if not extra_networks:
-        return {'result': 'failure', 'reason': 'You must define extra_networks/extra_subnets'}
     sgid = data['security_group']
     plan = cluster
     tags = {'plan': cluster, 'kube': cluster, 'kubetype': 'eks'}
@@ -166,13 +164,27 @@ def create(config, cluster, overrides, dnsconfig=None):
         pprint(f"Using worker role {worker_role}")
     worker_role = worker_roles[worker_role]
     subnetids = []
-    for index, n in enumerate([network] + extra_networks):
-        vpcid, subnetid = k.eks_get_network(n)
+    total_subnets = [network] + extra_networks
+    for index, n in enumerate(total_subnets):
+        vpcid, subnetid, az = k.eks_get_network(n)
         if index == 0:
             sgid = k.get_security_group_id(n, vpcid) if sgid is not None else k.get_default_security_group_id(vpcid)
             if sgid is None:
                 return {'result': 'failure', 'reason': "Couldn't find a valid security group"}
         subnetids.append(subnetid)
+    if len(total_subnets) == 1:
+        subnets = k.list_subnets()
+        subnetid = None
+        for subnetname in subnets:
+            subnet = subnets[subnetname]
+            if subnet['network'] == vpcid and subnet['id'] != subnetid and subnet['az'] != az:
+                subnetid = subnet['id']
+                break
+        if subnetid is None:
+            return {'result': 'failure', 'reason': "Couldn't find a valid subnet in the same vpc but with other az"}
+        else:
+            pprint(f"Using subnet {subnetid} as extra subnet")
+            subnetids.append(subnetid)
     cluster_data['resourcesVpcConfig'] = {'subnetIds': subnetids, 'securityGroupIds': [sgid]}
     eks = boto3.client('eks', aws_access_key_id=access_key_id, aws_secret_access_key=access_key_secret,
                        region_name=region, aws_session_token=session_token)
