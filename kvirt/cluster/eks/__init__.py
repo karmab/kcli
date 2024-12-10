@@ -94,6 +94,8 @@ def create(config, cluster, overrides, dnsconfig=None):
     data = {'workers': 2,
             'network': 'default',
             'extra_networks': [],
+            'subnet': None,
+            'extra_subnets': None,
             'ctlplane_role': None,
             'worker_role': None,
             'security_group': None,
@@ -114,10 +116,10 @@ def create(config, cluster, overrides, dnsconfig=None):
     flavor = data['flavor']
     ami_type = data['ami_type']
     capacity_type = data['capacity_type']
-    network = data['network']
-    extra_networks = data['extra_networks']
+    network = data['subnet'] or data['network']
+    extra_networks = data['extra_subnets'] or data['extra_networks']
     if not extra_networks:
-        return {'result': 'failure', 'reason': 'You must define extra_networks'}
+        return {'result': 'failure', 'reason': 'You must define extra_networks/extra_subnets'}
     sgid = data['security_group']
     plan = cluster
     tags = {'plan': cluster, 'kube': cluster, 'kubetype': 'eks'}
