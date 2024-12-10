@@ -3579,7 +3579,7 @@ class Kvirt(object):
                 netxml = conn.interfaceLookupByName(interface).XMLDesc(0)
                 root = ET.fromstring(netxml)
             except:
-                warning(f"Issue parsing your {interface}. Skipping")
+                warning(f"Issue parsing interface {interface}. Skipping")
                 continue
             bridge = list(root.iter('bridge'))
             if not bridge:
