@@ -101,6 +101,7 @@ def create(config, cluster, overrides, dnsconfig=None):
             'flavor': None,
             'ami_type': None,
             'capacity_type': None,
+            'default_addons': True,
             'version': None}
     data.update(overrides)
     fix_typos(data)
@@ -120,7 +121,7 @@ def create(config, cluster, overrides, dnsconfig=None):
     sgid = data['security_group']
     plan = cluster
     tags = {'plan': cluster, 'kube': cluster, 'kubetype': 'eks'}
-    cluster_data = {'name': cluster, 'tags': tags}
+    cluster_data = {'name': cluster, 'tags': tags, 'bootstrapSelfManagedAddons': data['default_addons']}
     if version is not None:
         version = str(version)
         if version not in supported_versions:

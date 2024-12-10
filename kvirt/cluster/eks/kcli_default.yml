@@ -10,4 +10,4 @@ disk_size:
 flavor:
 ami_type:
 capacity_type:
-
+default_addons: true
