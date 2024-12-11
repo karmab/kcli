@@ -1223,7 +1223,7 @@ class Kvirt(object):
                     smmxml = "<smm state='on'/>"
                     sectemplate = '/usr/share/OVMF/OVMF_VARS.secboot.fd'
                     ramxml += f'<nvram template="{sectemplate}">/var/lib/libvirt/qemu/nvram/{name}.fd</nvram>'
-                elif 'arm' in uefi_firmware or 'aarch64' in uefi_firmware:
+                elif uefi_firmware is not None and ('arm' in uefi_firmware or 'aarch64' in uefi_firmware):
                     nvtemplate = uefi_nvtemplate or uefi_firmware.replace('-code', '-vars')
                     ramxml += f'<nvram template="{nvtemplate}">/var/lib/libvirt/qemu/nvram/{name}.fd</nvram>'
                 else:
