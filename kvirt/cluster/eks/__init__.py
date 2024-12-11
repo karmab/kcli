@@ -1,7 +1,8 @@
 import boto3
-from kvirt.common import success, info2, pprint, error, fix_typos
+from kvirt.common import success, info2, pprint, error, fix_typos, warning
 import os
 import yaml
+from yaml import safe_dump, safe_load
 
 supported_versions = ['1.20', '1.21', '1.22', '1.23', '1.24', '1.25', '1.26', '1.27']
 
@@ -45,13 +46,13 @@ def get_kubeconfig(config, cluster, zonal=True):
                       "users": [{"name": cluster_arn, "user": {"exec": {
                           "apiVersion": "client.authentication.k8s.io/v1beta1", "command": "ekstoken",
                           "interactiveMode": "Never", "args": [config.client, cluster]}}}]}
-    config_text = yaml.dump(cluster_config, default_flow_style=False)
+    config_text = safe_dump(cluster_config, default_flow_style=False)
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     with open(f"{clusterdir}/auth/kubeconfig", 'w') as f:
         f.write(config_text)
 
 
-def scale(config, cluster, overrides):
+def scale(config, plandir, cluster, overrides):
     data = {'workers': 2,
             'network': 'default',
             'role': None,
@@ -90,21 +91,8 @@ def scale(config, cluster, overrides):
     return {'result': 'success'}
 
 
-def create(config, cluster, overrides, dnsconfig=None):
-    data = {'workers': 2,
-            'network': 'default',
-            'extra_networks': [],
-            'subnet': None,
-            'extra_subnets': None,
-            'ctlplane_role': None,
-            'worker_role': None,
-            'security_group': None,
-            'disk_size': None,
-            'flavor': None,
-            'ami_type': None,
-            'capacity_type': None,
-            'default_addons': True,
-            'version': None}
+def create(config, plandir, cluster, overrides, dnsconfig=None):
+    data = safe_load(open(f'{plandir}/kcli_default.yml'))
     data.update(overrides)
     fix_typos(data)
     k = config.k
@@ -121,7 +109,27 @@ def create(config, cluster, overrides, dnsconfig=None):
     sgid = data['security_group']
     plan = cluster
     tags = {'plan': cluster, 'kube': cluster, 'kubetype': 'eks'}
-    cluster_data = {'name': cluster, 'tags': tags, 'bootstrapSelfManagedAddons': data['default_addons']}
+    cluster_data = {'name': cluster, 'tags': tags}
+    if not data['default_addons']:
+        warning("Disabling network add-ons")
+        cluster_data['bootstrapSelfManagedAddons'] = True
+    else:
+        auto_mode = {'storageConfig': {'blockStorage': {'enabled': True}},
+                     'kubernetesNetworkConfig': {'elasticLoadBalancing': {'enabled': True}},
+                     'computeConfig': {'enabled': True}}
+        cluster_data.update(auto_mode)
+    extended_support = data['extended_support']
+    if not extended_support:
+        cluster_data['upgradePolicy'] = {'supportType': 'STANDARD'}
+    zonal_shift = data['zonal_shift']
+    if zonal_shift:
+        cluster_data['zonalShiftConfig'] = {'enabled': True}
+    logging = data['logging']
+    if logging:
+        logging_data = []
+        for _type in data['logging_types']:
+            logging_data.append({'type': _type, 'enabled': True})
+        cluster_data['logging'] = {'clusterLogging': logging_data}
     if version is not None:
         version = str(version)
         if version not in supported_versions:

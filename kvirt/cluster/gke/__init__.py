@@ -3,7 +3,7 @@ from kvirt.common import error, success, info2, pprint, fix_typos
 import os
 from time import sleep
 import sys
-import yaml
+from yaml import safe_dump, safe_load
 
 
 def _wait_for_operation(client, location):
@@ -63,7 +63,7 @@ def project_init(config):
     return project, region, zone
 
 
-def scale(config, cluster, overrides):
+def scale(config, plandir, cluster, overrides):
     data = {'workers': 2}
     data.update(overrides)
     workers = data['workers']
@@ -78,35 +78,8 @@ def scale(config, cluster, overrides):
     return {'result': 'success'}
 
 
-def create(config, cluster, overrides, dnsconfig=None):
-    data = {'workers': 2,
-            'autoscaling': False,
-            'autoscaling_minimum': None,
-            'autoscaling_maximum': None,
-            'autopilot': False,
-            'beta_apis': [],
-            'network': 'default',
-            'flavor': None,
-            'disk_size': None,
-            'image': None,
-            'image_type': None,
-            'disk_type': 'pd-standard',
-            'local_ssd_count': None,
-            'spot': False,
-            'confidential': False,
-            'secureboot': False,
-            'integrity_monitoring': False,
-            'native': False,
-            'cluster_network': None,
-            'cluster_network_ipv4': "10.132.0.0/14",
-            'service_network': None,
-            'service_network_ipv4': "172.30.0.0/16",
-            'preemptible': False,
-            'alpha': False,
-            'beta': False,
-            'zonal': True,
-            'version': None,
-            'worker_version': None}
+def create(config, plandir, cluster, overrides, dnsconfig=None):
+    data = safe_load(open(f'{plandir}/kcli_default.yml'))
     data.update(overrides)
     fix_typos(data)
     workers = data['workers']
@@ -134,7 +107,7 @@ def create(config, cluster, overrides, dnsconfig=None):
             installparam['kubetype'] = 'gke'
             installparam['zonal'] = zonal
             installparam['client'] = config.client
-            yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
+            safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     project, region, zone = project_init(config)
     clusterspec = {'name': cluster, 'enable_kubernetes_alpha': data['alpha']}
     clusterspec['resource_labels'] = {'plan': cluster, 'kube': cluster, 'kubetype': 'gke'}

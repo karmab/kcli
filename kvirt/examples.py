@@ -209,7 +209,10 @@ $ kcli create kube aks -P network=subnet-1 myaks
 $ kcli create kube aks --paramfile=myparameters.yml myaks
 """
 
-kubeekscreate = """# Create an eks instance named myeks (specifying two subnets in different AZs)
+kubeekscreate = """# Create an eks instance named myeks on current vpc
+$ kcli create kube eks myeks
+
+# Create an eks instance named myeks (specifying two subnets in different AZs)
 $ kcli create kube eks -P network=subnet-1 -P extra_networks=[subnet-2] myeks
 
 # Specify custom role for ctlplane

@@ -2630,6 +2630,7 @@ class Kconfig(Kbaseconfig):
             self.get_vip_from_confpool(ippool, cluster, overrides)
         if baremetalpool is not None:
             self.get_baremetal_hosts_from_confpool(baremetalpool, cluster, overrides)
+        os.environ['PATH'] += ':/workdir' if container_mode() else f':{os.getcwd()}'
         if kubetype == 'openshift':
             result = self.create_kube_openshift(cluster, overrides)
         elif kubetype == 'openshift-sno':
@@ -2655,77 +2656,42 @@ class Kconfig(Kbaseconfig):
 
     def create_kube_aks(self, cluster, overrides={}):
         from kvirt.cluster import aks
-        if container_mode():
-            os.environ['PATH'] += ':/workdir'
-        else:
-            os.environ['PATH'] += ':%s' % os.getcwd()
-        return aks.create(self, cluster, overrides)
+        plandir = os.path.dirname(aks.create.__code__.co_filename)
+        return aks.create(self, plandir, cluster, overrides)
 
     def create_kube_eks(self, cluster, overrides={}):
         from kvirt.cluster import eks
-        if container_mode():
-            os.environ['PATH'] += ':/workdir'
-        else:
-            os.environ['PATH'] += ':%s' % os.getcwd()
-        return eks.create(self, cluster, overrides)
+        plandir = os.path.dirname(eks.create.__code__.co_filename)
+        return eks.create(self, plandir, cluster, overrides)
 
     def create_kube_generic(self, cluster, overrides={}):
-        if container_mode():
-            os.environ['PATH'] += ':/workdir'
-        else:
-            os.environ['PATH'] += ':%s' % os.getcwd()
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
         return kubeadm.create(self, plandir, cluster, overrides)
 
     def create_kube_gke(self, cluster, overrides={}):
         from kvirt.cluster import gke
-        if container_mode():
-            os.environ['PATH'] += ':/workdir'
-        else:
-            os.environ['PATH'] += ':%s' % os.getcwd()
-        return gke.create(self, cluster, overrides)
+        plandir = os.path.dirname(gke.create.__code__.co_filename)
+        return gke.create(self, plandir, cluster, overrides)
 
     def create_kube_microshift(self, cluster, overrides={}):
-        if container_mode():
-            os.environ['PATH'] += ':/workdir'
-        else:
-            os.environ['PATH'] += ':%s' % os.getcwd()
         plandir = os.path.dirname(microshift.create.__code__.co_filename)
         return microshift.create(self, plandir, cluster, overrides)
 
     def create_kube_k3s(self, cluster, overrides={}):
-        if container_mode():
-            os.environ['PATH'] += ':/workdir'
-        else:
-            os.environ['PATH'] += ':%s' % os.getcwd()
         plandir = os.path.dirname(k3s.create.__code__.co_filename)
         return k3s.create(self, plandir, cluster, overrides)
 
     def create_kube_hypershift(self, cluster, overrides={}):
-        if container_mode():
-            os.environ['PATH'] += ':/workdir'
-        else:
-            os.environ['PATH'] += ':%s' % os.getcwd()
         plandir = os.path.dirname(hypershift.create.__code__.co_filename)
-        # dnsclient = overrides.get('dnsclient')
-        # dnsconfig = Kconfig(client=dnsclient) if dnsclient is not None else None
         return hypershift.create(self, plandir, cluster, overrides)
 
     def create_kube_openshift(self, cluster, overrides={}):
-        if container_mode():
-            os.environ['PATH'] += ':/workdir'
-        else:
-            os.environ['PATH'] += ':%s' % os.getcwd()
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         dnsclient = overrides.get('dnsclient')
         dnsconfig = Kconfig(client=dnsclient) if dnsclient is not None else None
         return openshift.create(self, plandir, cluster, overrides, dnsconfig=dnsconfig)
 
     def create_kube_rke2(self, cluster, overrides={}):
-        if container_mode():
-            os.environ['PATH'] += ':/workdir'
-        else:
-            os.environ['PATH'] += ':%s' % os.getcwd()
         plandir = os.path.dirname(rke2.create.__code__.co_filename)
         return rke2.create(self, plandir, cluster, overrides)
 
@@ -2933,11 +2899,13 @@ class Kconfig(Kbaseconfig):
 
     def scale_kube_aks(self, cluster, overrides={}):
         from kvirt.cluster import aks
-        return aks.scale(self, cluster, overrides)
+        plandir = os.path.dirname(aks.create.__code__.co_filename)
+        return aks.scale(self, plandir, cluster, overrides)
 
     def scale_kube_eks(self, cluster, overrides={}):
         from kvirt.cluster import eks
-        return eks.scale(self, cluster, overrides)
+        plandir = os.path.dirname(eks.create.__code__.co_filename)
+        return eks.scale(self, plandir, cluster, overrides)
 
     def scale_kube_generic(self, cluster, overrides={}):
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
@@ -2945,7 +2913,8 @@ class Kconfig(Kbaseconfig):
 
     def scale_kube_gke(self, cluster, overrides={}):
         from kvirt.cluster import gke
-        return gke.scale(self, cluster, overrides)
+        plandir = os.path.dirname(gke.create.__code__.co_filename)
+        return gke.scale(self, plandir, cluster, overrides)
 
     def scale_kube_hypershift(self, cluster, overrides={}):
         plandir = os.path.dirname(hypershift.create.__code__.co_filename)

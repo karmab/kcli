@@ -2,7 +2,7 @@ from azure.identity import ClientSecretCredential
 from azure.mgmt.containerservice import ContainerServiceClient
 from kvirt.common import success, info2, pprint, error, get_ssh_pub_key, warning, fix_typos
 import os
-import yaml
+from yaml import safe_dump, safe_load
 
 resource_group = 'kcli'
 
@@ -28,7 +28,7 @@ def get_kubeconfig(config, cluster, zonal=True):
         f.write(kubeconfig)
 
 
-def scale(config, cluster, overrides):
+def scale(config, plandir, cluster, overrides):
     data = {'workers': 2,
             'network': 'default',
             'disk_size': 0,
@@ -61,15 +61,8 @@ def scale(config, cluster, overrides):
     return {'result': 'success'}
 
 
-def create(config, cluster, overrides, dnsconfig=None):
-    data = {'workers': 2,
-            'network': None,
-            'network_type': None,
-            'disk_size': 0,
-            'flavor': 'Standard_E2ds_v4',
-            'autoscaling': True,
-            'fips': False,
-            'version': None}
+def create(config, plandir, cluster, overrides, dnsconfig=None):
+    data = safe_load(open(f'{plandir}/kcli_default.yml'))
     data.update(overrides)
     fix_typos(data)
     network = data['network']
@@ -110,7 +103,7 @@ def create(config, cluster, overrides, dnsconfig=None):
             installparam['cluster'] = cluster
             installparam['kubetype'] = 'aks'
             installparam['client'] = config.client
-            yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
+            safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     tags = {'plan': cluster, 'kube': cluster, 'kubetype': 'aks'}
     admin_username, location, subscription_id, app_id, tenant_id, secret = project_init(config)
     agent_pool = {'name': cluster, 'vm_size': flavor, 'count': workers, 'min_count': workers, 'max_count': 30,

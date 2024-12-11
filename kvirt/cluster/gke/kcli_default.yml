@@ -1,14 +1,14 @@
 info: |
   Deploy kubernetes using gke on $nodes
-nodes: 2
+workers: 2
 version:
 worker_version:
-autoscaling: False
+autoscaling: false
 autoscaling_minimum: 
 autoscaling_maximum: 
-autopilot: False
-alpha: False
-beta: False
+autopilot: false
+alpha: false
+beta: false
 network: default
 flavor:
 disk_size:
@@ -16,13 +16,15 @@ image_type:
 image:
 disk_type: pd-standard
 local_ssd_count:
-zonal: True
+zonal: true
 beta_apis: []
 secureboot: false
-integritymonitoring: false
+integrity_monitoring: false
 confidential: false
 native: false
 cluster_network_ipv4: "10.132.0.0/14"
 cluster_network:
 service_network_ipv4: "172.30.0.0/16"
 service_network:
+spot: false
+preemptible: false
