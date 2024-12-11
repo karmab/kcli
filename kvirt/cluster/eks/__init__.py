@@ -110,14 +110,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     plan = cluster
     tags = {'plan': cluster, 'kube': cluster, 'kubetype': 'eks'}
     cluster_data = {'name': cluster, 'tags': tags}
+    auto_mode = data['auto_mode']
     if not data['default_addons']:
-        warning("Disabling network add-ons")
+        warning("Disabling network add-ons (and automode)")
         cluster_data['bootstrapSelfManagedAddons'] = True
-    else:
-        auto_mode = {'storageConfig': {'blockStorage': {'enabled': True}},
-                     'kubernetesNetworkConfig': {'elasticLoadBalancing': {'enabled': True}},
-                     'computeConfig': {'enabled': True}}
-        cluster_data.update(auto_mode)
+        auto_mode = False
     extended_support = data['extended_support']
     if not extended_support:
         cluster_data['upgradePolicy'] = {'supportType': 'STANDARD'}
@@ -150,12 +147,13 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             installparam['client'] = config.client
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     access_key_id, access_key_secret, session_token, region = project_init(config)
-    ctlplane_roles = list_valid_roles(config, 'AmazonEKSClusterPolicy')
+    cluster_role = 'AmazonEC2FullAccess' if auto_mode else 'AmazonEKSClusterPolicy'
+    ctlplane_roles = list_valid_roles(config, cluster_role)
     if ctlplane_role is not None:
         if ctlplane_role not in ctlplane_roles:
             return {'result': 'failure', 'reason': f"Invalid role {ctlplane_role}"}
     elif not ctlplane_roles:
-        return {'result': 'failure', 'reason': "No role with AmazonEKSClusterPolicy found"}
+        return {'result': 'failure', 'reason': f"No role with {cluster_role} found"}
     else:
         ctlplane_role = [*ctlplane_roles][0]
         pprint(f"Using ctlplane role {ctlplane_role}")
@@ -194,6 +192,13 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             pprint(f"Using subnet {subnetid} as extra subnet")
             subnetids.append(subnetid)
     cluster_data['resourcesVpcConfig'] = {'subnetIds': subnetids, 'securityGroupIds': [sgid]}
+    if auto_mode:
+        auto_mode_dict = {'storageConfig': {'blockStorage': {'enabled': True}},
+                          'kubernetesNetworkConfig': {'elasticLoadBalancing': {'enabled': True}},
+                          'computeConfig': {'enabled': True, 'nodePools': ['general-purpose', 'system'],
+                                            'nodeRoleArn': worker_role},
+                          'accessConfig': {'authenticationMode': 'API_AND_CONFIG_MAP'}}
+        cluster_data.update(auto_mode_dict)
     eks = boto3.client('eks', aws_access_key_id=access_key_id, aws_secret_access_key=access_key_secret,
                        region_name=region, aws_session_token=session_token)
     pprint(f"Creating cluster {cluster}")
@@ -204,28 +209,29 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     waiter = eks.get_waiter("cluster_active")
     waiter.wait(name=cluster)
     get_kubeconfig(config, cluster)
-    nodegroup_data = {'clusterName': cluster, 'nodegroupName': cluster, 'scalingConfig':
-                      {'minSize': workers, 'maxSize': 50, 'desiredSize': workers}, 'subnets': subnetids, 'tags': tags,
-                      'nodeRole': worker_role}
-    keypair = config.options.get('keypair')
-    if keypair is not None:
-        nodegroup_data['remoteAccess'] = {'ec2SshKey': keypair, 'sourceSecurityGroups': [sgid]}
-    if version is not None:
-        nodegroup_data['version'] = version
-    if disk_size is not None:
-        nodegroup_data['diskSize'] = disk_size
-    if flavor is not None:
-        nodegroup_data['instanceTypes'] = [flavor]
-    if ami_type is not None:
-        nodegroup_data['amiType'] = ami_type
-    if capacity_type is not None:
-        nodegroup_data['capacityType'] = capacity_type
-    pprint(f"Creating nodegroup {cluster}")
-    response = eks.create_nodegroup(**nodegroup_data)
-    if config.debug:
-        print(response)
-    waiter = eks.get_waiter("cluster_active")
-    waiter.wait(name=cluster)
+    if not auto_mode:
+        nodegroup_data = {'clusterName': cluster, 'nodegroupName': cluster, 'scalingConfig':
+                          {'minSize': workers, 'maxSize': 50, 'desiredSize': workers}, 'subnets': subnetids,
+                          'tags': tags, 'nodeRole': worker_role}
+        keypair = config.options.get('keypair')
+        if keypair is not None:
+            nodegroup_data['remoteAccess'] = {'ec2SshKey': keypair, 'sourceSecurityGroups': [sgid]}
+        if version is not None:
+            nodegroup_data['version'] = version
+        if disk_size is not None:
+            nodegroup_data['diskSize'] = disk_size
+        if flavor is not None:
+            nodegroup_data['instanceTypes'] = [flavor]
+        if ami_type is not None:
+            nodegroup_data['amiType'] = ami_type
+        if capacity_type is not None:
+            nodegroup_data['capacityType'] = capacity_type
+        pprint(f"Creating nodegroup {cluster}")
+        response = eks.create_nodegroup(**nodegroup_data)
+        if config.debug:
+            print(response)
+        waiter = eks.get_waiter("cluster_active")
+        waiter.wait(name=cluster)
     success(f"Kubernetes cluster {cluster} deployed!!!")
     info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{cluster}/auth/kubeconfig")
     info2("export PATH=$PWD:$PATH")
