@@ -1587,7 +1587,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if ignore_hosts:
             warning("Not updating /etc/hosts as per your request")
         elif api_ip is not None or sno_vm_ip is not None:
-            update_openshift_etc_hosts(cluster, domain, api_ip or sno_vm_ip)
+            update_openshift_etc_hosts(cluster, domain, api_ip or sno_vm_ip, ingress_ip)
         elif sno_dns:
             warning("Add the following entry in /etc/hosts if needed")
             dnsentries = ['api', 'console-openshift-console.apps', 'oauth-openshift.apps',
