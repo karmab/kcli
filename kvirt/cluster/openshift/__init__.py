@@ -856,6 +856,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             warning(f"Using {api_ip} as api_ip")
             overrides['api_ip'] = api_ip
             installparam['automatic_api_ip'] = True
+            installparam['api_ip'] = api_ip
         elif provider == 'kubevirt':
             selector = {'kcli/plan': plan, 'kcli/role': 'ctlplane'}
             service_type = "LoadBalancer" if k.access_mode == 'LoadBalancer' else 'NodePort'
