@@ -32,7 +32,7 @@ def update_ip_alias(config, nodes):
             sleep(5)
             timeout += 5
     for node in safe_load(os.popen("kubectl get node -o yaml").read())['items']:
-        name, pod_cidr = node['metadata']['name']
+        name = node['metadata']['name']
         try:
             pod_cidr = node['spec']['podCIDR']
             config.k.update_aliases(name, pod_cidr)
