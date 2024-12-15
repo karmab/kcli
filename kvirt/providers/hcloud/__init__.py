@@ -270,7 +270,7 @@ class Khcloud():
                 ips.append(ipv6)
             for floating_ip in vm.public_net.floating_ips:
                 ips.append(floating_ip.ip)
-            nets.append({'type': "public"})
+            nets.append({'device': 'eth0', 'mac': '', 'net': '', 'type': "public"})
 
         for private_net in vm.private_net:
             yamlinfo['private_ip'] = private_net.ip
@@ -281,7 +281,7 @@ class Khcloud():
             for alias_ip in private_net.alias_ips:
                 ips.append(alias_ip)
 
-            nets.append({'mac': private_net.mac_address, 'net': private_net.network.name, 'type': "private",
+            nets.append({'device': 'enp7s0', 'mac': private_net.mac_address, 'net': private_net.network.name, 'type': "private",
                          "ip": yamlinfo['private_ip']})
 
         if nets:
@@ -294,7 +294,7 @@ class Khcloud():
             devname = volume.name
             path = os.path.basename(volume.linux_device)
             disksize = volume.size
-            disks.append({'device': devname, 'size': disksize, 'path': path})
+            disks.append({'device': devname, 'size': disksize, 'format': volume.format, 'type': 'volume', 'path': path})
         if disks:
             yamlinfo['disks'] = disks
         if vm.labels:
