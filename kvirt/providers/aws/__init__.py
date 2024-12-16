@@ -1929,8 +1929,17 @@ class Kaws(object):
         iam_resource = boto3.resource('iam', aws_access_key_id=self.access_key_id,
                                       aws_secret_access_key=self.access_key_secret, region_name=self.region)
         role = iam_resource.Role(name)
-        role_policy = iam_resource.RolePolicy(name, name)
-        role_policy.delete()
+        iam = boto3.client('iam', aws_access_key_id=self.access_key_id, aws_secret_access_key=self.access_key_secret,
+                           region_name=self.region)
+        attached_policies = iam.list_attached_role_policies(RoleName=name)['AttachedPolicies']
+        for policy in attached_policies:
+            iam.detach_role_policy(RoleName=name, PolicyArn=policy['PolicyArn'])
+        inline_policies = iam.list_role_policies(RoleName=name)['PolicyNames']
+        for policy_name in inline_policies:
+            iam.delete_role_policy(RoleName=name, PolicyName=policy_name)
+        instance_profiles = iam.list_instance_profiles_for_role(RoleName=name)['InstanceProfiles']
+        for profile in instance_profiles:
+            iam.remove_role_from_instance_profile(InstanceProfileName=profile['InstanceProfileName'], RoleName=name)
         role.delete()
 
     def list_roles(self):
@@ -1938,6 +1947,25 @@ class Kaws(object):
                            region_name=self.region)
         response = iam.list_roles(MaxItems=1000)
         return [role['RoleName'] for role in response['Roles']]
+
+    def get_account_id(self):
+        iam = boto3.client('iam', aws_access_key_id=self.access_key_id, aws_secret_access_key=self.access_key_secret,
+                           region_name=self.region)
+        response = iam.list_roles(MaxItems=10)['Roles'][0]
+        return response['Arn'].split(':')[4]
+
+    def create_eks_role(self, name, policies):
+        ctlplane = 'ctlplane' in name
+        plandir = os.path.dirname(self.__init__.__code__.co_filename)
+        iam = boto3.client('iam', aws_access_key_id=self.access_key_id, aws_secret_access_key=self.access_key_secret,
+                           region_name=self.region)
+        document = 'trust_policy' if ctlplane else 'assume_policy'
+        rolepolicy_document = open(f'{plandir}/{document}.json').read()
+        tags = [{'Key': 'Name', 'Value': name}]
+        iam.create_role(RoleName=name, AssumeRolePolicyDocument=rolepolicy_document, Tags=tags)
+        for policy in policies:
+            policy_arn = f"arn:aws:iam::aws:policy/{policy}"
+            iam.attach_role_policy(RoleName=name, PolicyArn=policy_arn)
 
     def create_subnet(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
         gateway = overrides.get('gateway', True)

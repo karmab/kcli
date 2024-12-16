@@ -6,6 +6,11 @@ from yaml import safe_dump, safe_load
 
 supported_versions = ['1.20', '1.21', '1.22', '1.23', '1.24', '1.25', '1.26', '1.27']
 
+AUTOMODE_CTLPLANE_POLICIES = ['AmazonEKSBlockStoragePolicy', 'AmazonEKSClusterPolicy', 'AmazonEKSComputePolicy',
+                              'AmazonEKSLoadBalancingPolicy', 'AmazonEKSNetworkingPolicy']
+
+AUTOMODE_WORKER_POLICIES = ['AmazonEC2ContainerRegistryPullOnly', 'AmazonEKSWorkerNodeMinimalPolicy']
+
 
 def project_init(config):
     access_key_id = config.options.get('access_key_id')
@@ -15,18 +20,20 @@ def project_init(config):
     return access_key_id, access_key_secret, session_token, region
 
 
-def list_valid_roles(config, policy):
-    results = {}
+def get_role_policies(config, name):
+    role_policies = []
     access_key_id, access_key_secret, session_token, region = project_init(config)
     iam = boto3.client('iam', aws_access_key_id=access_key_id, aws_secret_access_key=access_key_secret,
                        region_name=region, aws_session_token=session_token)
-    for role in iam.list_roles(MaxItems=1000)['Roles']:
-        role_name = role['RoleName']
-        for attached_policy in iam.list_attached_role_policies(RoleName=role_name)['AttachedPolicies']:
-            if attached_policy['PolicyName'] == policy:
-                results[role_name] = role['Arn']
-                break
-    return results
+    try:
+        policies = iam.list_attached_role_policies(RoleName=name)['AttachedPolicies']
+    except:
+        error(f"Role {name} not found")
+        return {}
+    for attached_policy in policies:
+        attached_policy_name = attached_policy['PolicyName']
+        role_policies.append(attached_policy_name)
+    return sorted(role_policies)
 
 
 def get_kubeconfig(config, cluster, zonal=True):
@@ -113,7 +120,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     auto_mode = data['auto_mode']
     if not data['default_addons']:
         warning("Disabling network add-ons (and automode)")
-        cluster_data['bootstrapSelfManagedAddons'] = True
+        cluster_data['bootstrapSelfManagedAddons'] = False
         auto_mode = False
     extended_support = data['extended_support']
     if not extended_support:
@@ -147,28 +154,34 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             installparam['client'] = config.client
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     access_key_id, access_key_secret, session_token, region = project_init(config)
-    cluster_role = 'AmazonEC2FullAccess' if auto_mode else 'AmazonEKSClusterPolicy'
-    ctlplane_roles = list_valid_roles(config, cluster_role)
+    account_id = k.get_account_id()
+    ctlplane_policies = AUTOMODE_CTLPLANE_POLICIES if auto_mode else ['AmazonEKSClusterPolicy']
     if ctlplane_role is not None:
-        if ctlplane_role not in ctlplane_roles:
-            return {'result': 'failure', 'reason': f"Invalid role {ctlplane_role}"}
-    elif not ctlplane_roles:
-        return {'result': 'failure', 'reason': f"No role with {cluster_role} found"}
+        if get_role_policies(config, ctlplane_role) != ctlplane_policies:
+            return {'result': 'failure', 'reason': f"Role {ctlplane_role}"}
+        else:
+            ctlplane_role = f'arn:aws:iam::{account_id}:role/{ctlplane_role}'
     else:
-        ctlplane_role = [*ctlplane_roles][0]
-        pprint(f"Using ctlplane role {ctlplane_role}")
-    ctlplane_role = ctlplane_roles[ctlplane_role]
+        ctlplane_role_name = 'kcli-eks-ctlplane-auto' if auto_mode else 'kcli-eks-ctlplane'
+        if ctlplane_role_name not in k.list_roles():
+            pprint(f"Creating ctlplane role {ctlplane_role_name}")
+            k.create_eks_role(ctlplane_role_name, ctlplane_policies)
+        ctlplane_role = f'arn:aws:iam::{account_id}:role/{ctlplane_role_name}'
+    pprint(f"Using ctlplane role {ctlplane_role_name}")
     cluster_data['roleArn'] = ctlplane_role
-    worker_roles = list_valid_roles(config, 'AmazonEKSWorkerNodePolicy')
+    worker_policies = AUTOMODE_WORKER_POLICIES if auto_mode else ['AmazonEKSWorkerNodePolicy']
     if worker_role is not None:
-        if worker_role not in worker_roles:
+        if get_role_policies(config, worker_role) != worker_policies:
             return {'result': 'failure', 'reason': f"Invalid role {worker_role}"}
-    elif not worker_roles:
-        return {'result': 'failure', 'reason': "No role with AmazonEKSWorkerNodePolicy found"}
+        else:
+            worker_role = f'arn:aws:iam::{account_id}:role/{worker_role}'
     else:
-        worker_role = [*worker_roles][0]
-        pprint(f"Using worker role {worker_role}")
-    worker_role = worker_roles[worker_role]
+        worker_role_name = 'kcli-eks-worker-auto' if auto_mode else 'kcli-eks-worker'
+        if worker_role_name not in k.list_roles():
+            pprint(f"Creating worker role {worker_role_name}")
+            k.create_eks_role(worker_role_name, worker_policies)
+        worker_role = f'arn:aws:iam::{account_id}:role/{worker_role_name}'
+    pprint(f"Using worker role {worker_role_name}")
     subnetids = []
     total_subnets = [network] + extra_networks
     for index, n in enumerate(total_subnets):
@@ -197,15 +210,14 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                           'kubernetesNetworkConfig': {'elasticLoadBalancing': {'enabled': True}},
                           'computeConfig': {'enabled': True, 'nodePools': ['general-purpose', 'system'],
                                             'nodeRoleArn': worker_role},
-                          'accessConfig': {'authenticationMode': 'API_AND_CONFIG_MAP'}}
+                          'accessConfig': {'authenticationMode': 'API'}}
         cluster_data.update(auto_mode_dict)
     eks = boto3.client('eks', aws_access_key_id=access_key_id, aws_secret_access_key=access_key_secret,
                        region_name=region, aws_session_token=session_token)
-    pprint(f"Creating cluster {cluster}")
     response = eks.create_cluster(**cluster_data)
     if config.debug:
         print(response)
-    pprint("Waiting for cluster to be created")
+    pprint(f"Waiting for cluster {cluster} to be created")
     waiter = eks.get_waiter("cluster_active")
     waiter.wait(name=cluster)
     get_kubeconfig(config, cluster)
@@ -243,26 +255,28 @@ def delete(config, cluster, zonal=True):
     access_key_id, access_key_secret, session_token, region = project_init(config)
     eks = boto3.client('eks', aws_access_key_id=access_key_id, aws_secret_access_key=access_key_secret,
                        region_name=region, aws_session_token=session_token)
-    try:
-        response = eks.delete_nodegroup(clusterName=cluster, nodegroupName=cluster)
-        if config.debug:
-            print(response)
-        pprint("Waiting for nodegroup to be deleted")
-        waiter = eks.get_waiter("nodegroup_deleted")
-        waiter.wait(clusterName=cluster, nodegroupName=cluster)
-    except Exception as e:
-        fail = True
-        error(f"Hit Issue when getting {cluster}: {e}")
+    nodegroups = eks.list_nodegroups(clusterName=cluster).get('nodegroups', [])
+    if cluster in nodegroups:
+        try:
+            response = eks.delete_nodegroup(clusterName=cluster, nodegroupName=cluster)
+            if config.debug:
+                print(response)
+            pprint(f"Waiting for nodegroup {cluster} to be deleted")
+            waiter = eks.get_waiter("nodegroup_deleted")
+            waiter.wait(clusterName=cluster, nodegroupName=cluster)
+        except Exception as e:
+            fail = True
+            error(f"Hit Issue when deleting nodegroup {cluster}: {e}")
     try:
         response = eks.delete_cluster(name=cluster)
         if config.debug:
             print(response)
-        pprint("Waiting for cluster to be deleted")
+        pprint(f"Waiting for cluster {cluster} to be deleted")
         waiter = eks.get_waiter("cluster_deleted")
         waiter.wait(name=cluster)
     except Exception as e:
         fail = True
-        error(f"Hit Issue when getting {cluster}: {e}")
+        error(f"Hit Issue when deleting {cluster}: {e}")
     if fail:
         return {'result': 'failure', 'reason': 'Hit issue'}
     else:

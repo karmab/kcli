@@ -22,4 +22,4 @@ logging: false
 logging_types: ['api']
 ctlplane_role:
 worker_role:
-auto_mode: false
+auto_mode: true
