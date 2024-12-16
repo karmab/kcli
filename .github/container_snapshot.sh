@@ -14,7 +14,7 @@ fi
 if [ "$TAG" == "arm64" ] ; then
 curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/arm64/kubectl"
 sed -i 's/bookworm/bookworm-arm64/' extras/debian
-sed -i 's/\[all\]//' extras/debian
+# sed -i 's/\[all\]//' extras/debian
 else
   curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
 fi
