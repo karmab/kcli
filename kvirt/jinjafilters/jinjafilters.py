@@ -192,8 +192,8 @@ def has_ctlplane(_list):
     return False
 
 
-def count(string, char):
-    return string.count(char)
+def count(var, char):
+    return str(var).count(char)
 
 
 def pwd_path(path):

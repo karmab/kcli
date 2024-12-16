@@ -132,7 +132,7 @@ def update_disconnected_registry(config, plandir, cluster, data):
     if data.get('ca') is None:
         pprint(f"Trying to gather registry ca cert from {disconnected_url}")
         cacmd = f"openssl s_client -showcerts -connect {disconnected_url} </dev/null 2>/dev/null|"
-        cacmd += "openssl x509 -outform PEM"
+        cacmd += "awk '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/'"
         data['ca'] = os.popen(cacmd).read()
     with open(f'{clusterdir}/ca.crt', 'w') as f:
         f.write(data['ca'])

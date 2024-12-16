@@ -16,7 +16,7 @@ mirror:
 {% set catalog = 'quay.io/prega/prega-operator-index' if prega else 'registry.redhat.io/redhat/redhat-operator-index' %}
   - catalog: {{ catalog }}:{{ disconnected_operators_version }}
 {% else %}
-  - catalog: registry.redhat.io/redhat/redhat-operator-index:v{{ tag }}
+  - catalog: registry.redhat.io/redhat/redhat-operator-index:v{{ '4.' + (tag|string).split('.')[1] if tag|count('.') > 1 else tag }}
 {% endif %}
     packages:
 {% for package in disconnected_operators %}
