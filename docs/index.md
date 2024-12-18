@@ -1008,9 +1008,9 @@ The following commands are typically used when dealing with vms
 - Update memory in vm1 to 2GB memory
   - `kcli update vm -P memory=2048 vm1`
 - Clone vm1 to new vm2
-  - `kcli clone vm -b vm1 vm2`
+  - `kcli clone -b vm1 vm2`
 - Connect with ssh to vm vm1
-  - `kcli ssh vm vm1`
+  - `kcli ssh vm1`
 - Add a new nic from network default to vm1
   - `kcli create nic -n default vm1`
 - Delete nic eth2 from vm
