@@ -393,7 +393,7 @@ def get_upstream_installer(tag, version='stable', debug=False):
         elif version in ['ci', 'nightly']:
             url = f"https://amd64.origin.releases.ci.openshift.org/api/v1/releasestream/{tag}.0-0.okd-scos/latest"
         else:
-            url = "https://amd64.origin.releases.ci.openshift.org/api/v1/releasestream/4-stable/latest"
+            url = "https://amd64.origin.releases.ci.openshift.org/api/v1/releasestream/4-scos-stable/latest"
         tag = json.loads(urlopen(url).read())['pullSpec']
     cmd = f"oc adm release extract --command=openshift-install --to . {tag}"
     cmd += "; chmod 700 openshift-install"
