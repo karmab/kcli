@@ -13,7 +13,6 @@ from ipaddress import ip_address, ip_network
 from random import randint
 import base64
 from glob import glob
-from grp import getgrgid
 from jinja2 import Environment, FileSystemLoader
 from jinja2 import StrictUndefined as undefined
 from jinja2.exceptions import TemplateSyntaxError, TemplateError, TemplateNotFound
@@ -2038,15 +2037,8 @@ def olm_app(package, overrides={}):
 
 def need_fake():
     kclidir = os.path.expanduser("~/.kcli")
-    groups = [getgrgid(g).gr_name for g in os.getgroups()]
-    if not glob(f"{kclidir}/config.y*ml") and\
-       ((groups == ['root'] and not os.path.exists("/var/run/libvirt/libvirt-sock")) or 'libvirt' not in groups):
-        if os.path.exists('/i_am_a_container') and os.environ.get('KUBERNETES_SERVICE_HOST') is not None:
-            return False
-        else:
-            return True
-    else:
-        return False
+    return not os.path.exists("/var/run/libvirt/libvirt-sock") and not glob(f"{kclidir}/config.y*ml")\
+        and os.environ.get('KUBERNETES_SERVICE_HOST') is None
 
 
 def info_network(k, name):
