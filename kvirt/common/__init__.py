@@ -1004,7 +1004,7 @@ def get_user(image):
         user = getuser()
     elif 'rhel' in image.lower() and not image.startswith('RHEL-'):
         user = 'cloud-user'
-    elif 'centos9stream' in image.lower():
+    elif 'centos9stream' in image.lower() or 'centos10stream' in image.lower():
         user = 'cloud-user'
     elif 'centos' in image.lower() and not image.startswith('ibm'):
         user = 'centos'
