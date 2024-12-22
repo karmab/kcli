@@ -8,7 +8,7 @@ from jinja2.runtime import Undefined as defaultundefined
 from jinja2.exceptions import TemplateSyntaxError, TemplateError, TemplateNotFound
 from kvirt import common
 from kvirt.common import error, pprint, warning, container_mode, ssh, scp, NoAliasDumper, olm_app
-from kvirt.common import PlanLoader
+from kvirt.common import PlanLoader, get_kubetype
 from kvirt import defaults as kdefaults
 from kvirt.cluster import hypershift
 from kvirt.cluster import k3s
@@ -965,32 +965,76 @@ class Kbaseconfig:
         inputfile = f'{plandir}/sno.yml'
         self.info_plan(inputfile, quiet=quiet, web=web)
 
-    def list_apps_generic(self, quiet=True):
-        plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
-        appdir = plandir + '/apps'
-        return sorted([x for x in os.listdir(appdir) if os.path.isdir(f"{appdir}/{x}") and x != '__pycache__'])
-
-    def list_apps_openshift(self, quiet=True, installed=False):
-        if installed:
-            header = 'subscription.operators.coreos.com/'
-            results = []
-            manifestscmd = "oc get subscriptions.operators.coreos.com -A -o name"
-            manifestsdata = os.popen(manifestscmd).read().split('\n')
+    def create_app(self, app, overrides={}, outputdir=None):
+        kubetype = get_kubetype()
+        if kubetype == 'openshift':
+            return self.create_app_openshift(app, overrides, outputdir)
         else:
-            header = 'packagemanifest.packages.operators.coreos.com/'
-            results = ['autolabeller', 'users', 'metal3', 'nfs']
-            manifestscmd = "oc get packagemanifest -n openshift-marketplace -o name"
-            manifestsdata = os.popen(manifestscmd).read().split('\n')
-        results.extend([entry.replace(header, '') for entry in manifestsdata if entry != ''])
-        return sorted(results)
+            return self.create_app_generic(app, overrides, outputdir)
 
     def create_app_generic(self, app, overrides={}, outputdir=None):
         appdir = f"{os.path.dirname(kubeadm.create.__code__.co_filename)}/apps"
-        return common.app_create_generic(self, app, appdir, overrides=overrides, outputdir=outputdir)
+        return common.create_app_generic(self, app, appdir, overrides=overrides, outputdir=outputdir)
+
+    def create_app_openshift(self, app, overrides={}, outputdir=None):
+        appdir = f"{os.path.dirname(openshift.create.__code__.co_filename)}/apps"
+        if app in kdefaults.LOCAL_OPENSHIFT_APPS:
+            app_data = overrides.copy()
+            app_data['name'] = app
+            if app == 'users' and overrides.get('hypershift', False):
+                app_data['hypershift'] = True
+            return common.create_app_generic(self, app, appdir, overrides=overrides, outputdir=outputdir)
+        else:
+            name, catalog, channel, csv, description, namespace, channels, crds = common.olm_app(app, overrides)
+            if name is None:
+                error(f"Couldn't find any app matching {app}. Skipping...")
+                return 1
+            if 'channel' in overrides:
+                overrides_channel = overrides['channel']
+                if overrides_channel not in channels:
+                    error(f"Target channel {channel} not found in {channels}. Skipping...")
+                    return 1
+                else:
+                    channel = overrides_channel
+            if 'namespace' in overrides:
+                namespace = overrides['namespace']
+            app_data = {'catalog': catalog, 'channel': channel, 'namespace': namespace, 'csv': csv}
+            app_data.update(overrides)
+            return common.create_app_openshift(self, app, appdir, app_data, outputdir)
+
+    def delete_app(self, app, overrides={}):
+        kubetype = get_kubetype()
+        if kubetype == 'openshift':
+            return self.delete_app_openshift(app, overrides)
+        else:
+            return self.delete_app_generic(app, overrides)
 
     def delete_app_generic(self, app, overrides={}):
         appdir = f"{os.path.dirname(kubeadm.create.__code__.co_filename)}/apps"
         return common.delete_app_delete_generic(self, app, appdir, overrides=overrides)
+
+    def delete_app_openshift(self, app, overrides={}):
+        appdir = f"{os.path.dirname(openshift.create.__code__.co_filename)}/apps"
+        if app in kdefaults.LOCAL_OPENSHIFT_APPS:
+            app_data = overrides.copy()
+            if app == 'users' and overrides.get('hypershift', False):
+                app_data['hypershift'] = True
+            return common.delete_app_generic(self, app, appdir, app_data)
+        else:
+            name, catalog, channel, csv, description, namespace, channels, crds = common.olm_app(app, overrides)
+            if name is None:
+                error(f"Couldn't find any app matching {app}. Skipping...")
+                return 1
+            app_data = {'catalog': catalog, 'channel': channel, 'namespace': namespace, 'crds': crds}
+            app_data.update(overrides)
+            return common.delete_app_openshift(self, app, appdir, app_data)
+
+    def info_app(self, app, overrides={}):
+        kubetype = get_kubetype()
+        if kubetype == 'openshift':
+            return self.info_app_openshift(app, overrides)
+        else:
+            return self.info_app_generic(app)
 
     def info_app_generic(self, app):
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
@@ -1003,20 +1047,6 @@ class Kbaseconfig:
         else:
             with open(default_parameter_file, 'r') as f:
                 print(f.read().strip())
-
-    def create_app_openshift(self, app, overrides={}, outputdir=None):
-        appdir = f"{os.path.dirname(openshift.create.__code__.co_filename)}/apps"
-        if app in kdefaults.LOCAL_OPENSHIFT_APPS:
-            return common.create_app_generic(self, app, appdir, overrides=overrides, outputdir=outputdir)
-        else:
-            return common.create_app_openshift(self, app, appdir, overrides=overrides, outputdir=outputdir)
-
-    def delete_app_openshift(self, app, overrides={}):
-        appdir = f"{os.path.dirname(openshift.create.__code__.co_filename)}/apps"
-        if app in kdefaults.LOCAL_OPENSHIFT_APPS:
-            return common.delete_app_generic(self, app, appdir, overrides=overrides)
-        else:
-            return common.delete_app_openshift(self, app, appdir, overrides=overrides)
 
     def info_app_openshift(self, app, overrides={}):
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
@@ -1038,6 +1068,32 @@ class Kbaseconfig:
         if os.path.exists(default_parameter_file):
             with open(default_parameter_file, 'r') as f:
                 print(f.read().strip())
+
+    def list_apps(self, quiet=True, installed=False):
+        kubetype = get_kubetype()
+        if kubetype == 'openshift':
+            return self.list_apps_openshift(quiet=quiet, installed=installed)
+        else:
+            return self.list_apps_generic(quiet=quiet)
+
+    def list_apps_generic(self, quiet=True):
+        plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
+        appdir = plandir + '/apps'
+        return sorted([x for x in os.listdir(appdir) if os.path.isdir(f"{appdir}/{x}") and x != '__pycache__'])
+
+    def list_apps_openshift(self, quiet=True, installed=False):
+        if installed:
+            header = 'subscription.operators.coreos.com/'
+            results = []
+            manifestscmd = "oc get subscriptions.operators.coreos.com -A -o name"
+            manifestsdata = os.popen(manifestscmd).read().split('\n')
+        else:
+            header = 'packagemanifest.packages.operators.coreos.com/'
+            results = ['autolabeller', 'users', 'metal3', 'nfs']
+            manifestscmd = "oc get packagemanifest -n openshift-marketplace -o name"
+            manifestsdata = os.popen(manifestscmd).read().split('\n')
+        results.extend([entry.replace(header, '') for entry in manifestsdata if entry != ''])
+        return sorted(results)
 
     def download_openshift_installer(self, overrides={}):
         pull_secret = overrides.get('pull_secret', 'openshift_pull.json')

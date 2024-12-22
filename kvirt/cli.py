@@ -19,7 +19,7 @@ from kvirt.common import error, pprint, success, warning, ssh, _ssh_credentials,
 from kvirt.common import get_git_version, compare_git_versions, interactive_kube, interactive_vm, convert_yaml_to_cmd
 from kvirt.config import Kconfig
 from kvirt.containerconfig import Kcontainerconfig
-from kvirt.defaults import IMAGES, VERSION, LOCAL_OPENSHIFT_APPS, SSH_PUB_LOCATIONS, PLANTYPES, OPENSHIFT_TAG
+from kvirt.defaults import IMAGES, VERSION, SSH_PUB_LOCATIONS, PLANTYPES, OPENSHIFT_TAG
 import os
 from prettytable import PrettyTable
 import random
@@ -1252,7 +1252,7 @@ def list_subnets(args):
     print(subnetstable)
 
 
-def create_app_generic(args):
+def create_app(args):
     apps = args.apps
     outputdir = args.outputdir
     if outputdir is not None:
@@ -1264,150 +1264,53 @@ def create_app_generic(args):
         elif not os.path.exists(outputdir):
             os.mkdir(outputdir)
     overrides = handle_parameters(args.param, args.paramfile, cluster=True)
-    if which('kubectl') is None:
-        error("You need kubectl to install apps")
+    kubectl = which('kubectl') or which('oc')
+    if kubectl is None:
+        error("You need kubectl/oc to install apps")
         sys.exit(1)
     if 'KUBECONFIG' not in os.environ:
         warning("KUBECONFIG not set...Using .kube/config instead")
     elif not os.path.isabs(os.environ['KUBECONFIG']):
         os.environ['KUBECONFIG'] = f"{os.getcwd()}/{os.environ['KUBECONFIG']}"
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
-    available_apps = baseconfig.list_apps_generic(quiet=True)
     for app in apps:
-        if app not in available_apps:
-            error(f"app {app} not available. Skipping...")
-            continue
         pprint(f"Adding app {app}")
         overrides[f'{app}_version'] = overrides[f'{app}_version'] if f'{app}_version' in overrides else 'latest'
-        baseconfig.create_app_generic(app, overrides, outputdir=outputdir)
+        baseconfig.create_app(app, overrides, outputdir)
 
 
-def create_app_openshift(args):
-    apps = args.apps
-    outputdir = args.outputdir
-    if outputdir is not None:
-        if container_mode() and not outputdir.startswith('/'):
-            outputdir = f"/workdir/{outputdir}"
-        if os.path.exists(outputdir) and os.path.isfile(outputdir):
-            error(f"Invalid outputdir {outputdir}")
-            sys.exit(1)
-        elif not os.path.exists(outputdir):
-            os.mkdir(outputdir)
-    overrides = handle_parameters(args.param, args.paramfile, cluster=True)
-    if which('oc') is None:
-        error("You need oc to install apps")
-        sys.exit(1)
-    if 'KUBECONFIG' not in os.environ:
-        warning("KUBECONFIG not set...Using .kube/config instead")
-    elif not os.path.isabs(os.environ['KUBECONFIG']):
-        os.environ['KUBECONFIG'] = f"{os.getcwd()}/{os.environ['KUBECONFIG']}"
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
-    for app in apps:
-        if app in LOCAL_OPENSHIFT_APPS:
-            name = app
-            app_data = overrides.copy()
-            app_data['name'] = name
-            if app == 'users' and args.subcommand_create_app == 'hypershift':
-                app_data['hypershift'] = True
-        else:
-            name, catalog, channel, csv, description, namespace, channels, crds = common.olm_app(app, overrides)
-            if name is None:
-                error(f"Couldn't find any app matching {app}. Skipping...")
-                continue
-            if 'channel' in overrides:
-                overrides_channel = overrides['channel']
-                if overrides_channel not in channels:
-                    error(f"Target channel {channel} not found in {channels}. Skipping...")
-                    continue
-                else:
-                    channel = overrides_channel
-            if 'namespace' in overrides:
-                namespace = overrides['namespace']
-            app_data = {'catalog': catalog, 'channel': channel, 'namespace': namespace, 'csv': csv}
-            app_data.update(overrides)
-        pprint(f"Adding app {app}")
-        baseconfig.create_app_openshift(name, app_data, outputdir=outputdir)
-
-
-def delete_app_generic(args):
+def delete_app(args):
     yes = args.yes
     yes_top = args.yes_top
     if not yes and not yes_top:
         common.confirm("Are you sure?")
     apps = args.apps
     overrides = handle_parameters(args.param, args.paramfile, cluster=True)
-    if which('kubectl') is None:
-        error("You need kubectl to install apps")
+    kubectl = which('kubectl') or which('oc')
+    if kubectl is None:
+        error("You need kubectl/oc to install apps")
         sys.exit(1)
     if 'KUBECONFIG' not in os.environ:
         warning("KUBECONFIG not set...Using .kube/config instead")
     elif not os.path.isabs(os.environ['KUBECONFIG']):
         os.environ['KUBECONFIG'] = f"{os.getcwd()}/{os.environ['KUBECONFIG']}"
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
-    available_apps = baseconfig.list_apps_generic(quiet=True)
     for app in apps:
-        if app not in available_apps:
-            error(f"app {app} not available. Skipping...")
-            continue
         pprint(f"Deleting app {app}")
-        overrides[f'{app}_version'] = overrides[f'{app}_version'] if f'{app}_version' in overrides else 'latest'
-        baseconfig.delete_app_generic(app, overrides)
+        baseconfig.delete_app(app, overrides)
 
 
-def delete_app_openshift(args):
-    yes = args.yes
-    yes_top = args.yes_top
-    if not yes and not yes_top:
-        common.confirm("Are you sure?")
-    apps = args.apps
-    overrides = handle_parameters(args.param, args.paramfile, cluster=True)
-    if which('oc') is None:
-        error("You need oc to install apps")
+def list_apps(args):
+    kubectl = which('kubectl') or which('oc')
+    if kubectl is None:
+        error("You need kubectl/oc to list apps")
         sys.exit(1)
     if 'KUBECONFIG' not in os.environ:
         warning("KUBECONFIG not set...Using .kube/config instead")
     elif not os.path.isabs(os.environ['KUBECONFIG']):
         os.environ['KUBECONFIG'] = f"{os.getcwd()}/{os.environ['KUBECONFIG']}"
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
-    for app in apps:
-        if app in LOCAL_OPENSHIFT_APPS:
-            name = app
-            app_data = overrides.copy()
-            if app == 'users' and args.subcommand_delete_app == 'hypershift':
-                app_data['hypershift'] = True
-        else:
-            name, catalog, channel, csv, description, namespace, channels, crds = common.olm_app(app, app_data)
-            if name is None:
-                error(f"Couldn't find any app matching {app}. Skipping...")
-                continue
-            app_data = {'catalog': catalog, 'channel': channel, 'namespace': namespace, 'crds': crds}
-            app_data.update(overrides)
-        pprint(f"Deleting app {name}")
-        baseconfig.delete_app_openshift(app, app_data)
-
-
-def list_apps_generic(args):
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
-    apps = baseconfig.list_apps_generic(quiet=True)
-    output = args.global_output or args.output
-    if output is not None:
-        _list_output(apps, output)
-    appstable = PrettyTable(["Name"])
-    for app in apps:
-        appstable.add_row([app])
-    print(appstable)
-
-
-def list_apps_openshift(args):
-    if which('oc') is None:
-        error("You need oc to list apps")
-        sys.exit(1)
-    if 'KUBECONFIG' not in os.environ:
-        warning("KUBECONFIG not set...Using .kube/config instead")
-    elif not os.path.isabs(os.environ['KUBECONFIG']):
-        os.environ['KUBECONFIG'] = f"{os.getcwd()}/{os.environ['KUBECONFIG']}"
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
-    apps = baseconfig.list_apps_openshift(quiet=True, installed=args.installed)
+    apps = baseconfig.list_apps(quiet=True, installed=args.installed)
     output = args.global_output or args.output
     if output is not None:
         _list_output(apps, output)
@@ -2276,20 +2179,14 @@ def restart_plan(args):
     sys.exit(4 if 4 in codes else 0)
 
 
-def info_generic_app(args):
+def info_app(args):
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
-    baseconfig.info_app_generic(args.app)
+    baseconfig.info_app(args.app)
 
 
 def info_openshift_disconnected(args):
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     baseconfig.info_openshift_disconnected()
-
-
-def info_app_openshift(args):
-    overrides = handle_parameters(args.param, args.paramfile, cluster=True)
-    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
-    baseconfig.info_app_openshift(args.app, overrides)
 
 
 def info_plan(args):
@@ -3488,29 +3385,11 @@ def cli():
 
     createapp_desc = 'Create Kube Apps'
     createapp_parser = create_subparsers.add_parser('app', description=createapp_desc,
-                                                    help=createapp_desc, aliases=['apps', 'operator', 'operators'])
-    createapp_subparsers = createapp_parser.add_subparsers(metavar='', dest='subcommand_create_app')
-
-    appgenericcreate_desc = 'Create Kube Generic App'
-    appgenericcreate_epilog = None
-    appgenericcreate_parser = createapp_subparsers.add_parser('generic', description=appgenericcreate_desc,
-                                                              parents=[parent_parser],
-                                                              help=appgenericcreate_desc,
-                                                              epilog=appgenericcreate_epilog, formatter_class=rawhelp)
-    appgenericcreate_parser.add_argument('--outputdir', '-o', help='Output directory', metavar='OUTPUTDIR')
-    appgenericcreate_parser.add_argument('apps', metavar='APPS', nargs='*')
-    appgenericcreate_parser.set_defaults(func=create_app_generic)
-
-    appopenshiftcreate_desc = 'Create Openshift App'
-    appopenshiftcreate_epilog = f"Examples:\n\n{examples.appopenshiftcreate}"
-    appopenshiftcreate_parser = createapp_subparsers.add_parser('openshift', description=appopenshiftcreate_desc,
-                                                                help=appopenshiftcreate_desc,
-                                                                parents=[parent_parser],
-                                                                epilog=appopenshiftcreate_epilog,
-                                                                formatter_class=rawhelp, aliases=['hypershift'])
-    appopenshiftcreate_parser.add_argument('--outputdir', '-o', help='Output directory', metavar='OUTPUTDIR')
-    appopenshiftcreate_parser.add_argument('apps', metavar='APPS', nargs='*')
-    appopenshiftcreate_parser.set_defaults(func=create_app_openshift)
+                                                    help=createapp_desc, aliases=['apps', 'operator', 'operators'],
+                                                    parents=[parent_parser])
+    createapp_parser.add_argument('--outputdir', '-o', help='Output directory', metavar='OUTPUTDIR')
+    createapp_parser.add_argument('apps', metavar='APPS', nargs='*')
+    createapp_parser.set_defaults(func=create_app)
 
     bucketcreate_desc = 'Create Bucket'
     bucketcreate_epilog = None
@@ -4178,27 +4057,11 @@ def cli():
 
     deleteapp_desc = 'Delete Kube App'
     deleteapp_parser = delete_subparsers.add_parser('app', description=deleteapp_desc,
-                                                    help=deleteapp_desc, aliases=['apps', 'operator', 'operators'])
-    deleteapp_subparsers = deleteapp_parser.add_subparsers(metavar='', dest='subcommand_delete_app')
-
-    appgenericdelete_desc = 'Delete Kube App Generic'
-    appgenericdelete_epilog = None
-    appgenericdelete_parser = deleteapp_subparsers.add_parser('generic', description=appgenericdelete_desc,
-                                                              help=appgenericdelete_desc, parents=[parent_parser],
-                                                              epilog=appgenericdelete_epilog, formatter_class=rawhelp)
-    appgenericdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    appgenericdelete_parser.add_argument('apps', metavar='APPS', nargs='*')
-    appgenericdelete_parser.set_defaults(func=delete_app_generic)
-
-    appopenshiftdelete_desc = 'Delete Kube App Openshift'
-    appopenshiftdelete_epilog = None
-    appopenshiftdelete_parser = deleteapp_subparsers.add_parser('openshift', description=appopenshiftdelete_desc,
-                                                                help=appopenshiftdelete_desc, parents=[parent_parser],
-                                                                epilog=appopenshiftdelete_epilog,
-                                                                formatter_class=rawhelp, aliases=['hypershift'])
-    appopenshiftdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
-    appopenshiftdelete_parser.add_argument('apps', metavar='APPS', nargs='*')
-    appopenshiftdelete_parser.set_defaults(func=delete_app_openshift)
+                                                    help=deleteapp_desc, aliases=['apps', 'operator', 'operators'],
+                                                    parents=[parent_parser])
+    deleteapp_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    deleteapp_parser.add_argument('apps', metavar='APPS', nargs='*')
+    deleteapp_parser.set_defaults(func=delete_app)
 
     bucketfiledelete_desc = 'Delete Bucket file'
     bucketfiledelete_parser = argparse.ArgumentParser(add_help=False)
@@ -4546,21 +4409,9 @@ def cli():
 
     appinfo_desc = 'Info App'
     appinfo_parser = info_subparsers.add_parser('app', description=appinfo_desc, help=appinfo_desc,
-                                                aliases=['operator'])
-    appinfo_subparsers = appinfo_parser.add_subparsers(metavar='', dest='subcommand_info_app')
-
-    appgenericinfo_desc = 'Info Generic App'
-    appgenericinfo_parser = appinfo_subparsers.add_parser('generic', description=appgenericinfo_desc,
-                                                          help=appgenericinfo_desc)
-
-    appgenericinfo_parser.add_argument('app', metavar='APP')
-    appgenericinfo_parser.set_defaults(func=info_generic_app)
-
-    appopenshiftinfo_desc = 'Info Openshift App'
-    appopenshiftinfo_parser = appinfo_subparsers.add_parser('openshift', description=appopenshiftinfo_desc,
-                                                            help=appopenshiftinfo_desc, parents=[parent_parser])
-    appopenshiftinfo_parser.add_argument('app', metavar='APP')
-    appopenshiftinfo_parser.set_defaults(func=info_app_openshift)
+                                                aliases=['operator'], parents=[parent_parser])
+    appinfo_parser.add_argument('app', metavar='APP')
+    appinfo_parser.set_defaults(func=info_app)
 
     baremetalhostinfo_desc = 'Report info about Baremetal Host'
     baremetalhostinfo_epilog = f"Examples:\n\n{examples.infohost}"
@@ -4734,20 +4585,10 @@ def cli():
 
     listapp_desc = 'List Available Kube Apps'
     listapp_parser = list_subparsers.add_parser('app', description=listapp_desc,
-                                                help=listapp_desc, aliases=['apps', 'operator', 'operators'])
-    listapp_subparsers = listapp_parser.add_subparsers(metavar='', dest='subcommand_list_app')
-
-    appgenericlist_desc = 'List Available Kube Apps Generic'
-    appgenericlist_parser = listapp_subparsers.add_parser('generic', description=appgenericlist_desc,
-                                                          help=appgenericlist_desc, parents=[output_parser])
-    appgenericlist_parser.set_defaults(func=list_apps_generic)
-
-    appopenshiftlist_desc = 'List Available Kube Components Openshift'
-    appopenshiftlist_parser = listapp_subparsers.add_parser('openshift', description=appopenshiftlist_desc,
-                                                            help=appopenshiftlist_desc, aliases=['hypershift'],
-                                                            parents=[output_parser])
-    appopenshiftlist_parser.add_argument('-i', '--installed', action='store_true', help='Show installed apps')
-    appopenshiftlist_parser.set_defaults(func=list_apps_openshift)
+                                                help=listapp_desc, aliases=['apps', 'operator', 'operators'],
+                                                parents=[output_parser])
+    listapp_parser.add_argument('-i', '--installed', action='store_true', help='Show installed apps')
+    listapp_parser.set_defaults(func=list_apps)
 
     imagelist_desc = 'List Available Images'
     imagelist_parser = list_subparsers.add_parser('available-images', description=imagelist_desc, help=imagelist_desc,

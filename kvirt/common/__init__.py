@@ -2560,3 +2560,26 @@ def sdn_ip(ip, kubetype, cluster_network):
     if cluster_network is None:
         cluster_network = '10.132.0.0/14'
     return kubetype is not None and kubetype == 'openshift' and ip_address(ip) in ip_network(cluster_network)
+
+
+def get_kubetype():
+    kubectl = which('kubectl') or which('oc')
+    openshift_command = f'{kubectl} get project 2>/dev/null'
+    cloud_command = f'{kubectl} cluster-info'
+    if os.popen(openshift_command).read().strip() != '':
+        kubetype = 'openshift'
+    elif 'eks.amazonaws.com' in os.popen(cloud_command).read().strip():
+        kubetype = 'eks'
+    else:
+        kubetype = 'generic'
+    pprint(f"Detected kubetype {kubetype}")
+    return kubetype
+    # else:
+    #     cloud_data = os.popen(cloud_command).read().strip()
+    #     if 'gke.googleapis.com' in cloud_data:
+    #         return 'gke'
+    #     elif 'eks.amazonaws.com' in cloud_data:
+    #         return 'eks'
+    #     elif 'azmk8s.io' in cloud_data:
+    #         return 'ake'
+    # return 'generic'
