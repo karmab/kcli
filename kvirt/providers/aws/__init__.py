@@ -1583,7 +1583,6 @@ class Kaws(object):
             if dnsclient is not None:
                 return ip
             self.reserve_dns(name, ip=ip, domain=domain, alias=alias)
-        return
 
     def delete_loadbalancer(self, name):
         domain = None

@@ -1,0 +1,17 @@
+{% set api_ip = api_ip or ('{0}-ctlplane-1'.format(cluster)|kcli_info('ip') if scale|default(False) and 'ctlplane-0' in name else first_ip) %}
+
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: JoinConfiguration
+discovery:
+  tlsBootstrapToken: {{ token }}
+  bootstrapToken:
+    apiServerEndpoint: {{ api_ip }}:6443
+    token: {{ token }}
+    unsafeSkipCAVerification: true
+{% if 'ctlplane' in name %}
+controlPlane:
+  localAPIEndpoint:
+    advertiseAddress: 0.0.0.0
+    bindPort: 6443
+  certificateKey: {{ cert_key }}
+{% endif %}

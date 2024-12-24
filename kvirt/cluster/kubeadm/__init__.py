@@ -8,6 +8,7 @@ from kvirt.defaults import UBUNTUS
 import os
 from random import choice
 from re import match
+from socket import gethostbyname
 from shutil import which
 from string import ascii_lowercase, ascii_letters, digits
 from subprocess import call
@@ -107,6 +108,7 @@ def create(config, plandir, cluster, overrides):
     plan = cluster
     data['kube'] = data['cluster']
     data['kubetype'] = 'generic'
+    domain = data['domain']
     cloud_lb = data['cloud_lb']
     cloud_dns = data['cloud_dns']
     cloud_storage = data['cloud_storage']
@@ -121,7 +123,6 @@ def create(config, plandir, cluster, overrides):
     network = data.get('network', 'default')
     api_ip = data.get('api_ip')
     if provider in cloud_providers:
-        domain = data.get('domain', 'karmalabs.corp')
         api_ip = f"{cluster}-ctlplane.{domain}"
     elif api_ip is None:
         networkinfo = k.info_network(network)
@@ -298,9 +299,11 @@ def create(config, plandir, cluster, overrides):
         else:
             for lbentry in config.list_loadbalancers():
                 if lbentry[0] == f'api-{cluster}':
-                    lb_ip = lbentry[1]
+                    lb_ip = gethostbyname(lbentry[1])
                     update_etc_hosts(cluster, domain, lb_ip)
                     break
+    elif not data['ignore_hosts']:
+        update_etc_hosts(cluster, domain, api_ip)
     os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     apps = data.get('apps', [])
     if data.get('metallb', False) and 'metallb' not in apps:

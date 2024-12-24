@@ -88,3 +88,6 @@ disconnected_user: dummy
 disconnected_password: dummy
 disconnected_sync: true
 feature_gates: []
+coredns: true
+kube_proxy: true
+ignore_hosts: false

@@ -17,6 +17,8 @@
  nets: {{ [network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
  files:
+ - path: /root/config.yaml
+   origin: config_join.yaml
  - path: /root/pre.sh
    origin: pre_{{ 'ubuntu' if ubuntu|default(False) else 'el' }}.sh
  - deploy.sh

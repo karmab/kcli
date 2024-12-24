@@ -21,6 +21,8 @@
  nets: {{ [primary_network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
  files:
+ - path: /root/config.yaml
+   origin: config_join.yaml
 {% if config_type not in ['aws', 'azure', 'gcp', 'ibm', 'hcloud'] %}
  - keepalived.conf
  - keepalived.sh

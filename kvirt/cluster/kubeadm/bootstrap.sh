@@ -1,26 +1,12 @@
 #!/usr/bin/env bash
 
-POD_CIDR={{ cluster_network_ipv4 }}
-SERVICE_CIDR={{ service_network_ipv4 }}
-
-{% if config_type in ['aws', 'gcp', 'ibm'] %}
-API_IP={{ "api.%s.%s" % (cluster, domain) }}
-echo $(hostname -I) api.{{ cluster }}.{{ domain }} >> /etc/hosts
-{% elif sslip|default(False) %}
-API_IP={{ "api.%s.sslip.io" % api_ip.replace('.', '-').replace(':', '-') }}
-{% else %}
-API_IP={{ api_ip }}
-{% endif %}
-
+CLUSTER={{ cluster }}
 DOMAIN={{ domain }}
+POD_CIDR={{ cluster_network_ipv4 }}
 
-# initialize cluster
-CERTKEY={{ cert_key }}
-TOKEN={{ token }}
-K8S_VERSION='{{ "--kubernetes-version %s" % minor_version if minor_version is defined else "" }}'
-REGISTRY='{{ "--image-repository %s" % disconnected_url if disconnected_url != None else "" }}'
-FEATUREGATES='{{ "--feature-gates %s" % ','.join(feature_gates) if feature_gates else "" }}'
-kubeadm init --control-plane-endpoint "${API_IP}:6443" --pod-network-cidr $POD_CIDR --service-cidr $SERVICE_CIDR --certificate-key $CERTKEY --upload-certs --token $TOKEN --token-ttl 0 --apiserver-cert-extra-sans ${API_IP} $K8S_VERSION $REGISTRY $FEATUREGATES
+echo $(hostname -I) api.$CLUSTER.$DOMAIN >> /etc/hosts
+
+kubeadm init --config=/root/config.yaml --upload-certs
 
 # config cluster credentials
 cp /etc/kubernetes/admin.conf /root/kubeconfig
@@ -78,7 +64,4 @@ kubectl apply -f https://raw.githubusercontent.com/k8snetworkplumbingwg/multus-c
 
 {% if registry %}
 kubectl create -f /root/registry.yml
-echo """[[registry]]
-location=\"{{ api_ip }}:5000\"
-insecure=true""" > /etc/containers/registries.conf.d/003-{{ cluster }}.conf
 {% endif %}

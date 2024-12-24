@@ -1,0 +1,46 @@
+{% set api_fqdn = "api.%s.sslip.io" % api_ip.replace('.', '-').replace(':', '-') if sslip|default(False) else "api.%s.%s" % (cluster, domain) %}
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: InitConfiguration
+bootstrapTokens:
+- token: "{{ token }}"
+  ttl: "0"
+localAPIEndpoint:
+  advertiseAddress: 0.0.0.0
+  bindPort: 6443
+certificateKey: "{{ cert_key }}"
+---
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: ClusterConfiguration
+clusterName: "{{ cluster }}"
+{% if minor_version is defined %}
+kubernetesVersion: {{ minor_version }}
+{% endif %}
+controlPlaneEndpoint: {{ api_fqdn }}:6443
+networking:
+  podSubnet: {{ cluster_network_ipv4 }}
+  serviceSubnet: {{ service_network_ipv4 }}
+  dnsDomain: "{{ cluster }}.{{ domain }}"
+apiServer:
+  certSANs:
+  - {{ api_fqdn }}
+{% if disconnected_url != None %}
+imageRepository: {{ disconnected_url }}
+{% endif %}
+{% if not coredns %}
+dns:
+  disabled: true
+{% endif %}
+{% if not kube_proxy %}
+proxy:
+  disabled: true
+{% endif %}
+---
+{% if feature_gates %}
+apiVersion: kubelet.config.k8s.io/v1beta1
+cgroupDriver: systemd
+featureGates:
+{% for feature_gate in feature_gates %}
+  {{ feature_gate }}: true
+{% endfor %}
+kind: KubeletConfiguration
+{% endif %}
