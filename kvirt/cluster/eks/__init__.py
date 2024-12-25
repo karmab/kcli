@@ -1,6 +1,7 @@
 import boto3
-from kvirt.common import success, info2, pprint, error, fix_typos, warning
+from kvirt.common import success, info2, pprint, error, fix_typos, warning, pretty_print
 import os
+import re
 import yaml
 from yaml import safe_dump, safe_load
 
@@ -10,6 +11,11 @@ AUTOMODE_CTLPLANE_POLICIES = ['AmazonEKSBlockStoragePolicy', 'AmazonEKSClusterPo
                               'AmazonEKSLoadBalancingPolicy', 'AmazonEKSNetworkingPolicy']
 
 AUTOMODE_WORKER_POLICIES = ['AmazonEC2ContainerRegistryPullOnly', 'AmazonEKSWorkerNodeMinimalPolicy']
+
+
+def get_cluster_name():
+    kclidir = os.path.expanduser('~/.kcli/clusters')
+    return re.sub(f'{kclidir}/(.*)/auth/kubeconfig', r'\1', os.environ.get('KUBECONFIG'))
 
 
 def project_init(config):
@@ -59,6 +65,26 @@ def get_kubeconfig(config, cluster, zonal=True):
         f.write(config_text)
 
 
+def process_apps(config, clusterdir, apps, overrides):
+    if not apps:
+        return
+    os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
+    for app in apps:
+        base_data = overrides.copy()
+        if isinstance(app, str):
+            app = {'name': app}
+        app_data = app
+        appname = app.get('name')
+        if appname is None:
+            error(f"Missing name in dict {app}. Skipping")
+            continue
+        app_data.update(base_data)
+        pprint(f"Adding app {appname}")
+        result = config.create_app_eks(appname, app_data)
+        if result != 0:
+            error(f"Issue adding app {appname}")
+
+
 def scale(config, plandir, cluster, overrides):
     data = {'workers': 2,
             'network': 'default',
@@ -104,6 +130,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     fix_typos(data)
     k = config.k
     version = data['version']
+    apps = overrides.get('apps', [])
     workers = data['workers']
     ctlplane_role = data['ctlplane_role']
     worker_role = data['worker_role']
@@ -247,6 +274,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     success(f"Kubernetes cluster {cluster} deployed!!!")
     info2(f"export KUBECONFIG=$HOME/.kcli/clusters/{cluster}/auth/kubeconfig")
     info2("export PATH=$PWD:$PATH")
+    os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
+    process_apps(config, clusterdir, apps, overrides)
     return {'result': 'success'}
 
 
@@ -311,3 +340,44 @@ def info(config, cluster, debug=False):
 
 def info_service(config, zonal=True):
     return {}
+
+
+def list_apps(config, quiet=False, installed=False):
+    access_key_id, access_key_secret, session_token, region = project_init(config)
+    eks = boto3.client('eks', aws_access_key_id=access_key_id, aws_secret_access_key=access_key_secret,
+                       region_name=region, aws_session_token=session_token)
+    if installed:
+        cluster = get_cluster_name()
+        return eks.list_addons(clusterName=cluster).get('addons', [])
+    else:
+        return [i['addonName'] for i in eks.describe_addon_versions().get('addons', [])]
+
+
+def create_app(config, app, overrides={}):
+    access_key_id, access_key_secret, session_token, region = project_init(config)
+    eks = boto3.client('eks', aws_access_key_id=access_key_id, aws_secret_access_key=access_key_secret,
+                       region_name=region, aws_session_token=session_token)
+    cluster = get_cluster_name()
+    data = {'clusterName': cluster, 'addonName': app}
+    if 'version' in overrides:
+        data['addonVersion'] = overrides['version']
+    eks.create_addon(**data)
+
+
+def delete_app(config, app, overrides={}):
+    access_key_id, access_key_secret, session_token, region = project_init(config)
+    eks = boto3.client('eks', aws_access_key_id=access_key_id, aws_secret_access_key=access_key_secret,
+                       region_name=region, aws_session_token=session_token)
+    cluster = get_cluster_name()
+    eks.delete_addon(clusterName=cluster, addonName=app)
+
+
+def info_app(config, app):
+    access_key_id, access_key_secret, session_token, region = project_init(config)
+    eks = boto3.client('eks', aws_access_key_id=access_key_id, aws_secret_access_key=access_key_secret,
+                       region_name=region, aws_session_token=session_token)
+    data = eks.describe_addon_versions(addonName=app).get('addons', [])
+    if data:
+        pretty_print(data[0])
+    else:
+        error(f"App {app} not found")

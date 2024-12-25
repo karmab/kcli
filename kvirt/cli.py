@@ -1301,6 +1301,7 @@ def delete_app(args):
 
 
 def list_apps(args):
+    overrides = handle_parameters(args.param, args.paramfile, cluster=True)
     kubectl = which('kubectl') or which('oc')
     if kubectl is None:
         error("You need kubectl/oc to list apps")
@@ -1310,7 +1311,7 @@ def list_apps(args):
     elif not os.path.isabs(os.environ['KUBECONFIG']):
         os.environ['KUBECONFIG'] = f"{os.getcwd()}/{os.environ['KUBECONFIG']}"
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
-    apps = baseconfig.list_apps(quiet=True, installed=args.installed)
+    apps = baseconfig.list_apps(quiet=True, installed=args.installed, overrides=overrides)
     output = args.global_output or args.output
     if output is not None:
         _list_output(apps, output)
@@ -3383,7 +3384,7 @@ def cli():
                                           aliases=['add', 'run', 'install'])
     create_subparsers = create_parser.add_subparsers(metavar='', dest='subcommand_create')
 
-    createapp_desc = 'Create Kube Apps'
+    createapp_desc = 'Create Kube App'
     createapp_parser = create_subparsers.add_parser('app', description=createapp_desc,
                                                     help=createapp_desc, aliases=['apps', 'operator', 'operators'],
                                                     parents=[parent_parser])
@@ -4586,7 +4587,7 @@ def cli():
     listapp_desc = 'List Available Kube Apps'
     listapp_parser = list_subparsers.add_parser('app', description=listapp_desc,
                                                 help=listapp_desc, aliases=['apps', 'operator', 'operators'],
-                                                parents=[output_parser])
+                                                parents=[parent_parser, output_parser])
     listapp_parser.add_argument('-i', '--installed', action='store_true', help='Show installed apps')
     listapp_parser.set_defaults(func=list_apps)
 

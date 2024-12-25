@@ -966,15 +966,21 @@ class Kbaseconfig:
         self.info_plan(inputfile, quiet=quiet, web=web)
 
     def create_app(self, app, overrides={}, outputdir=None):
-        kubetype = get_kubetype()
+        kubetype = overrides.get('kubetype') or get_kubetype()
         if kubetype == 'openshift':
             return self.create_app_openshift(app, overrides, outputdir)
+        elif kubetype == 'eks':
+            return self.create_app_eks(app, overrides, outputdir)
         else:
             return self.create_app_generic(app, overrides, outputdir)
 
     def create_app_generic(self, app, overrides={}, outputdir=None):
         appdir = f"{os.path.dirname(kubeadm.create.__code__.co_filename)}/apps"
         return common.create_app_generic(self, app, appdir, overrides=overrides, outputdir=outputdir)
+
+    def create_app_eks(self, app, overrides={}, outputdir=None):
+        from kvirt.cluster import eks
+        return eks.create_app(self, app, overrides)
 
     def create_app_openshift(self, app, overrides={}, outputdir=None):
         appdir = f"{os.path.dirname(openshift.create.__code__.co_filename)}/apps"
@@ -1003,15 +1009,21 @@ class Kbaseconfig:
             return common.create_app_openshift(self, app, appdir, app_data, outputdir)
 
     def delete_app(self, app, overrides={}):
-        kubetype = get_kubetype()
+        kubetype = overrides.get('kubetype') or get_kubetype()
         if kubetype == 'openshift':
             return self.delete_app_openshift(app, overrides)
+        elif kubetype == 'eks':
+            return self.delete_app_eks(app, overrides)
         else:
             return self.delete_app_generic(app, overrides)
 
     def delete_app_generic(self, app, overrides={}):
         appdir = f"{os.path.dirname(kubeadm.create.__code__.co_filename)}/apps"
         return common.delete_app_delete_generic(self, app, appdir, overrides=overrides)
+
+    def delete_app_eks(self, app, overrides={}):
+        from kvirt.cluster import eks
+        return eks.delete_app(self, app, overrides)
 
     def delete_app_openshift(self, app, overrides={}):
         appdir = f"{os.path.dirname(openshift.create.__code__.co_filename)}/apps"
@@ -1030,9 +1042,11 @@ class Kbaseconfig:
             return common.delete_app_openshift(self, app, appdir, app_data)
 
     def info_app(self, app, overrides={}):
-        kubetype = get_kubetype()
+        kubetype = overrides.get('kubetype') or get_kubetype()
         if kubetype == 'openshift':
             return self.info_app_openshift(app, overrides)
+        elif kubetype == 'eks':
+            return self.info_app_eks(app)
         else:
             return self.info_app_generic(app)
 
@@ -1047,6 +1061,10 @@ class Kbaseconfig:
         else:
             with open(default_parameter_file, 'r') as f:
                 print(f.read().strip())
+
+    def info_app_eks(self, app):
+        from kvirt.cluster import eks
+        return eks.info_app(self, app)
 
     def info_app_openshift(self, app, overrides={}):
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
@@ -1069,10 +1087,12 @@ class Kbaseconfig:
             with open(default_parameter_file, 'r') as f:
                 print(f.read().strip())
 
-    def list_apps(self, quiet=True, installed=False):
-        kubetype = get_kubetype()
+    def list_apps(self, quiet=True, installed=False, overrides={}):
+        kubetype = overrides.get('kubetype') or get_kubetype()
         if kubetype == 'openshift':
             return self.list_apps_openshift(quiet=quiet, installed=installed)
+        elif kubetype == 'eks':
+            return self.list_apps_eks(quiet=quiet, installed=installed)
         else:
             return self.list_apps_generic(quiet=quiet)
 
@@ -1080,6 +1100,10 @@ class Kbaseconfig:
         plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
         appdir = plandir + '/apps'
         return sorted([x for x in os.listdir(appdir) if os.path.isdir(f"{appdir}/{x}") and x != '__pycache__'])
+
+    def list_apps_eks(self, quiet=True, installed=False):
+        from kvirt.cluster import eks
+        return eks.list_apps(self, quiet=quiet, installed=installed)
 
     def list_apps_openshift(self, quiet=True, installed=False):
         if installed:
