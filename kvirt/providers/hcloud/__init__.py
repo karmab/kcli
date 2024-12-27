@@ -96,19 +96,21 @@ class Khcloud():
             value = metadata[entry].replace('.', '-')
             labels[entry] = value
 
-        placement_group_name = f"kcli-{labels['plan']}"
-        placement_group = self.conn.placement_groups.get_by_name(placement_group_name)
-        if not placement_group:
-            response = self.conn.placement_groups.create(name=placement_group_name, type="spread",
-                                                         labels={"kcli-managed": "placement-group",
-                                                                 "plan": labels["plan"]})
-            if response.action:
-                response.action.wait_until_finished(300)
+        placement_group = None
+        if "worker" not in name:
+            placement_group_name = f"kcli-{labels['plan']}"
+            placement_group = self.conn.placement_groups.get_by_name(placement_group_name)
+            if not placement_group:
+                response = self.conn.placement_groups.create(name=placement_group_name, type="spread",
+                                                            labels={"kcli-managed": "placement-group",
+                                                                    "plan": labels["plan"]})
+                if response.action:
+                    response.action.wait_until_finished(300)
 
-                if response.action.error:
-                    return {'result': 'failure', 'reason': json.dumps(response.error)}
+                    if response.action.error:
+                        return {'result': 'failure', 'reason': json.dumps(response.error)}
 
-            placement_group = response.placement_group
+                placement_group = response.placement_group
 
         flavor_options = overrides.get("flavor_options", [flavor] if flavor is not None else [])
 
