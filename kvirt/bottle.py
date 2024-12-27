@@ -101,9 +101,14 @@ import inspect
 json_loads = lambda s: json_lds(touni(s))
 callable = lambda x: hasattr(x, '__call__')
 
+# KARIM HACK
+def isascii(s):
+    return all(ord(c) < 128 for c in s)
+
 def _wsgi_recode(src):
     """ Translate a PEP-3333 latin1-string to utf8+surrogateescape """
-    if src.isascii():
+    # if src.isascii():
+    if isascii(src):
         return src
     return src.encode('latin1').decode('utf8', 'surrogateescape')
 
