@@ -110,7 +110,7 @@ class Khcloud():
                     if response.action.error:
                         return {'result': 'failure', 'reason': json.dumps(response.error)}
 
-            placement_group = response.placement_group
+                placement_group = response.placement_group
 
         flavor_options = overrides.get("flavor_options", [flavor] if flavor is not None else [])
 
