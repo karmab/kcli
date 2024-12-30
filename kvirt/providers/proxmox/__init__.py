@@ -609,7 +609,7 @@ class Kproxmox(Kbase):
             if index < len(initial_disks):
                 current_diskname = initial_disks[index]['name']
                 current_disksize = int(initial_disks[index]['size'])
-                if disksize != current_disksize:
+                if disksize != current_disksize and current_disksize > 1:
                     pprint(f"Waiting for image disk {index} to be resized")
                     new_vm.resize.put(disk=diskname, size=f"{disksize}G")
                 vm_data[current_diskname] = initial_disks[index]['full']
@@ -1058,7 +1058,7 @@ class Kproxmox(Kbase):
                 disk_data = vm_config[entry].split(',')
                 path = disk_data[0]
                 disktype, disksize = disk_data[-1].split('=')
-                disksize = int(disksize.replace('G', ''))
+                disksize = 1 if disksize.endswith('M') else int(disksize.replace('G', ''))
                 if disktype == 'media':
                     continue
                 disks.append({'name': device, 'size': disksize, 'path': path, 'full': vm_config[entry]})
