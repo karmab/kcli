@@ -184,10 +184,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     account_id = k.get_account_id()
     ctlplane_policies = AUTOMODE_CTLPLANE_POLICIES if auto_mode else ['AmazonEKSClusterPolicy']
     if ctlplane_role is not None:
-        if get_role_policies(config, ctlplane_role) != ctlplane_policies:
-            return {'result': 'failure', 'reason': f"Role {ctlplane_role}"}
-        else:
-            ctlplane_role = f'arn:aws:iam::{account_id}:role/{ctlplane_role}'
+        pprint("Assuming ctlplane_role {ctlplane_role} has the correct policies")
+        ctlplane_role = f'arn:aws:iam::{account_id}:role/{ctlplane_role}'
     else:
         ctlplane_role_name = 'kcli-eks-ctlplane-auto' if auto_mode else 'kcli-eks-ctlplane'
         if ctlplane_role_name not in k.list_roles():
@@ -198,10 +196,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     cluster_data['roleArn'] = ctlplane_role
     worker_policies = AUTOMODE_WORKER_POLICIES if auto_mode else ['AmazonEKSWorkerNodePolicy']
     if worker_role is not None:
-        if get_role_policies(config, worker_role) != worker_policies:
-            return {'result': 'failure', 'reason': f"Invalid role {worker_role}"}
-        else:
-            worker_role = f'arn:aws:iam::{account_id}:role/{worker_role}'
+        pprint("Assuming worker_role {worker_role} has the correct policies")
+        worker_role = f'arn:aws:iam::{account_id}:role/{worker_role}'
     else:
         worker_role_name = 'kcli-eks-worker-auto' if auto_mode else 'kcli-eks-worker'
         if worker_role_name not in k.list_roles():
