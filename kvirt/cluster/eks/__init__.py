@@ -7,9 +7,12 @@ from yaml import safe_dump, safe_load
 
 supported_versions = ['1.20', '1.21', '1.22', '1.23', '1.24', '1.25', '1.26', '1.27']
 
+DEFAULT_CTLPLANE_POLICIES = ['AmazonEKSClusterPolicy', 'AmazonEC2ContainerRegistryReadOnly',
+                             'AmazonEBSCSIDriverPolicy', 'AmazonEKS_CNI_Policy', 'AmazonEKSBlockStoragePolicy']
 AUTOMODE_CTLPLANE_POLICIES = ['AmazonEKSBlockStoragePolicy', 'AmazonEKSClusterPolicy', 'AmazonEKSComputePolicy',
                               'AmazonEKSLoadBalancingPolicy', 'AmazonEKSNetworkingPolicy']
-
+DEFAULT_WORKER_POLICIES = ['AmazonEKSWorkerNodePolicy', 'AmazonEC2ContainerRegistryReadOnly',
+                           'AmazonEBSCSIDriverPolicy', 'AmazonEKS_CNI_Policy', 'AmazonEKSBlockStoragePolicy']
 AUTOMODE_WORKER_POLICIES = ['AmazonEC2ContainerRegistryPullOnly', 'AmazonEKSWorkerNodeMinimalPolicy']
 
 
@@ -182,7 +185,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     access_key_id, access_key_secret, session_token, region = project_init(config)
     account_id = k.get_account_id()
-    ctlplane_policies = AUTOMODE_CTLPLANE_POLICIES if auto_mode else ['AmazonEKSClusterPolicy']
+    ctlplane_policies = AUTOMODE_CTLPLANE_POLICIES if auto_mode else DEFAULT_CTLPLANE_POLICIES
     if ctlplane_role is not None:
         pprint("Assuming ctlplane_role {ctlplane_role} has the correct policies")
         ctlplane_role = f'arn:aws:iam::{account_id}:role/{ctlplane_role}'
@@ -194,7 +197,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         ctlplane_role = f'arn:aws:iam::{account_id}:role/{ctlplane_role_name}'
     pprint(f"Using ctlplane role {ctlplane_role_name}")
     cluster_data['roleArn'] = ctlplane_role
-    worker_policies = AUTOMODE_WORKER_POLICIES if auto_mode else ['AmazonEKSWorkerNodePolicy']
+    worker_policies = AUTOMODE_WORKER_POLICIES if auto_mode else DEFAULT_WORKER_POLICIES
     if worker_role is not None:
         pprint("Assuming worker_role {worker_role} has the correct policies")
         worker_role = f'arn:aws:iam::{account_id}:role/{worker_role}'
