@@ -275,6 +275,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     info2("export PATH=$PWD:$PATH")
     os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     process_apps(config, clusterdir, apps, overrides)
+    handle_oidc_provider(eks, cluster, overrides)
     return {'result': 'success'}
 
 
@@ -380,3 +381,19 @@ def info_app(config, app):
         pretty_print(data[0])
     else:
         error(f"App {app} not found")
+
+
+def handle_oidc_provider(eks, cluster, overrides):
+    name = overrides.get('oidc_name', 'oidc-config')
+    issuer_url = overrides.get('oidc_issuer_url')
+    client_id = overrides.get('oidc_client_id')
+    username_claim = overrides.get('oidc_username_claim', 'email')
+    group_claim = overrides.get('oidc_group_claim', 'cognito:groups')
+    if issuer_url is None or client_id is None:
+        return
+    pprint(f"Creating oidc config {name}")
+    pprint(f"Using {username_claim} as username claim")
+    pprint(f"Using {group_claim} as group claim")
+    oidc = {'identityProviderConfigName': name, 'issuerUrl': issuer_url, 'clientId': client_id,
+            'usernameClaim': username_claim, 'groupsClaim': group_claim}
+    eks.associate_identity_provider_config(clusterName=cluster, oidc=oidc)
