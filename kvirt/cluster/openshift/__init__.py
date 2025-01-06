@@ -844,7 +844,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if '0-ec.' in str(tag):
         version = 'dev-preview'
         data['version'] = version
-    elif int(tag.split('.')[1]) > int(OPENSHIFT_TAG.split('.')[1]):
+    elif int(str(tag).split('.')[1]) > int(OPENSHIFT_TAG.split('.')[1]):
         version = 'ci'
         data['version'] = version
     if os.path.exists('coreos-installer'):
