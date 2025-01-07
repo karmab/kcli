@@ -1292,7 +1292,8 @@ class Kubevirt():
             return {'result': 'failure', 'reason': 'timeout waiting for cdi importer pod to complete'}
         return {'result': 'success'}
 
-    def patch_pvc(self, pvc, command, image="quay.io/karmab/curl", files=[]):
+    def patch_pvc(self, pvc, command, files=[]):
+        image = f"{self.registry}/karmab/curl"
         kubectl = self.kubectl
         namespace = self.namespace
         now = datetime.datetime.now().strftime("%Y%M%d%H%M")
@@ -1333,6 +1334,35 @@ class Kubevirt():
             _delete_resource(kubectl, 'pod', podname, namespace, debug=self.debug)
         if configmap is not None:
             _delete_resource(kubectl, 'cm', podname, namespace, debug=self.debug)
+        return {'result': 'success'}
+
+    def patch_ignition(self, pvc, pool):
+        kubectl = self.kubectl
+        namespace = self.namespace
+        now = datetime.datetime.now().strftime("%Y%M%d%H%M")
+        podname = f'{now}-{pvc}-patch'
+        os.popen(f"{kubectl} -n {namespace} create cm --from-file=iso.ign {podname}").read()
+        container = {'image': 'quay.io/coreos/coreos-installer:release', 'name': 'patch', 'command': ['/bin/sh', '-c']}
+        _, volume_mode, _ = self.get_default_storage(pool, self.volume_mode, self.volume_access)
+        if volume_mode == 'Filesystem':
+            container['volumeMounts'] = [{'mountPath': '/storage', 'name': 'storage'},
+                                         {'mountPath': '/files', 'name': 'files'}]
+        else:
+            container['volumeDevices'] = [{'devicePath': '/dev/storage', 'name': 'storage'},
+                                          {'devicePath': '/dev/files', 'name': 'files'}]
+        container['args'] = ['coreos-installer iso ignition embed -fi /files/iso.ign /storage/disk.img']
+        pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'Never', 'containers': [container],
+                                       'volumes': [{'name': 'storage', 'persistentVolumeClaim': {'claimName': pvc}},
+                                                   {'name': 'files', 'configMap': {'name': podname}}]},
+               'apiVersion': 'v1', 'metadata': {'name': podname}}
+        _create_resource(kubectl, pod, namespace, debug=self.debug)
+        completed = self.pod_completed(podname, namespace)
+        if not completed:
+            error(f"Issue with pod {podname}. Leaving it for debugging purposes")
+            return {'result': 'failure', 'reason': f'issue with pod {podname}'}
+        else:
+            _delete_resource(kubectl, 'pod', podname, namespace, debug=self.debug)
+        os.popen(f"{kubectl} -n {namespace} delete cm {podname}").read()
         return {'result': 'success'}
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
@@ -1720,14 +1750,12 @@ class Kubevirt():
         return volume_mode, volume_access
 
     def get_default_storage(self, pool, volume_mode, volume_access):
+        pool = pool or self.get_default_sc()
         if pool is None:
-            default_pool = self.get_default_sc()
-            if default_pool is not None:
-                pool = default_pool
-        if pool is not None:
-            pool_volume_mode, pool_volume_access = self.get_sc_details(pool)
-            if pool_volume_mode is not None and pool_volume_access is not None:
-                volume_mode, volume_access = pool_volume_mode, pool_volume_access
+            return None, volume_mode, volume_access
+        pool_volume_mode, pool_volume_access = self.get_sc_details(pool)
+        volume_mode = pool_volume_mode or volume_mode
+        volume_access = pool_volume_access or volume_access
         return pool, volume_mode, volume_access
 
     def update_reference(self, owners, namespace, reference):
