@@ -7,13 +7,12 @@ from yaml import safe_dump, safe_load
 
 supported_versions = ['1.20', '1.21', '1.22', '1.23', '1.24', '1.25', '1.26', '1.27']
 
-DEFAULT_CTLPLANE_POLICIES = ['AmazonEKSClusterPolicy', 'AmazonEC2ContainerRegistryReadOnly',
-                             'AmazonEBSCSIDriverPolicy', 'AmazonEKS_CNI_Policy', 'AmazonEKSBlockStoragePolicy']
-AUTOMODE_CTLPLANE_POLICIES = ['AmazonEKSBlockStoragePolicy', 'AmazonEKSClusterPolicy', 'AmazonEKSComputePolicy',
-                              'AmazonEKSLoadBalancingPolicy', 'AmazonEKSNetworkingPolicy']
-DEFAULT_WORKER_POLICIES = ['AmazonEKSWorkerNodePolicy', 'AmazonEC2ContainerRegistryReadOnly',
-                           'AmazonEBSCSIDriverPolicy', 'AmazonEKS_CNI_Policy', 'AmazonEKSBlockStoragePolicy']
-AUTOMODE_WORKER_POLICIES = ['AmazonEC2ContainerRegistryPullOnly', 'AmazonEKSWorkerNodeMinimalPolicy']
+CTLPLANE_POLICIES = ['AmazonEBSCSIDriverPolicy', 'AmazonEC2ContainerRegistryReadOnly', 'AmazonEKSBlockStoragePolicy',
+                     'AmazonEKSClusterPolicy', 'AmazonEKS_CNI_Policy', 'AmazonEKSComputePolicy',
+                     'AmazonEKSLoadBalancingPolicy', 'AmazonEKSNetworkingPolicy']
+WORKER_POLICIES = ['AmazonEBSCSIDriverPolicy', 'AmazonEC2ContainerRegistryPullOnly',
+                   'AmazonEC2ContainerRegistryReadOnly', 'AmazonEKSBlockStoragePolicy', 'AmazonEKS_CNI_Policy',
+                   'AmazonEKSWorkerNodeMinimalPolicy', 'AmazonEKSWorkerNodePolicy']
 
 
 def get_cluster_name():
@@ -185,27 +184,25 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             yaml.safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
     access_key_id, access_key_secret, session_token, region = project_init(config)
     account_id = k.get_account_id()
-    ctlplane_policies = AUTOMODE_CTLPLANE_POLICIES if auto_mode else DEFAULT_CTLPLANE_POLICIES
     if ctlplane_role is not None:
         pprint("Assuming ctlplane_role {ctlplane_role} has the correct policies")
         ctlplane_role = f'arn:aws:iam::{account_id}:role/{ctlplane_role}'
     else:
-        ctlplane_role_name = 'kcli-eks-ctlplane-auto' if auto_mode else 'kcli-eks-ctlplane'
+        ctlplane_role_name = 'kcli-eks-ctlplane'
         if ctlplane_role_name not in k.list_roles():
             pprint(f"Creating ctlplane role {ctlplane_role_name}")
-            k.create_eks_role(ctlplane_role_name, ctlplane_policies)
+            k.create_eks_role(ctlplane_role_name, CTLPLANE_POLICIES)
         ctlplane_role = f'arn:aws:iam::{account_id}:role/{ctlplane_role_name}'
     pprint(f"Using ctlplane role {ctlplane_role_name}")
     cluster_data['roleArn'] = ctlplane_role
-    worker_policies = AUTOMODE_WORKER_POLICIES if auto_mode else DEFAULT_WORKER_POLICIES
     if worker_role is not None:
         pprint("Assuming worker_role {worker_role} has the correct policies")
         worker_role = f'arn:aws:iam::{account_id}:role/{worker_role}'
     else:
-        worker_role_name = 'kcli-eks-worker-auto' if auto_mode else 'kcli-eks-worker'
+        worker_role_name = 'kcli-eks-worker'
         if worker_role_name not in k.list_roles():
             pprint(f"Creating worker role {worker_role_name}")
-            k.create_eks_role(worker_role_name, worker_policies)
+            k.create_eks_role(worker_role_name, WORKER_POLICIES)
         worker_role = f'arn:aws:iam::{account_id}:role/{worker_role_name}'
     pprint(f"Using worker role {worker_role_name}")
     subnetids = []
