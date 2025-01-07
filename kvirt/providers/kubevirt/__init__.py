@@ -1292,8 +1292,7 @@ class Kubevirt():
             return {'result': 'failure', 'reason': 'timeout waiting for cdi importer pod to complete'}
         return {'result': 'success'}
 
-    def patch_pvc(self, pvc, command, files=[]):
-        image = f'{self.registry}/karmab/curl'
+    def patch_pvc(self, pvc, command, image="quay.io/karmab/curl", files=[]):
         kubectl = self.kubectl
         namespace = self.namespace
         now = datetime.datetime.now().strftime("%Y%M%d%H%M")
