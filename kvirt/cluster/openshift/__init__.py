@@ -1727,7 +1727,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 pprint("Waiting 5s for bootstrap vm to be up")
                 sleep(5)
         if 'kubeconfig' in config.ini[config.client]:
-            kubeconfig = config.ini[config.client].get('kubeconfig') or os.environ['KUBECONFIG']
+            kubeconfig = config.ini[config.client].get('kubeconfig')
             hostip_cmd = f'KUBECONFIG={kubeconfig} oc get node {nodehost} -o yaml'
             hostip = safe_load(os.popen(hostip_cmd).read())['status']['addresses'][0]['address']
             update_openshift_etc_hosts(cluster, domain, hostip)
@@ -1771,7 +1771,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             if result['result'] != 'success':
                 return result
     if async_install:
-        kubeconf = os.environ['KUBECONFIG']
+        kubeconf = f"{clusterdir}/auth/kubeconfig"
         kubepassword = open(f"{clusterdir}/auth/kubeadmin-password").read()
         if async_install:
             success("Async Cluster created")

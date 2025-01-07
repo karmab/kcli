@@ -1964,7 +1964,7 @@ class Kaws(object):
         tags = [{'Key': 'Name', 'Value': name}]
         iam.create_role(RoleName=name, AssumeRolePolicyDocument=rolepolicy_document, Tags=tags)
         for policy in policies:
-            policy_arn = f"arn:aws:iam::aws:policy/{policy}"
+            policy_arn = f"arn:aws:iam::aws:policy/{policy}" if not policy.startswith('arn:') else policy
             iam.attach_role_policy(RoleName=name, PolicyArn=policy_arn)
 
     def create_subnet(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):

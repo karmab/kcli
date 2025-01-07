@@ -7,12 +7,26 @@ from yaml import safe_dump, safe_load
 
 supported_versions = ['1.20', '1.21', '1.22', '1.23', '1.24', '1.25', '1.26', '1.27']
 
-CTLPLANE_POLICIES = ['AmazonEBSCSIDriverPolicy', 'AmazonEC2ContainerRegistryReadOnly', 'AmazonEKSBlockStoragePolicy',
-                     'AmazonEKSClusterPolicy', 'AmazonEKS_CNI_Policy', 'AmazonEKSComputePolicy',
-                     'AmazonEKSLoadBalancingPolicy', 'AmazonEKSNetworkingPolicy']
-WORKER_POLICIES = ['AmazonEBSCSIDriverPolicy', 'AmazonEC2ContainerRegistryPullOnly',
-                   'AmazonEC2ContainerRegistryReadOnly', 'AmazonEKSBlockStoragePolicy', 'AmazonEKS_CNI_Policy',
-                   'AmazonEKSWorkerNodeMinimalPolicy', 'AmazonEKSWorkerNodePolicy']
+CTLPLANE_POLICIES = [
+    'arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy',
+    'AmazonEC2ContainerRegistryReadOnly',
+    'AmazonEKSBlockStoragePolicy',
+    'AmazonEKSClusterPolicy',
+    'AmazonEKS_CNI_Policy',
+    'AmazonEKSComputePolicy',
+    'AmazonEKSLoadBalancingPolicy',
+    'AmazonEKSNetworkingPolicy'
+]
+
+WORKER_POLICIES = [
+    'arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy',
+    'AmazonEC2ContainerRegistryPullOnly',
+    'AmazonEC2ContainerRegistryReadOnly',
+    'AmazonEKSBlockStoragePolicy',
+    'AmazonEKS_CNI_Policy',
+    'AmazonEKSWorkerNodeMinimalPolicy',
+    'AmazonEKSWorkerNodePolicy'
+]
 
 
 def get_cluster_name():
