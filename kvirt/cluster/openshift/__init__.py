@@ -989,7 +989,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         else:
             pprint(f"Removing existing directory {clusterdir}")
             rmtree(clusterdir)
-    os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
     if version == 'ci':
         if '/' not in str(tag) and str(tag).count('.') != 1:
             if arch in ['aarch64', 'arm64']:
@@ -1596,7 +1595,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 msg += f"Delete it with kcli delete cluster --yes {cluster}"
                 return {'result': 'failure', 'reason': msg}
         else:
-            c = os.environ['KUBECONFIG']
+            c = f"{clusterdir}/auth/kubeconfig"
             kubepassword = open(f"{clusterdir}/auth/kubeadmin-password").read()
             console = f"https://console-openshift-console.apps.{cluster}.{domain}"
             info2(f"To access the cluster as the system:admin user when running 'oc', run export KUBECONFIG={c}")
@@ -1727,7 +1726,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             else:
                 pprint("Waiting 5s for bootstrap vm to be up")
                 sleep(5)
-        if 'KUBECONFIG' in os.environ or 'kubeconfig' in config.ini[config.client]:
+        if 'kubeconfig' in config.ini[config.client]:
             kubeconfig = config.ini[config.client].get('kubeconfig') or os.environ['KUBECONFIG']
             hostip_cmd = f'KUBECONFIG={kubeconfig} oc get node {nodehost} -o yaml'
             hostip = safe_load(os.popen(hostip_cmd).read())['status']['addresses'][0]['address']
