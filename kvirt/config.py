@@ -60,8 +60,9 @@ class Kconfig(Kbaseconfig):
             if self.type == 'kubevirt':
                 kubeconfig_file = options.get('kubeconfig')
                 if kubeconfig_file is None:
-                    error("Missing kubeconfig in the configuration. Leaving")
-                    sys.exit(1)
+                    if not os.path.exists('/var/run/secrets/kubernetes.io/serviceaccount'):
+                        error("Missing kubeconfig in the configuration. Leaving")
+                        sys.exit(1)
                 elif not os.path.exists(os.path.expanduser(kubeconfig_file)):
                     error("Kubeconfig file path doesn't exist. Leaving")
                     sys.exit(1)
@@ -2743,18 +2744,19 @@ class Kconfig(Kbaseconfig):
         elif vmclients:
             deleteclients.update({cli: Kconfig(client=cli).k for cli in vmclients if cli != self.client})
         if hypershift:
+            oc = which('kubectl') or which('oc')
             kubeconfigmgmt = f"{clusterdir}/kubeconfig.mgmt"
             if os.path.exists(f'{clusterdir}/bmcs.yml'):
-                call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/bmcs.yml', shell=True)
-            call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/autoapprovercron.yml', shell=True)
-            call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/nodepools.yaml', shell=True)
-            call(f'KUBECONFIG={kubeconfigmgmt} oc delete -f {clusterdir}/hostedcluster.yaml', shell=True)
+                call(f'KUBECONFIG={kubeconfigmgmt} {oc} delete -f {clusterdir}/bmcs.yml', shell=True)
+            call(f'KUBECONFIG={kubeconfigmgmt} {oc} delete -f {clusterdir}/autoapprovercron.yml', shell=True)
+            call(f'KUBECONFIG={kubeconfigmgmt} {oc} delete -f {clusterdir}/nodepools.yaml', shell=True)
+            call(f'KUBECONFIG={kubeconfigmgmt} {oc} delete -f {clusterdir}/hostedcluster.yaml', shell=True)
             if not assisted and ('baremetal_iso' in clusterdata or 'baremetal_hosts' in clusterdata):
                 call(f'KUBECONFIG={kubeconfigmgmt} oc -n default delete all -l app=httpd-kcli', shell=True)
                 call(f'KUBECONFIG={kubeconfigmgmt} oc -n default delete pvc httpd-kcli-pvc', shell=True)
             ingress_ip = clusterdata.get('ingress_ip')
             if self.type == 'kubevirt' and clusterdata.get('platform') is None and ingress_ip is None:
-                call(f'KUBECONFIG={kubeconfigmgmt} oc -n {k.namespace} delete route {cluster}-ingress', shell=True)
+                call(f'KUBECONFIG={kubeconfigmgmt} {oc} -n {k.namespace} delete route {cluster}-ingress', shell=True)
         for hypervisor in deleteclients:
             c = deleteclients[hypervisor]
             for vm in sorted(c.list(), key=lambda x: x['name']):
@@ -2781,7 +2783,8 @@ class Kconfig(Kbaseconfig):
             if f"{cluster}-ingress" in k.list_services(k.namespace):
                 k.delete_service(f"{cluster}-ingress", k.namespace)
             try:
-                call(f'oc delete -n {k.namespace} route {cluster}-ingress', shell=True)
+                oc = which('kubectl') or which('oc')
+                call(f'{oc} delete -n {k.namespace} route {cluster}-ingress', shell=True)
             except:
                 pass
         if self.type in ['aws', 'azure', 'gcp', 'ibm', 'hcloud'] and not gke and not eks and not aks:
@@ -2986,8 +2989,8 @@ class Kconfig(Kbaseconfig):
         existing_workers = len([v for v in planvms if v.startswith(f'{cluster}-worker-')])
         if data['ctlplanes'] != existing_ctlplanes or data['workers'] != existing_workers:
             os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
-            binary = 'oc' if which('oc') is not None else 'kubectl'
-            nodescmd = f'{binary} get node -o name'
+            kubectl = which('kubectl') or which('oc')
+            nodescmd = f'{kubectl} get node -o name'
             nodes = [n.strip().replace('node/', '') for n in os.popen(nodescmd).readlines()]
             for vm in self.k.list():
                 vmname = vm['name']
@@ -2997,7 +3000,7 @@ class Kconfig(Kbaseconfig):
                     for node in nodes:
                         if node.split('.')[0] == vmname:
                             pprint(f"Deleting node {node} from your cluster")
-                            call(f'{binary} delete node {node}', shell=True)
+                            call(f'{kubectl} delete node {node}', shell=True)
                             break
                     self.k.delete(vmname)
 

@@ -63,8 +63,9 @@ class Kubevirt():
             return
         elif context is not None:
             self.kubectl += f' --context {context}'
-        kubeconfig_file = os.path.expanduser(kubeconfig_file)
-        self.kubectl += f' --kubeconfig {kubeconfig_file}'
+        if kubeconfig_file is not None:
+            kubeconfig_file = os.path.expanduser(kubeconfig_file)
+            self.kubectl += f' --kubeconfig {kubeconfig_file}'
         self.access_mode = access_mode
         self.conn = 'OK'
         self.debug = debug
