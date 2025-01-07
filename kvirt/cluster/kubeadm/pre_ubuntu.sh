@@ -20,8 +20,7 @@ systemctl enable --now docker
 {% else %}
 modprobe overlay
 modprobe br_netfilter
-echo overlay >> /etc/modules
-echo br_netfilter >> /etc/modules
+echo -e 'overlay\nbr_netfilter' > /etc/modules-load.d/kubeadm.conf
 cat <<EOF | tee /etc/sysctl.d/99-kubernetes-cri.conf
 net.bridge.bridge-nf-call-iptables  = 1
 net.ipv4.ip_forward                 = 1

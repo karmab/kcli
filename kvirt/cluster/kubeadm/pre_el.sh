@@ -9,7 +9,9 @@ enabled=1
 gpgcheck=1
 gpgkey=https://pkgs.k8s.io/core:/stable:/$VERSION/rpm/repodata/repomd.xml.key""" >/etc/yum.repos.d/kubernetes.repo
 echo net.bridge.bridge-nf-call-iptables=1 >> /etc/sysctl.d/99-sysctl.conf
+modprobe overlay
 modprobe br_netfilter
+echo -e 'overlay\nbr_netfilter' > /etc/modules-load.d/kubeadm.conf
 sysctl -p
 setenforce 0
 sed -i "s/SELINUX=enforcing/SELINUX=permissive/" /etc/selinux/config
@@ -28,8 +30,7 @@ systemctl enable --now docker
 {% else %}
 modprobe overlay
 modprobe br_netfilter
-echo overlay >> /etc/modules
-echo br_netfilter >> /etc/modules
+echo -e 'overlay\nbr_netfilter' > /etc/modules-load.d/kubeadm.conf
 cat <<EOF | tee /etc/sysctl.d/99-kubernetes-cri.conf
 net.bridge.bridge-nf-call-iptables  = 1
 net.ipv4.ip_forward                 = 1

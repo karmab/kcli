@@ -1343,17 +1343,16 @@ class Kubevirt():
         podname = f'{now}-{pvc}-patch'
         os.popen(f"{kubectl} -n {namespace} create cm --from-file=iso.ign {podname}").read()
         container = {'image': 'quay.io/coreos/coreos-installer:release', 'name': 'patch', 'command': ['/bin/sh', '-c']}
-        _, volume_mode, _ = self.get_default_storage(pool, self.volume_mode, self.volume_access)
+        _, volume_mode, _ = self.get_default_storage(self.check_pool(pool), self.volume_mode, self.volume_access)
+        container['volumeMounts'] = [{'mountPath': '/files', 'name': 'config-volume'}]
         if volume_mode == 'Filesystem':
-            container['volumeMounts'] = [{'mountPath': '/storage', 'name': 'storage'},
-                                         {'mountPath': '/files', 'name': 'files'}]
+            container['volumeMounts'].append({'mountPath': '/storage', 'name': 'storage'})
         else:
-            container['volumeDevices'] = [{'devicePath': '/dev/storage', 'name': 'storage'},
-                                          {'devicePath': '/dev/files', 'name': 'files'}]
+            container['volumeDevices'] = [{'devicePath': '/dev/storage', 'name': 'storage'}]
         container['args'] = ['coreos-installer iso ignition embed -fi /files/iso.ign /storage/disk.img']
         pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'Never', 'containers': [container],
                                        'volumes': [{'name': 'storage', 'persistentVolumeClaim': {'claimName': pvc}},
-                                                   {'name': 'files', 'configMap': {'name': podname}}]},
+                                                   {'name': 'config-volume', 'configMap': {'name': podname}}]},
                'apiVersion': 'v1', 'metadata': {'name': podname}}
         _create_resource(kubectl, pod, namespace, debug=self.debug)
         completed = self.pod_completed(podname, namespace)
