@@ -384,8 +384,13 @@ class Kubevirt():
                 continue
             if existingpvc:
                 continue
-            diskpool = self.check_pool(pool)
-            pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': diskpool,
+            pool = self.check_pool(diskpool)
+            pool_details = self.get_sc_details(pool)
+            if volume_mode not in pool_details:
+                return {'result': 'failure', 'reason': f"Pool {pool} doesn't support volume mode {volume_mode}"}
+            elif volume_access not in pool_details[volume_mode]:
+                return {'result': 'failure', 'reason': f"Pool {pool} doesn't support volume access {volume_access}"}
+            pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': pool,
                                                              'volumeMode': volume_mode,
                                                              'accessModes': [volume_access],
                                                              'resources': {'requests': {'storage': f'{disksize}Gi'}}},
@@ -398,7 +403,7 @@ class Kubevirt():
             sizes.append(disksize)
         if iso is not None:
             if iso not in self.volumes(iso=True):
-                return {'result': 'failure', 'reason': f"you don't have iso {iso}"}
+                return {'result': 'failure', 'reason': f"You don't have iso {iso}"}
             diskname = f'{name}-iso'
             iso_boot_order = len(disks) + 1 if boot_order else 2
             newdisk = {'bootOrder': iso_boot_order, 'cdrom': {'readonly': False, 'bus': 'sata'}, 'name': diskname}
@@ -1098,8 +1103,14 @@ class Kubevirt():
                         if disk['name'] != 'cloudinitdisk']
         index = len(currentdisks)
         diskname = f'{name}-disk{index}'
-        diskpool = self.check_pool(pool)
-        diskpool, volume_mode, volume_access = self.get_default_storage(diskpool, self.volume_mode, self.volume_access)
+        pool = self.check_pool(pool)
+        pool_details = self.get_sc_details(pool)
+        volume_mode = self.volume_mode
+        volume_access = self.volume_access
+        if volume_mode not in pool_details:
+            return {'result': 'failure', 'reason': f"Pool {pool} doesn't support volume mode {volume_mode}"}
+        elif volume_access not in pool_details[volume_mode]:
+            return {'result': 'failure', 'reason': f"Pool {pool} doesn't support volume access {volume_access}"}
         myvolume = {'name': diskname, 'persistentVolumeClaim': {'claimName': diskname}}
         if self.disk_hotplug:
             pprint(f"Hotplugging disk {diskname}")
@@ -1123,8 +1134,8 @@ class Kubevirt():
             disk_overrides = overrides.copy()
             disk_overrides['volume_mode'] = volume_mode
             disk_overrides['volume_access'] = volume_access
-            self.create_disk(diskname, size=size, pool=diskpool, thin=thin, image=image, overrides=disk_overrides)
-            bound = self.pvc_bound(diskname, namespace, diskpool)
+            self.create_disk(diskname, size=size, pool=pool, thin=thin, image=image, overrides=disk_overrides)
+            bound = self.pvc_bound(diskname, namespace, pool)
             if not bound:
                 return {'result': 'failure', 'reason': f'timeout waiting for pvc {diskname} to get bound'}
             bus = overrides.get('interface', 'virtio')
@@ -1256,6 +1267,13 @@ class Kubevirt():
             size = _base_image_size(url)
             warning(f"Setting size of image to {size}G. This will be the size of primary disks using this")
         pool = self.check_pool(pool)
+        pool_details = self.get_sc_details(pool)
+        volume_mode = self.volume_mode
+        volume_access = self.volume_access
+        if volume_mode not in pool_details:
+            return {'result': 'failure', 'reason': f"Pool {pool} doesn't support volume mode {volume_mode}"}
+        elif volume_access not in pool_details[volume_mode]:
+            return {'result': 'failure', 'reason': f"Pool {pool} doesn't support volume access {volume_access}"}
         namespace = self.namespace
         harvester = self.harvester
         shortimage = os.path.basename(url).split('?')[0]
@@ -1271,7 +1289,6 @@ class Kubevirt():
                                    'apiVersion': f'{HDOMAIN}/{HVERSION}', 'metadata': {'name': volname}}
             _create_resource(kubectl, virtualmachineimage, namespace, debug=self.debug)
             return {'result': 'success'}
-        pool, volume_mode, volume_access = self.get_default_storage(pool, self.volume_mode, self.volume_access)
         pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': pool,
                                                          'volumeMode': volume_mode,
                                                          'accessModes': [volume_access],
@@ -1343,12 +1360,10 @@ class Kubevirt():
         podname = f'{now}-{pvc}-patch'
         os.popen(f"{kubectl} -n {namespace} create cm --from-file=iso.ign {podname}").read()
         container = {'image': 'quay.io/coreos/coreos-installer:release', 'name': 'patch', 'command': ['/bin/sh', '-c']}
-        _, volume_mode, _ = self.get_default_storage(self.check_pool(pool), self.volume_mode, self.volume_access)
-        container['volumeMounts'] = [{'mountPath': '/files', 'name': 'config-volume'}]
-        if volume_mode == 'Filesystem':
-            container['volumeMounts'].append({'mountPath': '/storage', 'name': 'storage'})
-        else:
-            container['volumeDevices'] = [{'devicePath': '/dev/storage', 'name': 'storage'}]
+        container['volumeMounts'] = [
+            {'mountPath': '/files', 'name': 'config-volume'},
+            {'mountPath': '/storage', 'name': 'storage'},
+        ]
         container['args'] = ['coreos-installer iso ignition embed -fi /files/iso.ign /storage/disk.img']
         pod = {'kind': 'Pod', 'spec': {'restartPolicy': 'Never', 'containers': [container],
                                        'volumes': [{'name': 'storage', 'persistentVolumeClaim': {'claimName': pvc}},
@@ -1423,12 +1438,10 @@ class Kubevirt():
 
     def list_networks(self):
         kubectl = self.kubectl
-        try:
-            for node in _get_all_resources(kubectl, 'node', debug=self.debug):
-                cidr = node['spec']['podCidr']
-                break
-        except:
-            cidr = 'N/A'
+        cidr = 'N/A'
+        for node in _get_all_resources(kubectl, 'node', debug=self.debug):
+            cidr = node['spec'].get('podCidr', cidr)
+            break
         networks = {'default': {'cidr': cidr, 'dhcp': True, 'type': 'bridge', 'mode': 'N/A'}}
         namespace = self.namespace
         try:
@@ -1491,7 +1504,8 @@ class Kubevirt():
 
     def pvc_bound(self, volname, namespace, pool=None):
         kubectl = self.kubectl
-        if self.wait_for_first_consumer(pool or self.get_default_sc()):
+        pool = self.check_pool(pool)
+        if self.wait_for_first_consumer(pool):
             job_name = f"temp-{volname}"
             container = {'name': 'hello', 'image': f'{self.registry}/karmab/curl', 'command': ["echo", "hello"]}
             volume = {'name': volname, 'persistentVolumeClaim': {'claimName': volname}}
@@ -1560,7 +1574,10 @@ class Kubevirt():
             storageclasses = [s['metadata']['name'] for s in items]
             if pool in storageclasses:
                 return pool
-        return None
+            elif pool == 'default':
+                default_sc = self.get_default_sc()
+                if default_sc is not None:
+                    return default_sc
 
     def list_flavors(self):
         kubectl = self.kubectl
@@ -1741,21 +1758,13 @@ class Kubevirt():
 
     def get_sc_details(self, name):
         kubectl = self.kubectl
-        volume_mode, volume_access = None, None
+        data = {}
         for entry in _get_all_resources(kubectl, 'storageprofile', debug=self.debug):
             if entry['metadata']['name'] == name and 'claimPropertySets' in entry['status']:
-                claimset = entry['status']['claimPropertySets'][0]
-                volume_mode, volume_access = claimset['volumeMode'], claimset['accessModes'][0]
-        return volume_mode, volume_access
-
-    def get_default_storage(self, pool, volume_mode, volume_access):
-        pool = pool or self.get_default_sc()
-        if pool is None:
-            return None, volume_mode, volume_access
-        pool_volume_mode, pool_volume_access = self.get_sc_details(pool)
-        volume_mode = pool_volume_mode or volume_mode
-        volume_access = pool_volume_access or volume_access
-        return pool, volume_mode, volume_access
+                for claimset in entry['status']['claimPropertySets']:
+                    data[claimset['volumeMode']] = claimset['accessModes']
+                break
+        return data
 
     def update_reference(self, owners, namespace, reference):
         kubectl = self.kubectl

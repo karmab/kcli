@@ -1546,7 +1546,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 while sno_vm_ip is None:
                     sno_info = k.info(f'{cluster}-sno')
                     sno_nets = sno_info.get('nets', [])
-                    if provider == 'kubevirt' and len(sno_nets) == 1 and sno_nets[0]['net'] == 'default':
+                    if provider == 'kubevirt' and len(sno_nets) == 1 and sno_nets[0]['net'] == 'default'\
+                       and not os.path.exists('/var/run/secrets/kubernetes.io/serviceaccount'):
                         sno_vm_host = sno_info.get('host')
                         sno_vm_port = sno_info.get('apiport')
                         if sno_vm_host is not None and sno_vm_port is not None:
