@@ -246,13 +246,11 @@ def scale(config, plandir, cluster, overrides):
             os.mkdir(clusterdir)
             data['assisted'] = True
     old_extra_nodepools = []
-    old_assisted_vms_number = 2
     if storedparameters and os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
         with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
             installparam = safe_load(install)
             data.update(installparam)
             plan = installparam.get('plan', plan)
-            old_assisted_vms_number = installparam.get('assisted_vms_number', old_assisted_vms_number)
             old_extra_nodepools = installparam.get('extra_nodepools', old_extra_nodepools)
     data.update(overrides)
     namespace = data['namespace']
@@ -272,7 +270,6 @@ def scale(config, plandir, cluster, overrides):
         warning("KUBECONFIG not set...Using .kube/config instead")
     platform = data.get('platform')
     assisted = platform == 'assisted'
-    assisted_vms = data.get('assisted_vms')
     kubevirt = platform == 'kubevirt'
     with open(f"{clusterdir}/kcli_parameters.yml", 'w') as paramfile:
         safe_dump(data, paramfile, default_flow_style=False, encoding='utf-8', allow_unicode=True)
@@ -286,30 +283,26 @@ def scale(config, plandir, cluster, overrides):
     os.chdir(os.path.expanduser("~/.kcli"))
     old_baremetal_hosts = installparam.get('baremetal_hosts', [])
     new_baremetal_hosts = overrides.get('baremetal_hosts', [])
-    assisted_vms_number = overrides.get('workers') or data['assisted_vms_number']
-    if assisted_vms and assisted_vms_number != old_assisted_vms_number:
-        if assisted_vms_number < old_assisted_vms_number:
-            msg = "New assisted_vms_number should be greater than old one"
-            return {'result': 'failure', 'reason': msg}
-        if data.get('disk_size', 30) < 200:
-            data['disk_size'] = 200
-        if data.get('numcpus', 8) < 16:
-            data['numcpus'] = 16
-        if data.get('memory', 16384) < 20480:
-            data['memory'] = 20480
-        worker_threaded = data.get('threaded', False) or data.get('assisted_vms_threaded', False)
-        result = config.plan(plan, inputfile=f'{plandir}/kcli_plan_assisted.yml', overrides=data,
-                             threaded=worker_threaded)
-        if result['result'] != 'success':
-            return result
-        vms = result['newvms']
-        ksushy_ip = data['assisted_vms_ksushy_ip']
-        ksushy_url = f'http://{ksushy_ip}:9000/redfish/v1/Systems/{config.client}'
-        virtual_hosts = []
-        for vm in vms:
-            new_mac = config.k.info(vm)['nets'][0]['mac']
-            virtual_hosts.append({'url': f'{ksushy_url}/{vm}', 'mac': new_mac})
-        new_baremetal_hosts.extend(virtual_hosts)
+    if assisted:
+        assisted_vms_number = workers - len(old_baremetal_hosts + new_baremetal_hosts)
+        if assisted_vms_number > 0:
+            data['assisted_vms_number '] = assisted_vms_number
+            data['disk_size'] = max(data['disk_size'], 200)
+            data['numcpus'] = max(data['numcpus'], 16)
+            data['memory'] = max(data['memory'], 20480)
+            worker_threaded = data.get('threaded', False) or data.get('assisted_vms_threaded', False)
+            result = config.plan(plan, inputfile=f'{plandir}/kcli_plan_assisted.yml', overrides=data,
+                                 threaded=worker_threaded)
+            if result['result'] != 'success':
+                return result
+            vms = result['newvms']
+            ksushy_ip = data['assisted_vms_ksushy_ip']
+            ksushy_url = f'http://{ksushy_ip}:9000/redfish/v1/Systems/{config.client}'
+            virtual_hosts = []
+            for vm in vms:
+                new_mac = config.k.info(vm)['nets'][0]['mac']
+                virtual_hosts.append({'url': f'{ksushy_url}/{vm}', 'mac': new_mac})
+            new_baremetal_hosts.extend(virtual_hosts)
     baremetal_hosts = [entry for entry in new_baremetal_hosts if entry not in old_baremetal_hosts]
     if baremetal_hosts:
         if assisted:
@@ -369,7 +362,6 @@ def create(config, plandir, cluster, overrides):
     platform = data.get('platform')
     assisted = platform == 'assisted'
     data['assisted'] = assisted
-    assisted_vms = data.get('assisted_vms')
     kubevirt = platform == 'kubevirt'
     data['kubevirt'] = kubevirt
     if platform not in [None, 'kubevirt', 'assisted']:
@@ -783,14 +775,13 @@ def create(config, plandir, cluster, overrides):
         pprint(f"Using installer version {INSTALLER_VERSION}")
         nodepool_image = os.popen("openshift-install version | grep 'release image' | cut -f3 -d' '").read().strip()
     if assisted:
-        if assisted_vms:
-            if data['disk_size'] < 200:
-                data['disk_size'] = 200
-            if data['numcpus'] < 16:
-                data['numcpus'] = 16
-            if data['memory'] < 20480:
-                data['memory'] = 20480
-            worker_threaded = data.get('threaded', False) or data.get('assisted_vms_threaded', False)
+        data['disk_size'] = max(data['disk_size'], 200)
+        data['numcpus'] = max(data['numcpus'], 16)
+        data['memory'] = max(data['memory'], 20480)
+        worker_threaded = data.get('threaded', False)
+        assisted_vms_number = workers - len(baremetal_hosts)
+        if assisted_vms_number > 0:
+            data['assisted_vms_number '] = assisted_vms_number
             result = config.plan(plan, inputfile=f'{plandir}/kcli_plan_assisted.yml', overrides=data,
                                  threaded=worker_threaded)
             if result['result'] != 'success':
@@ -803,7 +794,6 @@ def create(config, plandir, cluster, overrides):
                 new_mac = config.k.info(vm)['nets'][0]['mac']
                 virtual_hosts.append({'url': f'{ksushy_url}/{vm}', 'mac': new_mac})
             baremetal_hosts.extend(virtual_hosts)
-            data['assisted_vms_number'] = len(virtual_hosts)
         create_bmh_objects(config, plandir, cluster, namespace, baremetal_hosts, overrides)
         agents = len(baremetal_hosts) or 2
         pprint(f"Waiting for {agents} agents to appear")
@@ -866,7 +856,6 @@ def create(config, plandir, cluster, overrides):
         installparam['original_domain'] = data['original_domain']
         if baremetal_hosts:
             installparam['baremetal_hosts'] = baremetal_hosts
-        installparam['assisted_vms_number'] = data['assisted_vms_number']
         installparam['registry'] = data.get('registry', 'quay.io')
         installparam['extra_nodepools'] = extra_nodepools
         safe_dump(installparam, p, default_flow_style=False, encoding='utf-8', allow_unicode=True)
