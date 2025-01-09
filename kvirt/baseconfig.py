@@ -8,7 +8,7 @@ from jinja2.runtime import Undefined as defaultundefined
 from jinja2.exceptions import TemplateSyntaxError, TemplateError, TemplateNotFound
 from kvirt import common
 from kvirt.common import error, pprint, warning, container_mode, ssh, scp, NoAliasDumper, olm_app
-from kvirt.common import PlanLoader, get_kubetype
+from kvirt.common import PlanLoader, get_kubetype, detect_openshift_version
 from kvirt import defaults as kdefaults
 from kvirt.cluster import hypershift
 from kvirt.cluster import k3s
@@ -1120,14 +1120,12 @@ class Kbaseconfig:
         return sorted(results)
 
     def download_openshift_installer(self, overrides={}):
-        pull_secret = overrides.get('pull_secret', 'openshift_pull.json')
-        upstream = overrides.get('upstream', False)
-        baremetal = overrides.get('baremetal', False)
-        tag = overrides.get('tag', kdefaults.OPENSHIFT_TAG)
-        default_version = 'dev-preview' if 'ec' in tag else 'stable'
-        version = overrides.get('version', default_version)
-        if 'rc' in tag:
-            version = 'stable'
+        OPENSHIFT_TAG = kdefaults.OPENSHIFT_TAG
+        pull_secret = overrides.get('pull_secret') or 'openshift_pull.json'
+        upstream = overrides.get('upstream') or False
+        baremetal = overrides.get('baremetal') or False
+        tag = overrides.get('tag') or OPENSHIFT_TAG
+        version = overrides.get('version') or detect_openshift_version(tag, OPENSHIFT_TAG)
         macosx = os.path.exists('/Users')
         if upstream:
             run = openshift.get_upstream_installer(tag, version=version, debug=self.debug)

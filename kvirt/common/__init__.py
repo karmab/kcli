@@ -2584,3 +2584,15 @@ def get_kubetype():
     #     elif 'azmk8s.io' in cloud_data:
     #         return 'ake'
     # return 'generic'
+
+
+def detect_openshift_version(tag, OPENSHIFT_TAG):
+    if 'rc' in tag:
+        version = 'stable'
+    elif '0-ec.' in str(tag):
+        version = 'dev-preview'
+    elif int(str(tag).split('.')[1]) > int(OPENSHIFT_TAG.split('.')[1]):
+        version = 'ci'
+    else:
+        version = 'stable'
+    return version

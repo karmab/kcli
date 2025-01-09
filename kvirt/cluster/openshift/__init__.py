@@ -6,7 +6,7 @@ import json
 from kvirt.common import error, pprint, success, warning, info2, fix_typos
 from kvirt.common import get_oc, pwd_path, get_oc_mirror
 from kvirt.common import get_latest_fcos, generate_rhcos_iso, olm_app
-from kvirt.common import get_installer_rhcos, wait_cloud_dns, delete_lastvm
+from kvirt.common import get_installer_rhcos, wait_cloud_dns, delete_lastvm, detect_openshift_version
 from kvirt.common import ssh, scp, _ssh_credentials, get_ssh_pub_key
 from kvirt.common import start_baremetal_hosts_with_iso, update_baremetal_hosts, get_cluster_api_vips
 from kvirt.defaults import LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG
@@ -339,8 +339,12 @@ def get_upstream_installer(tag, version='stable', debug=False):
 def get_ci_installer(pull_secret, tag=None, macosx=False, debug=False, nightly=False, baremetal=False):
     arch = 'arm64' if os.uname().machine == 'aarch64' else None
     base = 'openshift'
-    if 'registry.ci.openshift.org' not in open(os.path.expanduser(pull_secret)).read():
-        error("entry for registry.ci.openshift.org missing in pull secret")
+    pull_secret = os.path.expanduser(pull_secret)
+    if not os.path.exists(pull_secret):
+        error(f"Pull secret {pull_secret} not found")
+        return 1
+    if 'registry.ci.openshift.org' not in open(pull_secret).read():
+        error("Entry for registry.ci.openshift.org missing in pull secret")
         return 1
     if tag is not None and str(tag).count('.') == 1:
         _type = 'nightly' if nightly else 'ci'
@@ -759,15 +763,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     virtualization_nightly = data['virtualization_nightly']
     version = data['version']
     tag = data['tag']
-    if str(tag) == '4.1':
-        tag = '4.10'
-        data['tag'] = tag
-    if '0-ec.' in str(tag):
-        version = 'dev-preview'
-        data['version'] = version
-    elif int(str(tag).split('.')[1]) > int(OPENSHIFT_TAG.split('.')[1]):
-        version = 'ci'
-        data['version'] = version
+    version = overrides.get('version') or detect_openshift_version(tag, OPENSHIFT_TAG)
+    data['version'] = version
     if os.path.exists('coreos-installer'):
         pprint("Removing old coreos-installer")
         os.remove('coreos-installer')
