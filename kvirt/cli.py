@@ -465,7 +465,7 @@ def download_image(args):
     overrides = handle_parameters(args.param, args.paramfile)
     name = overrides.get('name')
     cmds = overrides.get('cmds')
-    url = overrides.get('url')
+    url = args.url or overrides.get('url')
     if image is None:
         if url is not None:
             image = os.path.basename(url)
@@ -495,7 +495,7 @@ def download_image(args):
 
 def download_iso(args):
     overrides = handle_parameters(args.param, args.paramfile)
-    url = overrides.get('url')
+    url = args.url or overrides.get('url')
     if url is None:
         error("An url needs to be specified")
         sys.exit(1)
@@ -4279,6 +4279,7 @@ def cli():
     images_list = '\n'.join(IMAGES.keys())
     imagedownload_help = f"Image to download. Choose between \n{images_list}"
     imagedownload_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
+    imagedownload_parser.add_argument('-u', '--url', help='Url', metavar='URL')
     imagedownload_parser.add_argument('image', help=imagedownload_help, metavar='IMAGE', nargs='?')
     imagedownload_parser.set_defaults(func=download_image)
     download_subparsers.add_parser('image', parents=[imagedownload_parser], description=imagedownload_desc,
@@ -4301,6 +4302,7 @@ def cli():
     isodownload_epilog = f"Examples:\n\n{examples.isodownload}"
     isodownload_help = "Iso name"
     isodownload_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
+    isodownload_parser.add_argument('-u', '--url', help='Url', metavar='URL')
     isodownload_parser.add_argument('iso', help=isodownload_help, metavar='ISO', nargs='?')
     isodownload_parser.set_defaults(func=download_iso)
     download_subparsers.add_parser('iso', parents=[isodownload_parser], description=isodownload_desc,
