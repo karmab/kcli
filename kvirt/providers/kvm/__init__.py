@@ -260,6 +260,10 @@ class Kvirt(object):
             if 'machine' in overrides and overrides['machine'] not in capabilities['machines']:
                 machines = ','.join(sorted(capabilities['machines']))
                 return {'result': 'failure', 'reason': f"Incorrect machine. Choose between {machines}"}
+        uefi_firmware = overrides.get('uefi_firmware')
+        uefi_nvtemplate = overrides.get('uefi_nvtemplate')
+        uefi = overrides.get('uefi', False) or uefi_firmware is not None or uefi_nvtemplate is not None
+        uefi_legacy = overrides.get('uefi_legacy', False) or (uefi and self._rhel_legacy(capabilities['machines']))
         iommu_model = 'smmuv3' if arch == 'aarch64' else 'intel'
         aarch64 = arch == 'aarch64'
         aarch64_full = aarch64 and capabilities['kvm']
@@ -277,6 +281,9 @@ class Kvirt(object):
             if 'cpumodel' not in overrides:
                 cpumodel = 'cortex-a57'
                 warning("Forcing cpumodel to cortex-a57")
+        if aarch64_full and not uefi and uefi_legacy:
+            warning("Forcing uefi")
+            uefi = True
         try:
             default_storagepool = conn.storagePoolLookupByName(default_pool)
         except:
@@ -335,10 +342,6 @@ class Kvirt(object):
         machine = 'pc'
         if 'machine' in overrides:
             machine = overrides['machine']
-        uefi_firmware = overrides.get('uefi_firmware')
-        uefi_nvtemplate = overrides.get('uefi_nvtemplate')
-        uefi = overrides.get('uefi', False) or uefi_firmware is not None or uefi_nvtemplate is not None
-        uefi_legacy = overrides.get('uefi_legacy', False) or (uefi and self._rhel_legacy(capabilities['machines']))
         secureboot = overrides.get('secureboot', False)
         if machine == 'pc' and (uefi or uefi_legacy or secureboot or aarch64 or enableiommu):
             machine = 'q35'
@@ -1240,7 +1243,7 @@ class Kvirt(object):
         if not aarch64 or sriov_nic:
             acpixml = '<acpi/>\n<apic/>'
         elif aarch64_full:
-            acpixml = "<gic version='3'/>"
+            acpixml = "<acpi/><gic version='3'/>"
         else:
             acpixml = ''
         hugepagesxml = ""
@@ -1596,10 +1599,7 @@ class Kvirt(object):
                     continue
                 networks.append(f"name: {interface}, type: bridged")
         except libvirtError as e:
-            if 'this function is not supported by the connection driver: virConnectNumOfInterfaces' in str(e):
-                warning("Network: system interfaces are unavailable")
-            else:
-                raise e
+            error(e)
         for network in conn.listAllNetworks():
             networkname = network.name()
             netxml = network.XMLDesc(0)
