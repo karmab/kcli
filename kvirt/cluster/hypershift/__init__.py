@@ -3,7 +3,7 @@ from glob import glob
 from ipaddress import ip_network
 from kvirt.common import success, error, pprint, info2, container_mode, warning, fix_typos, olm_app
 from kvirt.common import get_oc, pwd_path, get_installer_rhcos, get_ssh_pub_key, start_baremetal_hosts_with_iso
-from kvirt.common import deploy_cloud_storage
+from kvirt.common import deploy_cloud_storage, patch_ingress_controller_wildcard
 from kvirt.cluster.openshift import get_ci_installer, get_downstream_installer, get_installer_version
 from kvirt.cluster.openshift import same_release_images, process_apps, offline_image
 import json
@@ -558,10 +558,7 @@ def create(config, plandir, cluster, overrides):
             data['domain'] = domain
             pprint(f"Setting domain to {domain}")
             try:
-                cmcmd = "oc patch ingresscontroller -n openshift-ingress-operator default --type=json -p "
-                cmcmd += "'[{ \"op\": \"add\", \"path\": \"/spec/routeAdmission\", "
-                cmcmd += "\"value\": {wildcardPolicy: \"WildcardsAllowed\"}}]'"
-                call(cmcmd, shell=True)
+                patch_ingress_controller_wildcard()
             except:
                 warning("Couldnt patch ingresscontroller to support wildcards. Assuming it's configured properly")
             if not kubevirt:

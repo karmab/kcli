@@ -4,7 +4,7 @@ from glob import glob
 from ipaddress import ip_address, ip_network
 import json
 from kvirt.common import error, pprint, success, warning, info2, fix_typos
-from kvirt.common import get_oc, pwd_path, get_oc_mirror
+from kvirt.common import get_oc, pwd_path, get_oc_mirror, patch_ingress_controller_wildcard
 from kvirt.common import get_latest_fcos, generate_rhcos_iso, olm_app
 from kvirt.common import get_installer_rhcos, wait_cloud_dns, delete_lastvm, detect_openshift_version
 from kvirt.common import ssh, scp, _ssh_credentials, get_ssh_pub_key
@@ -797,10 +797,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         elif provider == 'kubevirt':
             selector = {'kcli/plan': plan, 'kcli/role': 'ctlplane'}
             service_type = "LoadBalancer" if k.access_mode == 'LoadBalancer' else 'NodePort'
+            namespace = k.namespace
             if service_type == 'NodePort':
                 kubevirt_api_service_node_port = True
-            api_ip = k.create_service(f"{cluster}-api", k.namespace, selector, _type=service_type,
-                                      ports=[6443, 22623, 22624, 80, 443], openshift_hack=True)
+            api_ip = k.create_service(f"{cluster}-api", namespace, selector, _type=service_type,
+                                      ports=[6443, 22623, 22624], openshift_hack=True)
             if api_ip is None:
                 return {'result': 'failure', 'reason': "Couldnt gather an api_ip from your specified network"}
             else:
@@ -809,6 +810,15 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 overrides['kubevirt_api_service'] = True
                 kubevirt_api_service = True
                 overrides['mdns'] = False
+                try:
+                    patch_ingress_controller_wildcard()
+                    selector = {'kcli/plan': plan, 'kcli/role': 'worker' if workers > 0 else 'ctlplane'}
+                    k.create_service(f"{cluster}-ingress", namespace, selector, ports=[80, 443])
+                    routecmd = f'oc -n {namespace} create route passthrough --service={cluster}-ingress '
+                    routecmd += f'--hostname=http.apps.{cluster}.{domain} --wildcard-policy=Subdomain --port=443'
+                    call(routecmd, shell=True)
+                except:
+                    pass
         else:
             return {'result': 'failure', 'reason': "You need to define api_ip in your parameters file"}
     if api_ip is not None:

@@ -2596,3 +2596,10 @@ def detect_openshift_version(tag, OPENSHIFT_TAG):
     else:
         version = 'stable'
     return version
+
+
+def patch_ingress_controller_wildcard():
+    cmd = "oc patch ingresscontroller -n openshift-ingress-operator default --type=json -p "
+    cmd += "'[{ \"op\": \"add\", \"path\": \"/spec/routeAdmission\", "
+    cmd += "\"value\": {wildcardPolicy: \"WildcardsAllowed\"}}]'"
+    call(cmd, shell=True)

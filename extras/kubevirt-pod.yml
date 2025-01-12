@@ -1,34 +1,4 @@
 apiVersion: v1
-kind: Secret
-metadata:
-  name: pull-secret
-  namespace: default
-type: kubernetes.io/dockerconfigjson
-data:
-  .dockerconfigjson: $BASE64
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: kcli
-  namespace: default
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: kcli-rolebinding
-  namespace: default
-subjects:
-  - kind: ServiceAccount
-    name: kcli
-    namespace: default
-roleRef:
-  kind: ClusterRole
-  name: admin
-  apiGroup: rbac.authorization.k8s.io
----
-
-apiVersion: v1
 kind: Pod
 metadata:
   name: kubevirt-kcli
@@ -52,6 +22,8 @@ spec:
       value: "173.28.0.0/16"
     - name: CLUSTER_NETWORK_IPV4
       value: "11.128.0.0/14"
+    - name: SSH_PUBLIC_KEY
+      value: ""
     - name: PYTHONUNBUFFERED
       value: "true"
     volumeMounts:
@@ -68,7 +40,14 @@ spec:
       #/bin/bash
       export HOME=/root
       export PATH=/:/usr/local/bin:$PATH
-      ssh-keygen -qt rsa -N '' -f /root/.ssh/id_rsa
+      if [ -z "$SSH_PUBLIC_KEY" ] ; then
+        ssh-keygen -qt rsa -N '' -f /root/.ssh/id_rsa
+      else
+        mkdir/root/.ssh
+        chown 700 /root/.ssh
+        echo $SSH_PUBLIC_KEY >> /root/.ssh/id_rsa
+        chown 600 /root/.ssh/id_rsa
+      fi
       NAMESPACE=$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)
       kcli -n $NAMESPACE create cluster openshift -P pull_secret=/etc/pull-secret/pull-secret -P sno_vm=true -P numcpus=$NUMCPUS -P memory=$MEMORY -P service_network_ipv4=$SERVICE_NETWORK_IPV4 -P cluster_network_ipv4=$CLUSTER_NETWORK_IPV4 -P domain=$DOMAIN -P force=true $CLUSTER
       sed -i "s/api.$CLUSTER.$DOMAIN:6443/api.$CLUSTER.$DOMAIN/" /root/.kcli/clusters/$CLUSTER/auth/kubeconfig
