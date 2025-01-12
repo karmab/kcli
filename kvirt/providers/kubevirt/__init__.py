@@ -355,6 +355,12 @@ class Kubevirt():
                 lun = disk.get('lun', False)
                 if 'name' in disk:
                     existingpvc = True
+            pool = self.check_pool(diskpool)
+            pool_details = self.get_sc_details(pool)
+            if volume_mode not in pool_details:
+                return {'result': 'failure', 'reason': f"Pool {pool} doesn't support volume mode {volume_mode}"}
+            elif volume_access not in pool_details[volume_mode]:
+                return {'result': 'failure', 'reason': f"Pool {pool} doesn't support volume access {volume_access}"}
             myvolume = {'name': diskname}
             if image is not None and index == 0:
                 if '/' in image:
@@ -384,12 +390,6 @@ class Kubevirt():
                 continue
             if existingpvc:
                 continue
-            pool = self.check_pool(diskpool)
-            pool_details = self.get_sc_details(pool)
-            if volume_mode not in pool_details:
-                return {'result': 'failure', 'reason': f"Pool {pool} doesn't support volume mode {volume_mode}"}
-            elif volume_access not in pool_details[volume_mode]:
-                return {'result': 'failure', 'reason': f"Pool {pool} doesn't support volume access {volume_access}"}
             pvc = {'kind': 'PersistentVolumeClaim', 'spec': {'storageClassName': pool,
                                                              'volumeMode': volume_mode,
                                                              'accessModes': [volume_access],
@@ -499,7 +499,7 @@ class Kubevirt():
             if index == 0 and image is not None:
                 owners.pop()
                 dvt = {'metadata': {'name': pvcname, 'annotations': {'sidecar.istio.io/inject': 'false'}},
-                       'spec': {'pvc': {'storageClassName': diskpool,
+                       'spec': {'pvc': {'storageClassName': pool,
                                         'volumeMode': pvc_volume_mode,
                                         'accessModes': pvc_access_mode,
                                         'resources':
