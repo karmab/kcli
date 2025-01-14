@@ -14,7 +14,7 @@ import os
 import re
 from random import choice
 from shutil import copy2, move, rmtree, which
-from socket import gethostbyname
+from socket import gethostbyname, create_connection
 from string import ascii_letters, digits
 from subprocess import call
 import sys
@@ -201,6 +201,14 @@ def get_installer_version():
     if installer_version.startswith('v'):
         installer_version = installer_version[1:]
     return installer_version
+
+
+def has_internet():
+    try:
+        create_connection(('mirror.openshift.com', 443), 5)
+        return True
+    except Exception:
+        return False
 
 
 def offline_image(version='stable', tag=OPENSHIFT_TAG, pull_secret='openshift_pull.json'):
@@ -926,7 +934,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 tag = f'registry.ci.openshift.org/{basetag}/release:{tag}'
     which_openshift = which('openshift-install')
     openshift_dir = os.path.dirname(which_openshift) if which_openshift is not None else '.'
-    if upstream:
+    if which_openshift is not None and not has_internet():
+        pprint("Using existing openshift-install found in your PATH")
+        warning("Not checking version")
+    elif upstream:
         run = get_upstream_installer(tag, version=version)
     elif not same_release_images(version=version, tag=tag, pull_secret=pull_secret, path=openshift_dir):
         if version in ['ci', 'nightly'] or '/' in str(tag):
