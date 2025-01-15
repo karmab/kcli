@@ -290,7 +290,8 @@ def get_downstream_installer(version='stable', macosx=False, tag=None, debug=Fal
         return call(cmd, shell=True)
     baselinks = {'stable': 'stable', 'dev-preview': 'candidate'}
     arch_map = {'aarch64': 'arm64', 's390x': 's390x'}
-    arch = arch_map.get(os.uname().machine)
+    arch = os.uname().machine
+    arch = arch_map.get(arch, arch)
     repo = 'ocp-dev-preview' if version == 'dev-preview' else 'ocp'
     if tag is None:
         repo += '/{version}'
@@ -300,7 +301,7 @@ def get_downstream_installer(version='stable', macosx=False, tag=None, debug=Fal
     else:
         repo += f"/{tag.replace('-x86_64', '')}"
     INSTALLSYSTEM = 'mac' if os.path.exists('/Users') or macosx else 'linux'
-    url = f"https://mirror.openshift.com/pub/openshift-v4/clients/{repo}"
+    url = f"https://mirror.openshift.com/pub/openshift-v4/{arch}/clients/{repo}"
     pprint(f'Downloading openshift-install from {url}')
     try:
         r = urlopen(f"{url}/release.txt").readlines()
@@ -315,10 +316,7 @@ def get_downstream_installer(version='stable', macosx=False, tag=None, debug=Fal
     if version is None:
         error("Couldn't find version")
         return 1
-    if arch is not None:
-        cmd = f"curl -Ls https://mirror.openshift.com/pub/openshift-v4/{arch}/clients/{repo}/"
-    else:
-        cmd = f"curl -Ls https://mirror.openshift.com/pub/openshift-v4/clients/{repo}/"
+    cmd = f"curl -Ls https://mirror.openshift.com/pub/openshift-v4/{arch}/clients/{repo}/"
     cmd += f"openshift-install-{INSTALLSYSTEM}-{version}.tar.gz "
     cmd += "| tar zxf - openshift-install"
     cmd += "; chmod 700 openshift-install"
@@ -346,7 +344,6 @@ def get_upstream_installer(tag, version='stable', debug=False):
 
 def get_ci_installer(pull_secret, tag=None, macosx=False, debug=False, nightly=False, baremetal=False):
     arch = 'arm64' if os.uname().machine == 'aarch64' else None
-    base = 'openshift'
     pull_secret = os.path.expanduser(pull_secret)
     if not os.path.exists(pull_secret):
         error(f"Pull secret {pull_secret} not found")
@@ -360,7 +357,7 @@ def get_ci_installer(pull_secret, tag=None, macosx=False, debug=False, nightly=F
         tag = json.loads(urlopen(ci_url).read())['pullSpec']
     if tag is None:
         tags = []
-        r = urlopen(f"https://{base}-release.ci.openshift.org/graph?format=dot").readlines()
+        r = urlopen("https://openshift-release.ci.openshift.org/graph?format=dot").readlines()
         for line in r:
             tag_match = re.match('.*label="(.*.)", shape=.*', str(line))
             if tag_match is not None:
