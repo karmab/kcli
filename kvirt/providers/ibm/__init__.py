@@ -433,9 +433,11 @@ class Kibm(object):
                 return yamlinfo
         ips = []
         for network in vm['network_interfaces']:
-            if network['id'] not in floating_ips:
-                continue
-            ips.append(floating_ips[network['id']]['address'])
+            if network['id'] in floating_ips:
+                ips.append(floating_ips[network['id']]['address'])
+        for a in vm['network_attachments']:
+            if 'virtual_network_interface' in a and a['virtual_network_interface']['id'] in floating_ips:
+                ips.append(floating_ips[a['virtual_network_interface']['id']]['address'])
         ip = ','.join(ips)
         # zone = vm['zone']['name']
         image = vm['image']['name']
