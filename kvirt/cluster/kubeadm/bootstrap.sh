@@ -18,7 +18,8 @@ DOMAIN={{ domain }}
 CERTKEY={{ cert_key }}
 TOKEN={{ token }}
 K8SVERSION='{{ "--kubernetes-version %s" % minor_version if minor_version is defined else "" }}'
-kubeadm init --control-plane-endpoint "${API_IP}:6443" --pod-network-cidr $POD_CIDR --service-cidr $SERVICE_CIDR --certificate-key $CERTKEY --upload-certs --token $TOKEN --token-ttl 0 --apiserver-cert-extra-sans ${API_IP} $K8SVERSION
+REGISTRY='{{ "--image-repository %s" % disconnected_url if disconnected_url != None else "" }}'
+kubeadm init --control-plane-endpoint "${API_IP}:6443" --pod-network-cidr $POD_CIDR --service-cidr $SERVICE_CIDR --certificate-key $CERTKEY --upload-certs --token $TOKEN --token-ttl 0 --apiserver-cert-extra-sans ${API_IP} $K8SVERSION $REGISTRY
 
 # config cluster credentials
 cp /etc/kubernetes/admin.conf /root/kubeconfig

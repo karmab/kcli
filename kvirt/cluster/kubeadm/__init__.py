@@ -267,10 +267,6 @@ def create(config, plandir, cluster, overrides):
         os.chdir(os.path.expanduser("~/.kcli"))
         worker_threaded = data.get('threaded', False) or data.get('workers_threaded', False)
         config.plan(plan, inputfile=f'{plandir}/workers.yml', overrides=data, threaded=worker_threaded)
-    prefile = 'pre_ubuntu.sh' if data['ubuntu'] else 'pre_el.sh'
-    predata = config.process_inputfile(plan, f"{plandir}/{prefile}", overrides=data)
-    with open(f"{clusterdir}/pre.sh", 'w') as f:
-        f.write(predata)
     if async_install:
         success(f"Kubernetes cluster {cluster} deployed!!!")
         info2(f"get kubeconfig from {cluster}-ctlplane-0 /root")
@@ -281,7 +277,6 @@ def create(config, plandir, cluster, overrides):
     if provider in cloud_providers and cloud_lb:
         if cloud_dns:
             wait_cloud_dns(cluster, domain)
-        # elif api_ip is not None and api_ip == f'api.{cluster}.{domain}':
         else:
             for lbentry in config.list_loadbalancers():
                 if lbentry[0] == f'api-{cluster}':

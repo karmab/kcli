@@ -1394,6 +1394,18 @@ def list_vmdisk(args):
     print(diskstable)
 
 
+def create_kubeadm_registry(args):
+    plan = args.plan
+    if plan is None:
+        plan = get_random_name()
+        pprint(f"Using {plan} as name of the plan")
+    overrides = handle_parameters(args.param, args.paramfile)
+    if 'cluster' not in overrides:
+        overrides['cluster'] = plan
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config.create_kubeadm_registry(plan, overrides=overrides)
+
+
 def create_openshift_iso(args):
     cluster = args.cluster
     ignitionfile = args.ignitionfile
@@ -1406,7 +1418,7 @@ def create_openshift_iso(args):
     config.create_openshift_iso(cluster, overrides=overrides, ignitionfile=ignitionfile, direct=direct)
 
 
-def create_openshift_disconnected(args):
+def create_openshift_registry(args):
     plan = args.plan
     if plan is None:
         plan = get_random_name()
@@ -1415,7 +1427,7 @@ def create_openshift_disconnected(args):
     if 'cluster' not in overrides:
         overrides['cluster'] = plan
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    config.create_openshift_disconnected(plan, overrides=overrides)
+    config.create_openshift_registry(plan, overrides=overrides)
 
 
 def create_vm(args):
@@ -2185,9 +2197,14 @@ def info_app(args):
     baseconfig.info_app(args.app)
 
 
-def info_openshift_disconnected(args):
+def info_kubeadm_registry(args):
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
-    baseconfig.info_openshift_disconnected()
+    baseconfig.info_kubeadm_registry()
+
+
+def info_openshift_registry(args):
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
+    baseconfig.info_openshift_registry()
 
 
 def info_plan(args):
@@ -2560,10 +2577,10 @@ def revert_snapshot_plan(args):
     config.revert_plan(plan, snapshotname=snapshot)
 
 
-def update_openshift_disconnected(args):
+def update_openshift_registry(args):
     overrides = handle_parameters(args.param, args.paramfile)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
-    baseconfig.update_openshift_disconnected(args.plan, overrides=overrides)
+    baseconfig.update_openshift_registry(args.plan, overrides=overrides)
 
 
 def ssh_vm(args):
@@ -3735,16 +3752,6 @@ def cli():
     networkcreate_parser.add_argument('name', metavar='NETWORK')
     networkcreate_parser.set_defaults(func=create_network)
 
-    disconnectedcreate_desc = 'Create a disconnected registry vm for openshift'
-    disconnectedcreate_epilog = f"Examples:\n\n{examples.disconnectedcreate}"
-    disconnectedcreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
-    disconnectedcreate_parser.add_argument('plan', metavar='PLAN', help='Plan', nargs='?')
-    disconnectedcreate_parser.set_defaults(func=create_openshift_disconnected)
-    create_subparsers.add_parser('openshift-registry', parents=[disconnectedcreate_parser],
-                                 description=disconnectedcreate_desc, help=disconnectedcreate_desc,
-                                 epilog=disconnectedcreate_epilog, formatter_class=rawhelp,
-                                 aliases=['openshift-disconnected'])
-
     isocreate_desc = 'Create an iso ignition for baremetal install'
     isocreate_epilog = f"Examples:\n\n{examples.isocreate}"
     isocreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
@@ -3911,6 +3918,30 @@ def cli():
                                                                         description=vsphereprovidercreate_desc)
     vsphereprovidercreate_parser.add_argument('-p', '--pip', action='store_true', help='Force pip installation')
     vsphereprovidercreate_parser.set_defaults(func=install_provider)
+
+    registrycreate_desc = 'Create Registry'
+    registrycreate_parser = create_subparsers.add_parser('registry', description=registrycreate_desc,
+                                                         help=registrycreate_desc)
+    registrycreate_subparsers = registrycreate_parser.add_subparsers(metavar='', dest='subcommand_create_registry')
+
+    kubeadmregistrycreate_desc = 'Create a registry vm for kubeadm'
+    kubeadmregistrycreate_epilog = f"Examples:\n\n{examples.kubeadmregistrycreate}"
+    kubeadmregistrycreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
+    kubeadmregistrycreate_parser.add_argument('plan', metavar='PLAN', help='Plan', nargs='?')
+    kubeadmregistrycreate_parser.set_defaults(func=create_kubeadm_registry)
+    registrycreate_subparsers.add_parser('kubeadm', parents=[kubeadmregistrycreate_parser],
+                                         description=kubeadmregistrycreate_desc, help=kubeadmregistrycreate_desc,
+                                         epilog=kubeadmregistrycreate_epilog, formatter_class=rawhelp,
+                                         aliases=['generic'])
+
+    openshiftregistrycreate_desc = 'Create a registry vm for openshift'
+    openshiftregistrycreate_epilog = f"Examples:\n\n{examples.openshiftregistrycreate}"
+    openshiftregistrycreate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
+    openshiftregistrycreate_parser.add_argument('plan', metavar='PLAN', help='Plan', nargs='?')
+    openshiftregistrycreate_parser.set_defaults(func=create_openshift_registry)
+    registrycreate_subparsers.add_parser('openshift', parents=[openshiftregistrycreate_parser],
+                                         description=openshiftregistrycreate_desc, help=openshiftregistrycreate_desc,
+                                         epilog=openshiftregistrycreate_epilog, formatter_class=rawhelp)
 
     securitygroupcreate_desc = 'Create Security Group'
     securitygroupcreate_epilog = f"Examples:\n\n{examples.securitygroupcreate}"
@@ -4442,14 +4473,6 @@ def cli():
     confpoolinfo_parser.add_argument('confpool', metavar='CONFPOOL')
     confpoolinfo_parser.set_defaults(func=info_confpool)
 
-    openshiftdisconnectedinfo_desc = 'Info Openshift Disconnected registry vm'
-    openshiftdisconnectedinfo_parser = info_subparsers.add_parser('disconnected',
-                                                                  description=openshiftdisconnectedinfo_desc,
-                                                                  help=openshiftdisconnectedinfo_desc,
-                                                                  aliases=['openshift-disconnected',
-                                                                           'openshift-registry'])
-    openshiftdisconnectedinfo_parser.set_defaults(func=info_openshift_disconnected)
-
     hostinfo_desc = 'Report Info About Host'
     hostinfo_parser = argparse.ArgumentParser(add_help=False)
     hostinfo_parser.set_defaults(func=info_host)
@@ -4529,11 +4552,23 @@ def cli():
     kuberke2info_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kuberke2info_parser.set_defaults(func=info_rke2_kube)
 
+    kubeadmregistryinfo_desc = 'Info Kubeadm registry vm'
+    kubeadmregistryinfo_parser = info_subparsers.add_parser('kubeadm-registry',
+                                                            description=kubeadmregistryinfo_desc,
+                                                            help=kubeadmregistryinfo_desc, aliases=['generic-registry'])
+    kubeadmregistryinfo_parser.set_defaults(func=info_kubeadm_registry)
+
     networkinfo_desc = 'Info Network'
     networkinfo_parser = info_subparsers.add_parser('network', description=networkinfo_desc, help=networkinfo_desc,
                                                     aliases=['net'])
     networkinfo_parser.add_argument('name', metavar='NETWORK')
     networkinfo_parser.set_defaults(func=info_network)
+
+    openshiftregistryinfo_desc = 'Info Openshift registry vm'
+    openshiftregistryinfo_parser = info_subparsers.add_parser('openshift-registry',
+                                                              description=openshiftregistryinfo_desc,
+                                                              help=openshiftregistryinfo_desc)
+    openshiftregistryinfo_parser.set_defaults(func=info_openshift_registry)
 
     openshiftsnoinfo_desc = 'Info Openshift SNO'
     openshiftsnoinfo_parser = info_subparsers.add_parser('openshift-sno', description=openshiftsnoinfo_desc,
@@ -5162,15 +5197,14 @@ def cli():
     planupdate_parser.add_argument('plan', metavar='PLAN')
     planupdate_parser.set_defaults(func=update_plan)
 
-    disconnectedupdate_desc = 'Update disconnected registry for openshift'
-    disconnectedupdate_epilog = f"Examples:\n\n{examples.disconnectedupdate}"
-    disconnectedupdate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
-    disconnectedupdate_parser.add_argument('plan', metavar='PLAN', nargs='?')
-    disconnectedupdate_parser.set_defaults(func=update_openshift_disconnected)
-    update_subparsers.add_parser('openshift-registry', parents=[disconnectedupdate_parser],
-                                 description=disconnectedupdate_desc, help=disconnectedupdate_desc,
-                                 epilog=disconnectedupdate_epilog, formatter_class=rawhelp,
-                                 aliases=['openshift-disconnected'])
+    openshiftregistryupdate_desc = 'Update openshift registry'
+    openshiftregistryupdate_epilog = f"Examples:\n\n{examples.openshiftregistryupdate}"
+    openshiftregistryupdate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
+    openshiftregistryupdate_parser.add_argument('plan', metavar='PLAN', nargs='?')
+    openshiftregistryupdate_parser.set_defaults(func=update_openshift_registry)
+    update_subparsers.add_parser('openshift-registry', parents=[openshiftregistryupdate_parser],
+                                 description=openshiftregistryupdate_desc, help=openshiftregistryupdate_desc,
+                                 epilog=openshiftregistryupdate_epilog, formatter_class=rawhelp)
 
     securitygroupupdate_desc = 'Update Securitygroup/Firewall'
     securitygroupupdate_epilog = f"Examples:\n\n{examples.securitygroupupdate}"

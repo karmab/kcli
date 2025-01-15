@@ -25,14 +25,5 @@
    origin: disconnected/bin
  - path: /etc/systemd/system/registry.service
    origin: disconnected/registry.service
-{% if disconnected_sync %}
- - content: |
-     {{ pull_secret }}
-   path: /root/openshift_pull.json
-{% endif %}
- - path: /root/haproxy.cfg
-   origin: disconnected/haproxy.cfg
- - path: /root/mirror-config.yaml
-   origin: disconnected/mirror-config.yaml
  cmds:
  - bash /root/scripts/deploy.sh

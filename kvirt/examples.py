@@ -351,25 +351,30 @@ $ kcli create openshift-iso -P nets=['{"ip":"192.168.0.8","netmask":"24","gatewa
 $ kcli create openshift-iso -P extra_args="super_string_of_args" myopenshift.karmalabs.corp
 """
 
-disconnectedcreate = """# Generate an openshift disconnected vm for 4.17
-$ kcli create openshift-registry -P version=stable -P tag='4.17'
+kubeadmregistrycreate = """# Generate a kubeadm/generic registry vm for latest kubeadm
+$ kcli create registry kubeadm
+"""
+
+openshiftregistrycreate = """# Generate an openshift registry vm for 4.17
+$ kcli create registry openshift -P version=stable -P tag='4.17'
 
 # Do the same over an ipv4 network
-$ kcli create openshift-registry -P version=nightly -P tag='4.17' -P disconnected_ipv6_network=false
+$ kcli create registry openshift -P version=nightly -P tag='4.17' -P disconnected_ipv6_network=false
 
 # Use specific version and add extra operators (from 4.17)
-$ kcli create openshift-registry -P version=nightly -P tag='4.17' -P disconnected_operators=[sriov-network-operator]
+$ kcli create registry openshift -P version=nightly -P tag='4.17' -P disconnected_operators=[sriov-network-operator]
 
 # Deploy registry without content
-$ kcli create openshift-registry -P disconnected_sync=false
+$ kcli create registry openshift -P disconnected_sync=false
 """
 
-disconnectedupdate = """# Update openshift disconnected registry for 4.17
+openshiftregistryupdate = """# Update openshift registry for 4.17
 $ kcli update openshift-registry -P version=stable -P tag='4.17' -P disconnected_url=192.168.122.200.sslip.io:5000 myreg
 
-# Update openshift disconnected registry taking parameter from existing cluster install named myopenshift
+# Update openshift registry taking parameter from existing cluster install named myopenshift
 $ kcli update openshift-registry -P tag='4.17.0' myopenshift
 """
+
 
 appopenshiftcreate = """# Deploy sriov network operator
 $ kcli create app openshift sriov-network-operator

@@ -106,12 +106,8 @@ EOF
 {% endif %}
 {% endif %}
 
-{% if registry %}
-sed -i "/registry.mirrors/a\        [plugins.\"io.containerd.grpc.v1.cri\".registry.mirrors.\"{{ api_ip }}:5000\"]\n          endpoint = [\"http://{{ api_ip }}:5000\"]\n          insecure_skip_verify = true" /etc/containerd/config.toml
-{% endif %}
+bash /root/containerd.sh
 
-systemctl enable --now containerd
-systemctl restart containerd
 {% endif %}
 {% endif %}
 

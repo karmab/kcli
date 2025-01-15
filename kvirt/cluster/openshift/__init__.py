@@ -85,7 +85,7 @@ def update_pull_secret(pull_secret, registry, user, password):
             json.dump(data, p)
 
 
-def update_disconnected_registry(config, plandir, cluster, data):
+def update_registry(config, plandir, cluster, data):
     disconnected_url = data['disconnected_url']
     pull_secret_path = data['pull_secret_path']
     version = data['version']
@@ -1047,7 +1047,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if not os.path.exists(clusterdir):
         os.makedirs(clusterdir)
     if provider in virt_providers and disconnected_vm:
-        disconnected_vm = f"{data['disconnected_reuse_name'] or cluster}-disconnected"
+        disconnected_vm = f"{data['disconnected_reuse_name'] or cluster}-registry"
         pprint(f"Deploying disconnected vm {disconnected_vm}")
         data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
         disconnected_plan = f"{plan}-reuse" if disconnected_reuse else plan
@@ -1105,7 +1105,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if disconnected_url is not None:
         if disconnected_update and disconnected_url != 'quay.io':
             data['release_tag'] = f'4.{get_installer_minor(INSTALLER_VERSION)}'
-            update_disconnected_registry(config, plandir, cluster, data)
+            update_registry(config, plandir, cluster, data)
         key = f"{disconnected_user}:{disconnected_password}"
         key = str(b64encode(key.encode('utf-8')), 'utf-8')
         auths = json.loads(data['pull_secret'])['auths']

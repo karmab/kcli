@@ -32,6 +32,7 @@
 {% if engine == 'containerd' %}
  - path: /etc/crictl.yaml
    origin: crictl.yaml
+ - containerd.sh
 {% endif %}
 {% if sdn == 'flannel' %}
  - path: /etc/systemd/network/10-flannel.link

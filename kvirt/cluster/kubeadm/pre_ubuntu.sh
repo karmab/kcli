@@ -95,12 +95,8 @@ EOF
 {% endif %}
 {% endif %}
 
-{% if registry %}
-sed -i "/registry.mirrors/a\        [plugins.\"io.containerd.grpc.v1.cri\".registry.mirrors.\"{{ api_ip }}:5000\"]\n          endpoint = [\"http://{{ api_ip }}:5000\"]\n          insecure_skip_verify = true" /etc/containerd/config.toml
-{% endif %}
+bash /root/containerd.sh
 
-systemctl daemon-reload
-systemctl restart containerd
 {% endif %}
 {% endif %}
 {% set kube_packages = 'kubelet=%s* kubectl=%s* kubeadm=%s*' % (version, version, version) if version != None and version|count('.') == 2 else 'kubelet kubectl kubeadm' %}

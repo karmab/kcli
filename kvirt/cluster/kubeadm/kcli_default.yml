@@ -73,3 +73,16 @@ cluster_network_ipv4: 10.244.0.0/16
 service_network_ipv4: 10.96.0.0/12
 docker_user:
 docker_password:
+disconnected_image: centos9stream
+disconnected_ipv6_network: false
+disconnected_mac:
+disconnected_reuse: false
+disconnected_reuse_name:
+disconnected_vm: false
+disconnected_vm_name:
+disconnected_default_network: default
+disconnected_disk_size: 100
+disconnected_url:
+disconnected_user: dummy
+disconnected_password: dummy
+disconnected_sync: true

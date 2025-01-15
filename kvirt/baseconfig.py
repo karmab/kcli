@@ -588,7 +588,12 @@ class Kbaseconfig:
             warning("No parameters found. Leaving...")
         # return {'result': 'success'}
 
-    def info_openshift_disconnected(self):
+    def info_kubeadm_registry(self):
+        plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
+        inputfile = f'{plandir}/disconnected.yml'
+        return self.info_plan(inputfile)
+
+    def info_openshift_registry(self):
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         inputfile = f'{plandir}/disconnected.yml'
         return self.info_plan(inputfile)
@@ -1646,7 +1651,7 @@ class Kbaseconfig:
         results = {'nodes': nodes, 'version': version}
         return results
 
-    def update_openshift_disconnected(self, cluster, overrides={}):
+    def update_openshift_registry(self, cluster, overrides={}):
         os.environ["PATH"] = f'{os.getcwd()}:{os.environ["PATH"]}'
         data = {}
         clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}") if cluster is not None else '.'
@@ -1670,7 +1675,7 @@ class Kbaseconfig:
         if which('openshift-install') is None:
             self.download_openshift_installer(data)
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
-        openshift.update_disconnected_registry(self, plandir, cluster, data)
+        openshift.update_registry(self, plandir, cluster, data)
 
 
 def interactive_kube(_type):

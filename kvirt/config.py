@@ -3122,7 +3122,28 @@ class Kconfig(Kbaseconfig):
                 iso_pool = overrides.get('pool') or self.pool
                 generate_rhcos_iso(self.k, f"{cluster}-{role}", iso_pool, version=iso_version, installer=installer)
 
-    def create_openshift_disconnected(self, plan, overrides={}):
+    def create_kubeadm_registry(self, plan, overrides={}):
+        data = overrides
+        plandir = os.path.dirname(kubeadm.create.__code__.co_filename)
+        cluster = data.get('cluster', 'mygeneric')
+        registry_vm = f"{cluster}-registry"
+        registry_reuse = data.get('disconnected_reuse', False)
+        version = data.get('version')
+        if version is not None:
+            pprint(f"Using version {version}")
+        pprint(f"Deploying registry vm {registry_vm}")
+        registry_plan = f"{plan}-reuse" if registry_reuse else plan
+        result = self.plan(registry_plan, inputfile=f'{plandir}/disconnected.yml', overrides=data)
+        if result['result'] != 'success':
+            sys.exit(1)
+        ip, vmport = _ssh_credentials(self.k, registry_vm)[1:]
+        pprint("Use the following disconnected_url")
+        cmd = "cat /root/url.txt"
+        sshcmd = ssh(registry_vm, ip=ip, user='root', tunnel=self.tunnel, tunnelhost=self.tunnelhost,
+                     tunnelport=self.tunnelport, tunneluser=self.tunneluser, insecure=True, cmd=cmd, vmport=vmport)
+        os.system(sshcmd)
+
+    def create_openshift_registry(self, plan, overrides={}):
         data = overrides
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         cluster = data.get('cluster', 'myopenshift')
@@ -3130,11 +3151,11 @@ class Kconfig(Kbaseconfig):
         version = data.get('version', 'stable')
         tag = data.get('tag', OPENSHIFT_TAG)
         pprint(f"Using version {version} and tag {tag}")
-        disconnected_vm = f"{cluster}-disconnected"
-        disconnected_reuse = data.get('disconnected_reuse', False)
-        disconnected_sync = data.get('disconnected_sync', True)
-        pprint(f"Deploying disconnected vm {disconnected_vm}")
-        if disconnected_sync:
+        registry_vm = f"{cluster}-registry"
+        registry_reuse = data.get('disconnected_reuse', False)
+        registry_sync = data.get('disconnected_sync', True)
+        pprint(f"Deploying registry vm {registry_vm}")
+        if registry_sync:
             pull_secret = pwd_path(data.get('pull_secret')) if not upstream else f"{plandir}/fake_pull.json"
             if not upstream:
                 pull_secret = pwd_path(data.get('pull_secret', 'openshift_pull.json'))
@@ -3144,23 +3165,21 @@ class Kconfig(Kbaseconfig):
                 error(f"Missing pull secret file {pull_secret}")
                 sys.exit(1)
             data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
-        disconnected_plan = f"{plan}-reuse" if disconnected_reuse else plan
+        registry_plan = f"{plan}-reuse" if registry_reuse else plan
         if version == 'ci' and 'disconnected_origin' not in overrides:
-            reg = 'registry.build01.ci.openshift.org' if str(tag).startswith('ci-') else 'registry.ci.openshift.org'
-            warning(f"Forcing disconnected_origin to {reg}")
-            data['disconnected_origin'] = reg
-        result = self.plan(disconnected_plan, inputfile=f'{plandir}/disconnected.yml', overrides=data)
+            warning("Forcing disconnected_origin to registry.ci.openshift.org")
+            data['disconnected_origin'] = 'registry.ci.openshift.org'
+        result = self.plan(registry_plan, inputfile=f'{plandir}/disconnected.yml', overrides=data)
         if result['result'] != 'success':
             sys.exit(1)
-        name = data.get('disconnected_reuse_name') or cluster
-        ip, vmport = _ssh_credentials(self.k, f'{name}-disconnected')[1:]
-        if disconnected_sync:
+        ip, vmport = _ssh_credentials(self.k, registry_vm)[1:]
+        if registry_sync:
             pprint("Use the following OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE")
             cmd = "cat /root/version.txt"
         else:
             pprint("Use the following disconnected_url")
             cmd = "cat /root/url.txt"
-        sshcmd = ssh(name, ip=ip, user='root', tunnel=self.tunnel, tunnelhost=self.tunnelhost,
+        sshcmd = ssh(registry_vm, ip=ip, user='root', tunnel=self.tunnel, tunnelhost=self.tunnelhost,
                      tunnelport=self.tunnelport, tunneluser=self.tunneluser, insecure=True, cmd=cmd, vmport=vmport)
         os.system(sshcmd)
 
