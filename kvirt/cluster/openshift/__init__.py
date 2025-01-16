@@ -791,7 +791,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             if cidr == 'N/A':
                 return {'result': 'failure', 'reason': "Couldnt gather an api_ip from your specified network"}
             api_index = 2 if ':' in cidr else -3
-            api_ip = get_new_vip(network, ipv6=':' in cidr) or str(ip_network(cidr)[api_index])
+            api_ip = str(get_new_vip(network, ipv6=':' in cidr) or ip_network(cidr)[api_index])
             warning(f"Using {api_ip} as api_ip")
             overrides['api_ip'] = api_ip
             installparam['automatic_api_ip'] = True

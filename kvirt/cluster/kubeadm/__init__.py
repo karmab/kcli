@@ -134,7 +134,7 @@ def create(config, plandir, cluster, overrides):
                 msg = "Couldnt gather an api_ip from your specified network"
                 return {'result': 'failure', 'reason': msg}
             api_index = 2 if ':' in cidr else -3
-            api_ip = get_new_vip(network, ipv6=':' in cidr) or str(ip_network(cidr)[api_index])
+            api_ip = str(get_new_vip(network, ipv6=':' in cidr) or ip_network(cidr)[api_index])
             warning(f"Using {api_ip} as api_ip")
             data['api_ip'] = api_ip
             data['automatic_api_ip'] = True
