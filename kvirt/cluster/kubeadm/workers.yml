@@ -25,6 +25,8 @@
  - path: /etc/crictl.yaml
    origin: crictl.yaml
  - containerd.sh
+{% else %}
+ - crio-d.sh
 {% endif %}
 {% if sdn == 'flannel' %}
  - path: /etc/systemd/network/10-flannel.link
