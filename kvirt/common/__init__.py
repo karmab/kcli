@@ -2498,7 +2498,7 @@ class PlanLoader(yaml.SafeLoader):
 PlanLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, plan_constructor)
 
 
-def get_cluster_api_vips():
+def get_new_vip(network, ipv6=False):
     data = {}
     clustersdir = os.path.expanduser('~/.kcli/clusters')
     if os.path.exists(clustersdir):
@@ -2509,12 +2509,17 @@ def get_cluster_api_vips():
             if os.path.exists(f'{clusterdir}/kcli_parameters.yml'):
                 with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
                     installparam = yaml.safe_load(install)
-                    network = installparam.get('network', 'default')
+                    current_network = installparam.get('network', 'default')
                     api_ip = installparam.get('api_ip')
                     automatic = installparam.get('automatic_api_ip', False)
                     if automatic and api_ip is not None:
-                        data[network] = 1 if network not in data else data[network] + 1
-    return data
+                        if current_network not in data:
+                            data[current_network] = [api_ip]
+                        else:
+                            data[current_network].append(api_ip)
+    if network in data:
+        index = 1 if ipv6 else -1
+        return min(ip_address(ip) for ip in data[network]) + index
 
 
 def wait_for_nodes(number):

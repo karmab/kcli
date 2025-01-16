@@ -8,7 +8,7 @@ from kvirt.common import get_oc, pwd_path, get_oc_mirror, patch_ingress_controll
 from kvirt.common import get_latest_fcos, generate_rhcos_iso, olm_app
 from kvirt.common import get_installer_rhcos, wait_cloud_dns, delete_lastvm, detect_openshift_version
 from kvirt.common import ssh, scp, _ssh_credentials, get_ssh_pub_key
-from kvirt.common import start_baremetal_hosts_with_iso, update_baremetal_hosts, get_cluster_api_vips
+from kvirt.common import start_baremetal_hosts_with_iso, update_baremetal_hosts, get_new_vip
 from kvirt.defaults import LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG
 import os
 import re
@@ -787,14 +787,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if not networkinfo:
             return {'result': 'failure', 'reason': f"Issue getting network {network}"}
         if provider == 'kvm' and networkinfo['type'] == 'routed':
-            vip_mappings = get_cluster_api_vips()
             cidr = networkinfo['cidr']
             if cidr == 'N/A':
                 return {'result': 'failure', 'reason': "Couldnt gather an api_ip from your specified network"}
             api_index = 2 if ':' in cidr else -3
-            if network in vip_mappings:
-                api_index = api_index + vip_mappings[network] if ':' in cidr else api_index - vip_mappings[network]
-            api_ip = str(ip_network(cidr)[api_index])
+            api_ip = get_new_vip(network, ipv6=':' in cidr) or str(ip_network(cidr)[api_index])
             warning(f"Using {api_ip} as api_ip")
             overrides['api_ip'] = api_ip
             installparam['automatic_api_ip'] = True

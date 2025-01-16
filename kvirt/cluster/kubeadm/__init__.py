@@ -3,7 +3,7 @@ from ipaddress import ip_network
 import json
 from kvirt.common import success, pprint, warning, info2, container_mode, wait_cloud_dns, update_etc_hosts, fix_typos
 from kvirt.common import get_kubectl, create_app_generic, get_ssh_pub_key, _ssh_credentials, ssh, deploy_cloud_storage
-from kvirt.common import get_cluster_api_vips, wait_for_nodes
+from kvirt.common import get_new_vip, wait_for_nodes
 from kvirt.defaults import UBUNTUS
 import os
 from random import choice
@@ -129,15 +129,12 @@ def create(config, plandir, cluster, overrides):
             msg = f"Issue getting network {network}"
             return {'result': 'failure', 'reason': msg}
         if provider == 'kvm' and networkinfo['type'] == 'routed':
-            vip_mappings = get_cluster_api_vips()
             cidr = networkinfo['cidr']
             if cidr == 'N/A':
                 msg = "Couldnt gather an api_ip from your specified network"
                 return {'result': 'failure', 'reason': msg}
             api_index = 2 if ':' in cidr else -3
-            if network in vip_mappings:
-                api_index = api_index + vip_mappings[network] if ':' in cidr else api_index - vip_mappings[network]
-            api_ip = str(ip_network(cidr)[api_index])
+            api_ip = get_new_vip(network, ipv6=':' in cidr) or str(ip_network(cidr)[api_index])
             warning(f"Using {api_ip} as api_ip")
             data['api_ip'] = api_ip
             data['automatic_api_ip'] = True
