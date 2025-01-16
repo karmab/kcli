@@ -2536,7 +2536,7 @@ class Kconfig(Kbaseconfig):
         if common.needs_ignition(image):
             cmd = waitcommand or 'sudo journalctl --all --no-pager'
         else:
-            cmd = waitcommand or f"sudo tail -n 50 {common.get_cloudinitfile(image)}"
+            cmd = waitcommand or f"sudo cat {common.get_cloudinitfile(image)}"
         user, ip, vmport = None, None, None
         hostip = None
         timeout = 0
