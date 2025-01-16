@@ -8,6 +8,7 @@ from jinja2 import Environment, FileSystemLoader
 from jinja2 import StrictUndefined as undefined
 from jinja2.exceptions import TemplateSyntaxError, TemplateError, TemplateNotFound
 from kvirt.defaults import IMAGES, IMAGESCOMMANDS, OPENSHIFT_TAG
+from kvirt.defaults import AWS, AZURE, GCP, KUBEVIRT, IBM, OVIRT, OPENSTACK, VSPHERE
 from kvirt.jinjafilters import jinjafilters
 from kvirt import nameutils
 from kvirt import common
@@ -23,7 +24,6 @@ from kvirt.expose import Kexposer
 from kvirt.internalplans import haproxy as haproxyplan
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.containerconfig import Kcontainerconfig
-from kvirt import defaults as kdefaults
 from kvirt.miniconsole import Kminiconsole
 from getpass import getuser
 import glob
@@ -68,26 +68,35 @@ class Kconfig(Kbaseconfig):
                     sys.exit(1)
                 namespace = namespace or options.get('namespace')
                 context = options.get('context')
-                readwritemany = options.get('readwritemany', kdefaults.KUBEVIRT['readwritemany'])
-                disk_hotplug = options.get('disk_hotplug', kdefaults.KUBEVIRT['disk_hotplug'])
-                access_mode = options.get('access_mode', kdefaults.KUBEVIRT['access_mode'])
+                KUBEVIRT_READWRITEMANY = os.environ.get("KUBEVIRT_READWRITEMANY")
+                KUBEVIRT_DISK_HOTPLUG = os.environ.get("KUBEVIRT_DISK_HOTPLUG")
+                KUBEVIRT_ACCESS_MODE = os.environ.get("KUBEVIRT_ACCESS_MODE")
+                KUBEVIRT_VOLUME_MODE = os.environ.get("KUBEVIRT_VOLUME_MODE")
+                KUBEVIRT_VOLUME_ACCESS = os.environ.get("KUBEVIRT_VOLUME_ACCESS")
+                KUBEVIRT_EMBED_USERDATA = os.environ.get("KUBEVIRT_EMBED_USERDATA")
+                KUBEVIRT_HARVESTER = os.environ.get("KUBEVIRT_HARVESTER")
+                KUBEVIRT_EMBED_USERDATA = os.environ.get("KUBEVIRT_EMBED_USERDATA")
+                KUBEVIRT_REGISTRY = os.environ.get("KUBEVIRT_REGISTRY")
+                readwritemany = KUBEVIRT_READWRITEMANY or options.get('readwritemany', KUBEVIRT['readwritemany'])
+                disk_hotplug = KUBEVIRT_DISK_HOTPLUG or options.get('disk_hotplug', KUBEVIRT['disk_hotplug'])
+                access_mode = KUBEVIRT_ACCESS_MODE or options.get('access_mode', KUBEVIRT['access_mode'])
                 if access_mode not in ['External', 'LoadBalancer', 'NodePort']:
                     msg = f"Incorrect access_mode {access_mode}. Should be External, NodePort or LoadBalancer"
                     error(msg)
                     sys.exit(1)
-                volume_mode = options.get('volume_mode', kdefaults.KUBEVIRT['volume_mode'])
+                volume_mode = KUBEVIRT_VOLUME_MODE or options.get('volume_mode', KUBEVIRT['volume_mode'])
                 if volume_mode not in ['Filesystem', 'Block']:
                     msg = f"Incorrect volume_mode {volume_mode}. Should be Filesystem or Block"
                     error(msg)
                     sys.exit(1)
-                volume_access = options.get('volume_access', kdefaults.KUBEVIRT['volume_access'])
+                volume_access = KUBEVIRT_VOLUME_ACCESS or options.get('volume_access', KUBEVIRT['volume_access'])
                 if volume_access not in ['ReadWriteMany', 'ReadWriteOnce']:
                     msg = f"Incorrect volume_access {volume_access}. Should be ReadWriteOnce or ReadWriteOnce"
                     error(msg)
                     sys.exit(1)
-                harvester = options.get('harvester', kdefaults.KUBEVIRT['harvester'])
-                embed_userdata = options.get('embed_userdata', kdefaults.KUBEVIRT['embed_userdata'])
-                registry = options.get('registry', kdefaults.KUBEVIRT['registry'])
+                harvester = KUBEVIRT_HARVESTER or options.get('harvester', KUBEVIRT['harvester'])
+                embed_userdata = KUBEVIRT_EMBED_USERDATA or options.get('embed_userdata', KUBEVIRT['embed_userdata'])
+                registry = KUBEVIRT_REGISTRY or options.get('registry', KUBEVIRT['registry'])
                 try:
                     from kvirt.providers.kubevirt import Kubevirt
                 except Exception as e:
@@ -109,7 +118,7 @@ class Kconfig(Kbaseconfig):
                     error("Missing project in the configuration. Leaving")
                     sys.exit(1)
                 if region is None:
-                    region = options.get('region', kdefaults.GCP['region'])
+                    region = options.get('region', GCP['region'])
                 if zone is None:
                     zone = options.get('zone')
                 try:
@@ -140,10 +149,10 @@ class Kconfig(Kbaseconfig):
                 except Exception as e:
                     exception = e if debug else None
                     dependency_error('azure', exception)
-                admin_user = options.get('admin_user', kdefaults.AZURE['admin_user'])
+                admin_user = options.get('admin_user', AZURE['admin_user'])
                 admin_password = options.get('admin_password')
-                location = options.get('location', kdefaults.AZURE['location'])
-                resource_group = options.get('resource_group', kdefaults.AZURE['resource_group'])
+                location = options.get('location', AZURE['location'])
+                resource_group = options.get('resource_group', AZURE['resource_group'])
                 mail = options.get('mail')
                 storage_account = options.get('storage_account')
                 subscription_id = options.get('subscription_id')
@@ -167,7 +176,7 @@ class Kconfig(Kbaseconfig):
                            admin_password=admin_password, mail=mail, storage_account=storage_account, debug=debug)
             elif self.type == 'aws':
                 if region is None:
-                    region = options.get('region', kdefaults.AWS['region'])
+                    region = options.get('region', AWS['region'])
                 if zone is None:
                     zone = options.get('zone')
                 access_key_id = options.get('access_key_id')
@@ -194,7 +203,7 @@ class Kconfig(Kbaseconfig):
                 cis_resource_instance_id = options.get('cis_resource_instance_id')
                 region = options.get('region')
                 if region is None:
-                    region = options.get('region', kdefaults.IBM['region'])
+                    region = options.get('region', IBM['region'])
                 if zone is None:
                     zone = options.get('zone')
                 vpc = options.get('vpc')
@@ -206,9 +215,9 @@ class Kconfig(Kbaseconfig):
                          cos_api_key=cos_api_key, cos_resource_instance_id=cos_resource_instance_id,
                          cis_resource_instance_id=cis_resource_instance_id)
             elif self.type == 'ovirt':
-                datacenter = options.get('datacenter', kdefaults.OVIRT['datacenter'])
-                cluster = options.get('cluster', kdefaults.OVIRT['cluster'])
-                user = options.get('user', kdefaults.OVIRT['user'])
+                datacenter = options.get('datacenter', OVIRT['datacenter'])
+                cluster = options.get('cluster', OVIRT['cluster'])
+                user = options.get('user', OVIRT['user'])
                 password = options.get('password')
                 if password is None:
                     error("Missing password in the configuration. Leaving")
@@ -225,8 +234,8 @@ class Kconfig(Kbaseconfig):
                 if not os.path.exists(ca_file):
                     error("Ca file path doesn't exist. Leaving")
                     sys.exit(1)
-                filtervms = options.get('filtervms', kdefaults.OVIRT['filtervms'])
-                filteruser = options.get('filteruser', kdefaults.OVIRT['filteruser'])
+                filtervms = options.get('filtervms', OVIRT['filtervms'])
+                filteruser = options.get('filteruser', OVIRT['filteruser'])
                 filtertag = options.get('filtertag')
                 try:
                     from kvirt.providers.ovirt import KOvirt
@@ -250,14 +259,14 @@ class Kconfig(Kbaseconfig):
                                 new_key = new_key.replace('export ', '')
                                 new_variable = new_variable.strip().replace('"', '').replace("'", '')
                                 os.environ[new_key] = new_variable
-                version = options.get('version') or kdefaults.OPENSTACK['version']
-                domain = options.get('domain') or os.environ.get("OS_USER_DOMAIN_NAME") or kdefaults.OPENSTACK['domain']
+                version = options.get('version') or OPENSTACK['version']
+                domain = options.get('domain') or os.environ.get("OS_USER_DOMAIN_NAME") or OPENSTACK['domain']
                 auth_url = options.get('auth_url') or os.environ.get("OS_AUTH_URL")
                 if auth_url is None:
                     error("Missing auth_url in the configuration. Leaving")
                     sys.exit(1)
-                user = options.get('user') or os.environ.get("OS_USERNAME") or kdefaults.OPENSTACK['user']
-                project = options.get('project') or os.environ.get("OS_PROJECT_NAME") or kdefaults.OPENSTACK['project']
+                user = options.get('user') or os.environ.get("OS_USERNAME") or OPENSTACK['user']
+                project = options.get('project') or os.environ.get("OS_PROJECT_NAME") or OPENSTACK['project']
                 password = options.get('password') or os.environ.get("OS_PASSWORD")
                 ca_file = options.get('ca_file') or os.environ.get("OS_CACERT")
                 region_name = options.get('region_name') or os.environ.get("OS_REGION_NAME")
@@ -318,18 +327,18 @@ class Kconfig(Kbaseconfig):
                         isopool = isofolder[0]
                         isofolder = isofolder[1:]
                     isofolder = f'[{isopool}]/{isofolder}'
-                filtervms = options.get('filtervms', kdefaults.VSPHERE['filtervms'])
-                filtervms = options.get('filteruser', kdefaults.VSPHERE['filteruser'])
-                filteruser = options.get('filteruser', kdefaults.VSPHERE['filteruser'])
+                filtervms = options.get('filtervms', VSPHERE['filtervms'])
+                filtervms = options.get('filteruser', VSPHERE['filteruser'])
+                filteruser = options.get('filteruser', VSPHERE['filteruser'])
                 filtertag = options.get('filtertag')
-                category = options.get('category', kdefaults.VSPHERE['category'])
+                category = options.get('category', VSPHERE['category'])
                 basefolder = options.get('basefolder')
-                dvs = options.get('dvs', kdefaults.VSPHERE['dvs'])
-                import_network = options.get('import_network', kdefaults.VSPHERE['import_network'])
-                timeout = options.get('timeout', kdefaults.VSPHERE['timeout'])
-                force_pool = options.get('force_pool', kdefaults.VSPHERE['force_pool'])
-                restricted = options.get('restricted', kdefaults.VSPHERE['restricted'])
-                serial = options.get('serial', kdefaults.VSPHERE['serial'])
+                dvs = options.get('dvs', VSPHERE['dvs'])
+                import_network = options.get('import_network', VSPHERE['import_network'])
+                timeout = options.get('timeout', VSPHERE['timeout'])
+                force_pool = options.get('force_pool', VSPHERE['force_pool'])
+                restricted = options.get('restricted', VSPHERE['restricted'])
+                serial = options.get('serial', VSPHERE['serial'])
                 try:
                     from kvirt.providers.vsphere import Ksphere
                 except Exception as e:
@@ -3120,7 +3129,7 @@ class Kconfig(Kbaseconfig):
                 warning(f"Iso generation not supported on {self.type}")
             else:
                 iso_pool = overrides.get('pool') or self.pool
-                live_url = overrides.get('liveiso_url')
+                live_url = os.environ.get('LIVEISO_URL') or overrides.get('liveiso_url')
                 generate_rhcos_iso(self.k, f"{cluster}-{role}", iso_pool, version=iso_version, installer=installer,
                                    url=live_url)
 

@@ -1453,7 +1453,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             result = config.create_vm(sno_name, overrides=iso_overrides, onlyassets=True)
             pprint("Writing iso.ign to current dir")
             f.write(result['userdata'])
-        live_url = overrides.get('liveiso_url')
+        live_url = os.environ.get('LIVEISO_URL') or overrides.get('liveiso_url')
         if provider == 'fake':
             pprint("Storing generated iso in current dir")
             generate_rhcos_iso(k, f"{cluster}-sno", 'default', installer=True, extra_args=sno_extra_args, url=live_url)

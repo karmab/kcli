@@ -24,6 +24,10 @@ spec:
       value: "11.128.0.0/14"
     - name: SSH_PUBLIC_KEY
       value: ""
+#   - name: KUBEVIRT_REGISTRY
+#     value: ""
+#   - name: LIVEISO_URL
+#     value: ""
     - name: PYTHONUNBUFFERED
       value: "true"
     volumeMounts:
