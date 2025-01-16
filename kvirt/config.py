@@ -3120,7 +3120,9 @@ class Kconfig(Kbaseconfig):
                 warning(f"Iso generation not supported on {self.type}")
             else:
                 iso_pool = overrides.get('pool') or self.pool
-                generate_rhcos_iso(self.k, f"{cluster}-{role}", iso_pool, version=iso_version, installer=installer)
+                live_url = overrides.get('liveiso_url')
+                generate_rhcos_iso(self.k, f"{cluster}-{role}", iso_pool, version=iso_version, installer=installer,
+                                   url=live_url)
 
     def create_kubeadm_registry(self, plan, overrides={}):
         data = overrides

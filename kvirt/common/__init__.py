@@ -1921,8 +1921,10 @@ def filter_compression_extension(name):
     return name.replace('.gz', '').replace('.xz', '').replace('.bz2', '')
 
 
-def generate_rhcos_iso(k, cluster, pool, version='latest', installer=False, arch='x86_64', extra_args=None):
-    if installer:
+def generate_rhcos_iso(k, cluster, pool, version='latest', installer=False, arch='x86_64', extra_args=None, url=None):
+    if url is not None:
+        liveiso = url
+    elif installer:
         liveiso = get_installer_iso()
         baseiso = os.path.basename(liveiso)
     else:

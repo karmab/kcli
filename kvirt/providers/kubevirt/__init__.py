@@ -1354,12 +1354,13 @@ class Kubevirt():
         return {'result': 'success'}
 
     def patch_ignition(self, pvc, pool):
+        coreos_installer_image = f"{self.registry}/coreos/coreos-installer:release"
         kubectl = self.kubectl
         namespace = self.namespace
         now = datetime.datetime.now().strftime("%Y%M%d%H%M")
         podname = f'{now}-{pvc}-patch'
         os.popen(f"{kubectl} -n {namespace} create cm --from-file=iso.ign {podname}").read()
-        container = {'image': 'quay.io/coreos/coreos-installer:release', 'name': 'patch', 'command': ['/bin/sh', '-c']}
+        container = {'image': coreos_installer_image, 'name': 'patch', 'command': ['/bin/sh', '-c']}
         container['volumeMounts'] = [
             {'mountPath': '/files', 'name': 'config-volume'},
             {'mountPath': '/storage', 'name': 'storage'},
