@@ -278,10 +278,7 @@ class Kvirt(object):
                 else:
                     warning(f"Using machine {virtmachines[-1]}")
                     overrides['machine'] = virtmachines[-1]
-            if 'cpumodel' not in overrides:
-                cpumodel = 'cortex-a57'
-                warning("Forcing cpumodel to cortex-a57")
-        if aarch64_full and not uefi and uefi_legacy:
+        if aarch64_full and not uefi and not uefi_legacy:
             warning("Forcing uefi")
             uefi = True
         try:
@@ -978,8 +975,8 @@ class Kvirt(object):
         busxml = ""
         if cpuxml != '':
             if numa:
-                expander = 'pcie-expander-bus' if 'q35' in machine else 'pci-expander-bus'
-                pxb = 'pxb-pcie' if 'q35' in machine else 'pxb'
+                expander = 'pci-expander-bus' if machine == 'pc' else 'pcie-expander-bus'
+                pxb = 'pxb' if machine == 'pc' else 'pxb-pcie'
                 numamemory = 0
                 numaxml = '<numa>'
                 count = 1
@@ -1003,7 +1000,7 @@ class Kvirt(object):
                         numaxml += "</distances>"
                     numaxml += '</cell>'
                     numamemory += int(cellmemory)
-                    if "q35" in machine:
+                    if machine != 'pc':
                         busindex = expanderinfo[cellid]['index']
                     else:
                         busindex = count
@@ -1016,7 +1013,7 @@ class Kvirt(object):
 <address type='pci' domain='0x0000' bus='0x00' function='0x0'/>
 </controller>\n""" % (busindex, expander, pxb, 20 * (index + 1), cellid, busindex)
                     count += 1
-                    if "q35" in machine:
+                    if machine != 'pc':
                         nicslots = expanderinfo[cellid]['slots']
                         for slot in range(expanderinfo[cellid]['slots']):
                             slotindex = busindex + slot + 1
