@@ -51,3 +51,10 @@ systemctl enable --now kubelet
 echo bpffs /sys/fs/bpf bpf defaults 0 0 >> /etc/fstab
 mount /sys/fs/bpf
 {% endif %}
+
+{% if registry %}
+mkdir -p /etc/containers
+echo """[[registry]]
+insecure = true
+location = \"{{ api_ip }}\"""" >> /etc/containers/registries.conf
+{% endif %}
