@@ -1,4 +1,8 @@
-apt-get -y install nfs-kernel-server || dnf -y install nfs-utils
+{% if ubuntu|default(False) %}
+apt-get -y install nfs-kernel-server
+{% else %}
+dnf -y install nfs-utils
+{% endif %}
 systemctl enable --now nfs-server
 
 IP=$(hostname -I | cut -d" " -f1)

@@ -51,7 +51,6 @@ location = \"{{ api_ip }}\"""" >> /etc/containers/registries.conf
 {% endif %}
 
 {% if disconnected_url != None %}
-sed -i "s%pause_image = .*%pause_image = \"$REGISTRY/pause:latest\"%" /etc/crio/crio.conf
 REGISTRY={{ disconnected_url }}
 REGISTRY_USER={{ disconnected_user }}
 REGISTRY_PASSWORD={{ disconnected_password }}
@@ -60,15 +59,12 @@ echo """[[registry]]
 insecure = true
 location = \"$REGISTRY\"""" >> /etc/containers/registries.conf
 
-echo """[[registry]]
-prefix="docker.io"
-location = \"$REGISTRY\"""" >> /etc/containers/registries.conf
-echo {\"auths\": {\"$REGISTRY:5000\": {\"auth\": \"$KEY\", \"email\": \"jhendrix@karmalabs.corp\"}}} > /root/kubeadm_pull.json
+echo {\"auths\": {\"$REGISTRY\": {\"auth\": \"$KEY\", \"email\": \"jhendrix@karmalabs.corp\"}}} > /root/kubeadm_pull.json
 
 echo """[crio.image]
 global_auth_file = \"/root/kubeadm_pull.json\"
 pause_image_auth_file = \"/root/kubeadm_pull.json\"
-pause_image = \"$REGISTRY/pause:latest\"""" > /etc/crio/crio.conf.d/20-crio.conf
+pause_image = \"$REGISTRY/pause:latest\"""" > /etc/crio/crio.conf.d/00-crio.conf
 {% endif %}
 
 systemctl restart crio
