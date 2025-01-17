@@ -219,6 +219,24 @@ def create(config, plandir, cluster, overrides):
     if not os.path.exists(clusterdir):
         os.makedirs(clusterdir)
         os.mkdir(f"{clusterdir}/auth")
+    disconnected = data['disconnected']
+    disconnected_url = data['disconnected_url']
+    disconnected_reuse = data['disconnected_reuse']
+    disconnected_vm = data['disconnected_vm'] or (disconnected_url is None and disconnected)
+    if provider not in cloud_providers and disconnected_vm:
+        disconnected_vm = f"{data['disconnected_reuse_name'] or cluster}-registry"
+        pprint(f"Deploying disconnected vm {disconnected_vm}")
+        disconnected_plan = f"{plan}-reuse" if disconnected_reuse else plan
+        result = config.plan(disconnected_plan, inputfile=f'{plandir}/disconnected.yml', overrides=data)
+        if result['result'] != 'success':
+            return result
+        disconnected_ip, disconnected_vmport = _ssh_credentials(k, disconnected_vm)[1:]
+        urlcmd = "cat /root/url.txt"
+        urlcmd = ssh(disconnected_vm, ip=disconnected_ip, user='root', tunnel=config.tunnel,
+                     tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,
+                     insecure=True, cmd=urlcmd, vmport=disconnected_vmport)
+        disconnected_url = os.popen(urlcmd).read().strip()
+        data['disconnected_url'] = disconnected_url
     result = config.plan(plan, inputfile=f'{plandir}/bootstrap.yml', overrides=data)
     if result['result'] != "success":
         return result

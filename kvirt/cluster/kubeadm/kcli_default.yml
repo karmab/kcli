@@ -72,6 +72,7 @@ cluster_network_ipv4: 10.244.0.0/16
 service_network_ipv4: 10.96.0.0/12
 docker_user:
 docker_password:
+disconnected: false
 disconnected_image: centos9stream
 disconnected_ipv6_network: false
 disconnected_mac:

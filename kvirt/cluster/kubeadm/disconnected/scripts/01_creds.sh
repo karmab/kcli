@@ -9,6 +9,6 @@ echo {\"auths\": {\"$REGISTRY:5000\": {\"auth\": \"$KEY\", \"email\": \"jhendrix
 DOCKER_USER={{ docker_user }}
 DOCKER_PASSWORD={{ docker_password }}
 DOCKER_KEY=$(echo -n $DOCKER_USER:$DOCKER_PASSWORD | base64)
-jq ".auths += {\"docker.io:5000\": {\"auth\": \"$DOCKER_KEY\",\"email\": \"jhendrix@karmalabs.corp\"}}" < /root/kubeadm_pull.json > /root/temp.json
+jq ".auths += {\"docker.io\": {\"auth\": \"$DOCKER_KEY\",\"email\": \"jhendrix@karmalabs.corp\"}}" < /root/kubeadm_pull.json > /root/temp.json
 mv /root/temp.json /root/kubeadm_pull.json
 {% endif %}
