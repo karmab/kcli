@@ -1,6 +1,7 @@
 VERSION="$(curl -L -s https://dl.k8s.io/release/stable.txt)"
 # Ensure the version is in the format v<major>.<minor> regardless of the source
 VERSION=$(echo "v${VERSION#v}" | cut -d. -f1,2)
+echo $VERSION > /root/version.txt
 
 echo """[kubernetes]
 name=Kubernetes
@@ -35,6 +36,9 @@ curl -Ls https://raw.githubusercontent.com/romana/romana/master/containerize/spe
 curl -LO https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz
 tar xzvfC cilium-linux-amd64.tar.gz /usr/local/bin
 rm -f cilium-linux-amd64.tar.gz
+CILIUM_VERSION={{ sdn_version or "$(/usr/local/bin/cilium install --list-versions | grep default | cut -d' ' -f1)" }}
+CILIUM_IMAGES="quay.io/cilium/cilium quay.io/cilium/operator-generic quay.io/cilium/operator quay.io/cilium/clustermesh-apiserver quay.io/cilium/hubble-relay quay.io/cilium/docker-plugin"
+for image in $CILIUM_IMAGES ; do echo image: $image:$CILIUM_VERSION >> sdn.yml ; done
 {% endif %}
 
 sdn_images=$(grep image: sdn.yml | sed 's/.* image: //' | sed 's/@.*//' | sort -u)
@@ -46,5 +50,7 @@ curl -Lk https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deplo
 nginx_images=$(grep image: ingress.yml | sed 's/.* image: //' | sed 's/@.*//' | sort -u)
 for image in $nginx_images ; do sync_image.sh $image ; done
 
-extra_images='quay.io/karmab/autolabeller:multi ghcr.io/k8snetworkplumbingwg/multus-cni:snapshot-thick'
-for image in $extra_images ; do sync_image.sh $image ; done
+{% set kcli_images = ['quay.io/karmab/autolabeller:multi', 'ghcr.io/k8snetworkplumbingwg/multus-cni:snapshot-thick'] %}
+{% for image in kcli_images + extra_images|default([]) %}
+sync_image.sh {{ image }}
+{% endfor %}

@@ -17,9 +17,9 @@ DOMAIN={{ domain }}
 # initialize cluster
 CERTKEY={{ cert_key }}
 TOKEN={{ token }}
-K8SVERSION='{{ "--kubernetes-version %s" % minor_version if minor_version is defined else "" }}'
+K8S_VERSION='{{ "--kubernetes-version %s" % minor_version if minor_version is defined else "" }}'
 REGISTRY='{{ "--image-repository %s" % disconnected_url if disconnected_url != None else "" }}'
-kubeadm init --control-plane-endpoint "${API_IP}:6443" --pod-network-cidr $POD_CIDR --service-cidr $SERVICE_CIDR --certificate-key $CERTKEY --upload-certs --token $TOKEN --token-ttl 0 --apiserver-cert-extra-sans ${API_IP} $K8SVERSION $REGISTRY
+kubeadm init --control-plane-endpoint "${API_IP}:6443" --pod-network-cidr $POD_CIDR --service-cidr $SERVICE_CIDR --certificate-key $CERTKEY --upload-certs --token $TOKEN --token-ttl 0 --apiserver-cert-extra-sans ${API_IP} $K8S_VERSION $REGISTRY
 
 # config cluster credentials
 cp /etc/kubernetes/admin.conf /root/kubeconfig
@@ -60,7 +60,9 @@ kubectl apply -f https://raw.githubusercontent.com/romana/romana/master/containe
 curl -LO https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz
 tar xzvfC cilium-linux-amd64.tar.gz /usr/local/bin
 rm -f cilium-linux-amd64.tar.gz
-cilium install
+CILIUM_VERSION='{{ "--version %s" % sdn_version if sdn_version is defined else "" }}'
+CILIUM_REGISTRY='{{ "--helm-set=image.repository=%s/cilium --set image.useDigest=false" % disconnected_url if disconnected_url is defined else "" }}'
+cilium install $CILIUM_VERSION $CILIUM_REGISTRY
 {% endif %}
 {% endif %}
 
