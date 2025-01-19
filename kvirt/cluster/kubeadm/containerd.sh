@@ -44,6 +44,7 @@ cat > /etc/containerd/certs.d/$REGISTRY/hosts.toml << EOF
   skip_verify = true
 EOF
 {% endif %}
+
 {% if disconnected_url != None %}
 REGISTRY={{ disconnected_url }}
 REGISTRY_USER={{ disconnected_user }}
@@ -59,6 +60,19 @@ cat > /etc/containerd/certs.d/_default/hosts.toml << EOF
   [host."https://$REGISTRY".header]
     authorization = "Basic $KEY"
 EOF
+{% elif docker_user != None and docker_password != None %}
+REGISTRY_USER={{ docker_user }}
+REGISTRY_PASSWORD={{ docker_password }}
+KEY=$( echo -n $REGISTRY_USER:$REGISTRY_PASSWORD | base64)
+sed -i 's%config_path = .*%config_path = "/etc/containerd/certs.d"%' /etc/containerd/config.toml
+mkdir -p /etc/containerd/certs.d/docker.io
+cat > /etc/containerd/certs.d/docker.io/hosts.toml << EOF
+[host."https://registry-1.docker.io"]
+  capabilities = ["pull", "resolve"]
+  [host."https://registry-1.docker.io".header]
+    authorization = "Basic $KEY"
+EOF
 {% endif %}
+
 systemctl enable --now containerd || systemctl daemon-reload
 systemctl restart containerd

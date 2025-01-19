@@ -20,6 +20,8 @@ env:
  PLAN: ${{github.event.inputs.PLAN}}
  CLUSTERPROFILE: ${{github.event.inputs.CLUSTERPROFILE}}
  EXTRAPARAMS: ${{github.event.inputs.EXTRAPARAMS}}
+ DOCKER_USER: ${{ secrets.DOCKER_USERNAME }}
+ DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
 jobs:
     deploy-kubeadm:
@@ -30,4 +32,4 @@ jobs:
        - name: Install kcli
          run: curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
        - name: Deploy Kubeadm on libvirt
-         run: kcli create cluster generic -P clusterprofile=$CLUSTERPROFILE $EXTRAPARAMS $PLAN --force
+         run: kcli create cluster generic -P clusterprofile=$CLUSTERPROFILE $EXTRAPARAMS -P docker_user=$docker_user -P docker_password=$docker_password $PLAN --force

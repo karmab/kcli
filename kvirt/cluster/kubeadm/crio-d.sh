@@ -54,17 +54,25 @@ location = \"{{ api_ip }}\"""" >> /etc/containers/registries.conf
 REGISTRY={{ disconnected_url }}
 REGISTRY_USER={{ disconnected_user }}
 REGISTRY_PASSWORD={{ disconnected_password }}
-KEY=$( echo -n $REGISTRY_USER:$REGISTRY_PASSWORD | base64)
+KEY=$(echo -n $REGISTRY_USER:$REGISTRY_PASSWORD | base64)
 echo """[[registry]]
 insecure = true
 location = \"$REGISTRY\"""" >> /etc/containers/registries.conf
-
 echo {\"auths\": {\"$REGISTRY\": {\"auth\": \"$KEY\", \"email\": \"jhendrix@karmalabs.corp\"}}} > /root/kubeadm_pull.json
-
 echo """[crio.image]
 global_auth_file = \"/root/kubeadm_pull.json\"
 pause_image_auth_file = \"/root/kubeadm_pull.json\"
 pause_image = \"$REGISTRY/pause:latest\"""" > /etc/crio/crio.conf.d/00-crio.conf
+{% elif docker_user != None and docker_password != None %}
+REGISTRY_USER={{ docker_user }}
+REGISTRY_PASSWORD={{ docker_password }}
+KEY=$(echo -n $REGISTRY_USER:$REGISTRY_PASSWORD | base64)
+echo """[[registry]]
+insecure = true
+location = \"registry-1.docker.io\"""" >> /etc/containers/registries.conf
+echo {\"auths\": {\"registry-1.docker.io\": {\"auth\": \"$KEY\", \"email\": \"jhendrix@karmalabs.corp\"}}} > /root/kubeadm_pull.json
+echo """[crio.image]
+global_auth_file = \"/root/kubeadm_pull.json\"""" > /etc/crio/crio.conf.d/00-crio.conf
 {% endif %}
 
 systemctl restart crio

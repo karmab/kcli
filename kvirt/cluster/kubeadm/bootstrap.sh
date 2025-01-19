@@ -38,10 +38,6 @@ kubectl taint nodes --all node-role.kubernetes.io/control-plane-
 {% if sdn == 'flannel' %}
 FLANNEL_VERSION={{ 'flannel-io/flannel'|github_version(flannel_version) }}
 curl -Ls https://raw.githubusercontent.com/flannel-io/flannel/$FLANNEL_VERSION/Documentation/kube-flannel.yml | sed "s@10.244.0.0/16@$POD_CIDR@" | kubectl apply -f -
-{% if docker_user != None and docker_password != None %}
-kubectl -n kube-flannel create secret docker-registry docker --docker-server=https://index.docker.io/v1/ --docker-username={{ docker_user }} --docker-password={{ docker_password }} --docker-email=jhendrix@karmalabs.corp
-kubectl -n kube-flannel patch serviceaccount flannel -p '{"imagePullSecrets": [{"name": "docker"}]}'
-{% endif %}
 {% elif sdn == 'weavenet' %}
 kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=`kubectl version | base64 | tr -d '\n'`"
 {% elif sdn == 'calico' %}
