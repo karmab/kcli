@@ -39,6 +39,7 @@ rm -f cilium-linux-amd64.tar.gz
 CILIUM_VERSION={{ sdn_version or "$(/usr/local/bin/cilium install --list-versions | grep default | cut -d' ' -f1)" }}
 CILIUM_IMAGES="quay.io/cilium/cilium quay.io/cilium/operator-generic quay.io/cilium/operator quay.io/cilium/clustermesh-apiserver quay.io/cilium/hubble-relay quay.io/cilium/docker-plugin"
 for image in $CILIUM_IMAGES ; do echo image: $image:$CILIUM_VERSION >> sdn.yml ; done
+echo image: quay.io/cilium/cilium-envoy:latest >> sdn.yml
 {% endif %}
 
 sdn_images=$(grep image: sdn.yml | sed 's/.* image: //' | sed 's/@.*//' | sort -u)
