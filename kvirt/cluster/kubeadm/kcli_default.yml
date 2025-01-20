@@ -33,6 +33,7 @@ nfs: true
 nfs_dynamic: false
 nfs_pv_size: 30
 sdn: flannel
+sdn_version:
 ingress: true
 ingress_method: nginx
 policy_as_code: false

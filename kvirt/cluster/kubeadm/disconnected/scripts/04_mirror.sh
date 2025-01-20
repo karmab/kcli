@@ -42,7 +42,7 @@ for image in $CILIUM_IMAGES ; do echo image: $image:$CILIUM_VERSION >> sdn.yml ;
 echo image: quay.io/cilium/cilium-envoy:latest >> sdn.yml
 {% endif %}
 
-sdn_images=$(grep image: sdn.yml | sed 's/.* image: //' | sed 's/@.*//' | sort -u)
+sdn_images=$(grep image: sdn.yml | sed 's/image: //' | sed 's/@.*//' | sort -u)
 for image in $sdn_images ; do sync_image.sh $image ; done
 {% endif %}
 
