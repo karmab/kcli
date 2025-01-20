@@ -962,8 +962,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         update_pull_secret(pull_secret, disconnected_url, disconnected_user, disconnected_password)
         data['ori_tag'] = tag
         if '/' not in str(tag):
-            minor = get_installer_minor(INSTALLER_VERSION)
-            tag = f'{disconnected_url}/openshift-release-dev/ocp-release:4.{minor}-{arch}'
+            tag = f'{disconnected_url}/openshift-release-dev/ocp-release:{INSTALLER_VERSION}-{arch}'
             os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = tag
         if 'ca' not in data and 'quay.io' not in disconnected_url:
             pprint(f"Trying to gather registry ca cert from {disconnected_url}")
@@ -1096,7 +1095,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             os.system(scpcmd)
         patch_oc_mirror(clusterdir)
         os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = disconnected_version
-        pprint(f"Setting OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to {disconnected_version}")
     data['pull_secret_path'] = pull_secret
     data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
     if disconnected_url is not None:
