@@ -306,7 +306,7 @@ def get_downstream_installer(version='stable', macosx=False, tag=None, debug=Fal
     try:
         r = urlopen(f"{url}/release.txt").readlines()
     except:
-        error(f"Couldn't open url {url}")
+        error(f"Couldn't open url {url}/release.txt")
         return 1
     version = None
     for line in r:
