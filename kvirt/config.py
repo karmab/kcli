@@ -76,7 +76,7 @@ class Kconfig(Kbaseconfig):
                 KUBEVIRT_EMBED_USERDATA = os.environ.get("KUBEVIRT_EMBED_USERDATA")
                 KUBEVIRT_HARVESTER = os.environ.get("KUBEVIRT_HARVESTER")
                 KUBEVIRT_EMBED_USERDATA = os.environ.get("KUBEVIRT_EMBED_USERDATA")
-                KUBEVIRT_REGISTRY = os.environ.get("KUBEVIRT_REGISTRY")
+                KUBEVIRT_REGISTRY = os.environ.get("KUBEVIRT_REGISTRY") or os.environ.get("DISCONNECTED_URL")
                 readwritemany = KUBEVIRT_READWRITEMANY or options.get('readwritemany', KUBEVIRT['readwritemany'])
                 disk_hotplug = KUBEVIRT_DISK_HOTPLUG or options.get('disk_hotplug', KUBEVIRT['disk_hotplug'])
                 access_mode = KUBEVIRT_ACCESS_MODE or options.get('access_mode', KUBEVIRT['access_mode'])
