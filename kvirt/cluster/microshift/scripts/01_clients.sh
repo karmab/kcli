@@ -3,7 +3,7 @@
 MAJOR={{ 8 if 'rhel8' in image else 9 }}
 {% set tag_str = tag|string %}
 
-{% if version in ['dev-preview', 'nightly'] %}
+{% if version in ['candidate', 'nightly'] %}
 PREFIX={{ 'ocp-dev-preview' if nightly else 'ocp' }}
 TAG={{ tag if tag_str.split('.')|length > 2 else "latest-" + tag_str }}
 echo """[microshift-dev-preview]

@@ -13,7 +13,7 @@ mirror:
     release: registry.ci.openshift.org/ocp/release:{{ tag }}
 {% else %}
     channels:
-    - name: {{ 'candidate' if version == 'dev-preview' else 'stable' }}-{{ release }}
+    - name: {{ version }}-{{ release }}
 {% if tag|count('.') > 1 %}
       minVersion: {{ disconnected_extra_release|default(tag)|min_ocp_version(tag) }}
       maxVersion: {{ disconnected_extra_release|default(tag)|max_ocp_version(tag) }}

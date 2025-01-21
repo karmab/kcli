@@ -381,7 +381,7 @@ def create(config, plandir, cluster, overrides):
     workers = data.get('workers')
     use_management_version = False
     version = data.get('version')
-    if version not in ['dev-preview', 'stable', 'ci', 'nightly', 'latest', 'cluster']:
+    if version not in ['candidate', 'stable', 'ci', 'nightly', 'latest', 'cluster']:
         return {'result': 'failure', 'reason': f"Invalid version {version}"}
     elif version == 'cluster':
         use_management_version = True
@@ -494,7 +494,7 @@ def create(config, plandir, cluster, overrides):
         tag = os.popen("oc get clusterversion version -o jsonpath='{.status.desired.version}'").read()
         pprint(f"Using tag {tag}")
         if 'ec' in tag:
-            version = 'dev-preview'
+            version = 'candidate'
     elif supported_data is not None:
         supported_data = supported_data['data']
         supported_versions = supported_versions = supported_data['supported-versions']
@@ -737,7 +737,7 @@ def create(config, plandir, cluster, overrides):
     else:
         if use_management_version:
             assetsdata['hosted_image'] = management_image
-        elif version in ['dev-preview', 'stable', 'ci', 'nightly', 'latest']:
+        elif version in ['candidate', 'stable', 'ci', 'nightly', 'latest']:
             assetsdata['hosted_image'] = offline_image(version=version, tag=tag, pull_secret=pull_secret)
         else:
             return {'result': 'failure', 'reason': f"Invalid version {version}"}
@@ -752,7 +752,7 @@ def create(config, plandir, cluster, overrides):
         if version in ['ci', 'nightly']:
             nightly = version == 'nigthly'
             run = get_ci_installer(pull_secret, tag=tag, nightly=nightly)
-        elif version in ['dev-preview', 'stable', 'latest']:
+        elif version in ['candidate', 'stable', 'latest']:
             run = get_downstream_installer(version=version, tag=tag, pull_secret=pull_secret)
         else:
             return {'result': 'failure', 'reason': f"Invalid version {version}"}

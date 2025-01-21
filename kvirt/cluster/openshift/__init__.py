@@ -227,8 +227,8 @@ def offline_image(version='stable', tag=OPENSHIFT_TAG, pull_secret='openshift_pu
                 offline = line.replace('Pull From: ', '').strip()
                 break
         return offline
-    ocp_repo = 'ocp-dev-preview' if version == 'dev-preview' else 'ocp'
-    if version in ['dev-preview', 'stable']:
+    ocp_repo = 'ocp-dev-preview' if version == 'candidate' else 'ocp'
+    if version in ['candidate', 'stable']:
         baselink = 'stable' if version == 'stable' else 'latest'
         target = tag if len(str(tag).split('.')) > 2 else f'{baselink}-{tag}'
         url = f"https://mirror.openshift.com/pub/openshift-v4/clients/{ocp_repo}/{target}/release.txt"
@@ -289,15 +289,14 @@ def get_downstream_installer(version='stable', macosx=False, tag=None, debug=Fal
         if debug:
             pprint(cmd)
         return call(cmd, shell=True)
-    baselinks = {'stable': 'stable', 'dev-preview': 'candidate'}
     arch_map = {'aarch64': 'arm64', 's390x': 's390x'}
     arch = os.uname().machine
     arch = arch_map.get(arch, arch)
-    repo = 'ocp-dev-preview' if version == 'dev-preview' else 'ocp'
+    repo = 'ocp-dev-preview' if version == 'candidate' else 'ocp'
     if tag is None:
         repo += '/{version}'
     elif str(tag).count('.') == 1:
-        baselink = baselinks.get(version, 'latest')
+        baselink = version if version in ['stable', 'candidate'] else 'latest'
         repo += f'/{baselink}-{tag}'
     else:
         repo += f"/{tag.replace('-x86_64', '')}"
@@ -328,7 +327,7 @@ def get_downstream_installer(version='stable', macosx=False, tag=None, debug=Fal
 
 def get_upstream_installer(tag, version='stable', debug=False):
     if 'quay.io' not in str(tag) and 'registry.ci.openshift.org' not in str(tag):
-        if version == 'dev-preview':
+        if version == 'candidate':
             url = "https://amd64.origin.releases.ci.openshift.org/api/v1/releasestream/4-scos-next/latest"
         elif version in ['ci', 'nightly']:
             url = f"https://amd64.origin.releases.ci.openshift.org/api/v1/releasestream/{tag}.0-0.okd-scos/latest"
@@ -774,7 +773,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if os.path.exists('coreos-installer'):
         pprint("Removing old coreos-installer")
         os.remove('coreos-installer')
-    if version not in ['ci', 'dev-preview', 'nightly', 'stable']:
+    if version not in ['ci', 'candidate', 'nightly', 'stable']:
         return {'result': 'failure', 'reason': f"Incorrect version {version}"}
     else:
         pprint(f"Using {version} version")
@@ -889,7 +888,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if not os.path.exists(pull_secret):
         return {'result': 'failure', 'reason': f"Missing pull secret file {pull_secret}"}
     if prega:
-        if version not in ['dev-preview', 'ci']:
+        if version not in ['candidate', 'ci']:
             return {'result': 'failure', 'reason': f"Invalid version {version} for prega"}
         if 'quay.io/prega' not in open(os.path.expanduser(pull_secret)).read():
             return {'result': 'failure', 'reason': "entry for quay.io/prega missing in pull secret"}
@@ -938,7 +937,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if version in ['ci', 'nightly'] or '/' in str(tag):
             nightly = version == 'nightly'
             run = get_ci_installer(pull_secret, tag=tag, nightly=nightly)
-        elif version in ['dev-preview', 'stable', 'latest']:
+        elif version in ['candidate', 'stable', 'latest']:
             run = get_downstream_installer(version=version, tag=tag, pull_secret=pull_secret)
         else:
             return {'result': 'failure', 'reason': f"Invalid version {version}"}

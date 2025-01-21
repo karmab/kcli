@@ -5,7 +5,7 @@ info: |
     When running on cloud platforms, loadbalancer and dns from the platform are used.
     Otherwise, extra static pods (coredns with mdns, keepalived and haproxy) are deployed on the nodes to provide a self contained platform.
     flags exist to disable those components if you are already meeting requirements
-    Default version is stable but you can use dev-preview, nightly or ci instead, for which you will need a specific pull secret.
+    Default version is stable but you can use candidate, nightly or ci instead, for which you will need a specific pull secret.
     When providing a DNS domain, either use one with correct DNS entries or with fake ones, avoid .com domain
     Sdn defaults to OVNKubernetes but OpenShiftSDN, Cilium or Calico can be selected.
     To avoid keepalived collision, you can force virtual_router_id. Otherwise, the id is calculated from cluster variable.

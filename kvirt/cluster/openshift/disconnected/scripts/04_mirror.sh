@@ -27,14 +27,14 @@ TAG={{ prefix + '-' + tag }}
 curl -Ls https://mirror.openshift.com/pub/openshift-v4/clients/ocp/$TAG/release.txt > /tmp/release.txt
 OCP_RELEASE=$(grep 'Name:' /tmp/release.txt | awk -F ' ' '{print $2}')-x86_64
 
-{% elif version == 'dev-preview' %}
+{% elif version == 'candidate' %}
 curl -Ls https://mirror.openshift.com/pub/openshift-v4/clients/ocp-dev-preview/{{ tag }}/release.txt > /tmp/release.txt
 OCP_RELEASE=$(grep 'Name:' /tmp/release.txt | awk -F ' ' '{print $2}')-x86_64
 {% endif %}
 
 {% if version == 'ci' %}
 {% set namespace = 'ocp/release' %}
-{% elif version == 'dev-preview' %}
+{% elif version == 'candidate' %}
 {% set namespace = 'openshift/release-images' %}
 {% else %}
 {% set namespace = 'openshift-release-dev/ocp-release' %}
