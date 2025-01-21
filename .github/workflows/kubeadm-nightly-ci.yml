@@ -22,6 +22,6 @@ jobs:
        - name: Install kcli
          run: curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
        - name: Deploy Kubeadm on libvirt
-         run: kcli create cluster generic -P clusterprofile=$CLUSTERPROFILE $EXTRAPARAMS -P docker_user=$DOCKER_USER -P docker_password = $DOCKER_PASSWORD $CLUSTER --force
+         run: kcli create cluster generic -P clusterprofile=$CLUSTERPROFILE $EXTRAPARAMS -P docker_user=$DOCKER_USER -P docker_password=$DOCKER_PASSWORD $CLUSTER --force
        - name: Clean everything after success
          run:  kcli delete cluster --yes $CLUSTER
