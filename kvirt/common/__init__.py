@@ -2570,7 +2570,10 @@ def sdn_ip(ip, kubetype, cluster_network):
     return kubetype is not None and kubetype == 'openshift' and ip_address(ip) in ip_network(cluster_network)
 
 
-def get_kubetype():
+def get_kubetype(overrides):
+    kubetype = overrides.get('kubetype') or overrides.get('type')
+    if kubetype is not None:
+        return kubetype
     kubectl = which('kubectl') or which('oc')
     openshift_command = f'{kubectl} get project 2>/dev/null'
     cloud_command = f'{kubectl} cluster-info'

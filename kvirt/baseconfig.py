@@ -971,7 +971,7 @@ class Kbaseconfig:
         self.info_plan(inputfile, quiet=quiet, web=web)
 
     def create_app(self, app, overrides={}, outputdir=None):
-        kubetype = overrides.get('kubetype') or get_kubetype()
+        kubetype = get_kubetype(overrides)
         if kubetype == 'openshift':
             return self.create_app_openshift(app, overrides, outputdir)
         elif kubetype == 'eks':
@@ -1014,7 +1014,7 @@ class Kbaseconfig:
             return common.create_app_openshift(self, app, appdir, app_data, outputdir)
 
     def delete_app(self, app, overrides={}):
-        kubetype = overrides.get('kubetype') or get_kubetype()
+        kubetype = get_kubetype(overrides)
         if kubetype == 'openshift':
             return self.delete_app_openshift(app, overrides)
         elif kubetype == 'eks':
@@ -1047,7 +1047,7 @@ class Kbaseconfig:
             return common.delete_app_openshift(self, app, appdir, app_data)
 
     def info_app(self, app, overrides={}):
-        kubetype = overrides.get('kubetype') or get_kubetype()
+        kubetype = get_kubetype(overrides)
         if kubetype == 'openshift':
             return self.info_app_openshift(app, overrides)
         elif kubetype == 'eks':
@@ -1093,7 +1093,7 @@ class Kbaseconfig:
                 print(f.read().strip())
 
     def list_apps(self, quiet=True, installed=False, overrides={}):
-        kubetype = overrides.get('kubetype') or get_kubetype()
+        kubetype = get_kubetype(overrides)
         if kubetype == 'openshift':
             return self.list_apps_openshift(quiet=quiet, installed=installed)
         elif kubetype == 'eks':
