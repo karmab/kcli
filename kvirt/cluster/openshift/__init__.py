@@ -116,7 +116,7 @@ def update_registry(config, plandir, cluster, data):
         os.mkdir(dockerdir)
     copy2(pull_secret_path, f"{dockerdir}/config.json")
     olmcmd = f"oc-mirror --v2 --workspace file://{clusterdir} --config {clusterdir}/mirror-config.yaml "
-    olmcmd += " docker://{disconnected_url}"
+    olmcmd += f" docker://{disconnected_url}"
     pprint(f"Running {olmcmd}")
     call(olmcmd, shell=True)
     for catalogsource in glob(f"{clusterdir}/working-dir/cluster-resources/cs*"):
