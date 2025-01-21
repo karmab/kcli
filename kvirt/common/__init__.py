@@ -2600,7 +2600,7 @@ def detect_openshift_version(tag, OPENSHIFT_TAG):
     if 'rc' in tag:
         version = 'stable'
     elif '0-ec.' in str(tag):
-        version = 'dev-preview'
+        version = 'candidate'
     elif int(str(tag).split('.')[1]) > int(OPENSHIFT_TAG.split('.')[1]):
         version = 'ci'
     else:

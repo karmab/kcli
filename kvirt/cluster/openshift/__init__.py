@@ -887,11 +887,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 public_api_ip = k.create_network_port(f"{cluster}-vip", network, ip=api_ip, floating=True)['floating']
     if not os.path.exists(pull_secret):
         return {'result': 'failure', 'reason': f"Missing pull secret file {pull_secret}"}
-    if prega:
-        if version not in ['candidate', 'ci']:
-            return {'result': 'failure', 'reason': f"Invalid version {version} for prega"}
-        if 'quay.io/prega' not in open(os.path.expanduser(pull_secret)).read():
-            return {'result': 'failure', 'reason': "entry for quay.io/prega missing in pull secret"}
+    if prega and 'quay.io/prega' not in open(os.path.expanduser(pull_secret)).read():
+        return {'result': 'failure', 'reason': "entry for quay.io/prega missing in pull secret"}
     if virtualization_nightly and 'quay.io/openshift-cnv' not in open(os.path.expanduser(pull_secret)).read():
         return {'result': 'failure', 'reason': "entry for quay.io/openshift-cnv missing in pull secret"}
     if which('oc') is None:
