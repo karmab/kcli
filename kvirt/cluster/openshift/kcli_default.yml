@@ -101,6 +101,7 @@ disconnected_mac:
 disconnected_extra_images: []
 disconnected_extra_catalogs: []
 disconnected_extra_releases: []
+disconnected_prefix:
 ca:
 ipv6: false
 dualstack: false

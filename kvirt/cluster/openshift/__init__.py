@@ -962,7 +962,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         update_pull_secret(pull_secret, disconnected_url, disconnected_user, disconnected_password)
         data['ori_tag'] = tag
         if '/' not in str(tag):
-            tag = f'{disconnected_url}/openshift-release-dev/ocp-release:{INSTALLER_VERSION}-{arch}'
+            disconnected_prefix = data['disconnected_prefix'] or 'openshift-release-dev/ocp-release'
+            tag = f'{disconnected_url}/{disconnected_prefix}:{INSTALLER_VERSION}-{arch}'
             os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = tag
         if 'ca' not in data and 'quay.io' not in disconnected_url:
             pprint(f"Trying to gather registry ca cert from {disconnected_url}")
