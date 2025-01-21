@@ -3156,6 +3156,7 @@ class Kconfig(Kbaseconfig):
 
     def create_openshift_registry(self, plan, overrides={}):
         data = overrides
+        data['OPENSHIFT_TAG'] = OPENSHIFT_TAG
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         cluster = data.get('cluster', 'myopenshift')
         upstream = data.get('upstream', False)

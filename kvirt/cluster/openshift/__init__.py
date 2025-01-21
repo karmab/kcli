@@ -108,6 +108,7 @@ def update_registry(config, plandir, cluster, data):
     mirror_data['tag'] = tag
     extra_images = data.get('disconnected_extra_images', [])
     mirror_data['extra_images'] = extra_images
+    mirror_data['OPENSHIFT_TAG'] = OPENSHIFT_TAG
     mirrorconf = config.process_inputfile(cluster, f"{plandir}/disconnected/mirror-config.yaml", overrides=mirror_data)
     with open(f"{clusterdir}/mirror-config.yaml", 'w') as f:
         f.write(mirrorconf)
@@ -1049,6 +1050,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
         disconnected_plan = f"{plan}-reuse" if disconnected_reuse else plan
         disconnected_overrides = data.copy()
+        disconnected_overrides['OPENSHIFT_TAG'] = OPENSHIFT_TAG
         disconnected_overrides['kube'] = f"{cluster}-reuse" if disconnected_reuse else cluster
         disconnected_overrides['openshift_version'] = INSTALLER_VERSION
         disconnected_overrides['disconnected_operators_version'] = f"4.{INSTALLER_VERSION.split('.')[1]}"
@@ -1100,7 +1102,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     data['pull_secret'] = re.sub(r"\s", "", open(pull_secret).read())
     if disconnected_url is not None:
         if disconnected_update and disconnected_url != 'quay.io':
-            data['release_tag'] = f'4.{get_installer_minor(INSTALLER_VERSION)}'
+            data['release_tag'] = f'v4.{get_installer_minor(INSTALLER_VERSION)}'
             update_registry(config, plandir, cluster, data)
         key = f"{disconnected_user}:{disconnected_password}"
         key = str(b64encode(key.encode('utf-8')), 'utf-8')
