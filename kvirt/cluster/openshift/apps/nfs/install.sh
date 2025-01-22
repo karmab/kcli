@@ -36,8 +36,8 @@ oc adm policy add-scc-to-user hostmount-anyuid system:serviceaccount:$NAMESPACE:
 
 {% if nfs_disconnected_registry != None %}
  echo sync registry.k8s.io/sig-storage/nfs-subdir-external-provisioner:v4.0.2 to your registry
- REGISTRY_NAME={{ nfs_disconnected_registry }}
- sed -i "s@registry.k8s.io@$REGISTRY_NAME:5000@" $BASEDIR/deploy/deployment.yaml
+ REGISTRY={{ nfs_disconnected_registry }}
+ sed -i "s@registry.k8s.io@$REGISTRY:5000@" $BASEDIR/deploy/deployment.yaml
 {% endif %}
 
 sed -i -e "s@registry.k8s.io/nfs-subdir-external-provisioner@storage.io/nfs@" -e "s@10.3.243.101@$IP@" -e "s@/ifs/kubernetes@$SHARE@" $BASEDIR/deploy/deployment.yaml

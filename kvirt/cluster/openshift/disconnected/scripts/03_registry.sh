@@ -2,8 +2,8 @@ export PATH=/root/bin:$PATH
 export PULL_SECRET=/root/openshift_pull.json
 export REGISTRY_IMAGE=quay.io/karmab/registry:latest
 IP=$(ip -o addr show eth0 | grep -v '169.254\|fe80::' | tail -1 | awk '{print $4}' | cut -d'/' -f1)
-REGISTRY_NAME=$(echo $IP | sed 's/\./-/g' | sed 's/:/-/g').sslip.io
-echo $REGISTRY_NAME:5000 > /root/url.txt
+REGISTRY=$(echo $IP | sed 's/\./-/g' | sed 's/:/-/g').sslip.io
+echo $REGISTRY:5000 > /root/url.txt
 REGISTRY_USER={{ disconnected_user }}
 REGISTRY_PASSWORD={{ disconnected_password }}
 mkdir -p /opt/registry/{auth,certs,data,conf}
@@ -32,7 +32,7 @@ compatibility:
   schema1:
     enabled: true
 EOF
-openssl req -newkey rsa:4096 -nodes -sha256 -keyout /opt/registry/certs/domain.key -x509 -days 3650 -out /opt/registry/certs/domain.crt -subj "/C=US/ST=Madrid/L=Chamberi/O=Karmalabs/OU=Guitar/CN=$REGISTRY_NAME" -addext "subjectAltName=DNS:$REGISTRY_NAME"
+openssl req -newkey rsa:4096 -nodes -sha256 -keyout /opt/registry/certs/domain.key -x509 -days 3650 -out /opt/registry/certs/domain.crt -subj "/C=US/ST=Madrid/L=Chamberi/O=Karmalabs/OU=Guitar/CN=$REGISTRY" -addext "subjectAltName=DNS:$REGISTRY"
 if [ "$(which dnf)" != "" ] ; then
  cp /opt/registry/certs/domain.crt /etc/pki/ca-trust/source/anchors/
  update-ca-trust extract
