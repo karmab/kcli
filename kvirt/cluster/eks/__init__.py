@@ -199,7 +199,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     access_key_id, access_key_secret, session_token, region = project_init(config)
     account_id = k.get_account_id()
     if ctlplane_role is not None:
-        pprint("Assuming ctlplane_role {ctlplane_role} has the correct policies")
+        pprint(f"Assuming ctlplane_role {ctlplane_role} has the correct policies")
         ctlplane_role = f'arn:aws:iam::{account_id}:role/{ctlplane_role}'
     else:
         ctlplane_role_name = 'kcli-eks-ctlplane'
@@ -207,10 +207,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             pprint(f"Creating ctlplane role {ctlplane_role_name}")
             k.create_eks_role(ctlplane_role_name, CTLPLANE_POLICIES)
         ctlplane_role = f'arn:aws:iam::{account_id}:role/{ctlplane_role_name}'
-    pprint(f"Using ctlplane role {ctlplane_role_name}")
+    pprint(f"Using ctlplane role {os.path.basename(ctlplane_role)}")
     cluster_data['roleArn'] = ctlplane_role
     if worker_role is not None:
-        pprint("Assuming worker_role {worker_role} has the correct policies")
+        pprint(f"Assuming worker_role {worker_role} has the correct policies")
         worker_role = f'arn:aws:iam::{account_id}:role/{worker_role}'
     else:
         worker_role_name = 'kcli-eks-worker'
@@ -218,7 +218,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             pprint(f"Creating worker role {worker_role_name}")
             k.create_eks_role(worker_role_name, WORKER_POLICIES)
         worker_role = f'arn:aws:iam::{account_id}:role/{worker_role_name}'
-    pprint(f"Using worker role {worker_role_name}")
+    pprint(f"Using worker role {os.path.basename(worker_role)}")
     subnetids = []
     total_subnets = [network] + extra_networks
     for index, n in enumerate(total_subnets):
