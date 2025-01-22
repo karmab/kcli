@@ -83,5 +83,6 @@ def _put(subresource, data, debug=False):
 def _create_secret(kubectl, name, namespace, data, field='userdata'):
     with NamedTemporaryFile(mode='w+') as tmp:
         tmp.write(data)
+        tmp.flush()
         cmd = f"{kubectl} -n {namespace} create secret generic --from-file={field}={tmp.name} -o yaml {name}"
         return yaml.safe_load(os.popen(cmd).read())
