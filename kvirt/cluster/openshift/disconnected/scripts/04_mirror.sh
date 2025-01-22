@@ -5,7 +5,7 @@ cd $HOME
 export PATH=/root/bin:$PATH
 export PULL_SECRET=/root/openshift_pull.json
 IP=$(ip -o addr show eth0 | grep -v '169.254\|fe80::' | tail -1 | awk '{print $4}' | cut -d'/' -f1)
-REGISTRY={{ disconnected_vm_name or "$(echo $IP | sed 's/\./-/g' | sed 's/:/-/g').sslip.io" }}
+REGISTRY=$(echo $IP | sed 's/\./-/g' | sed 's/:/-/g').sslip.io
 
 # Add extra registry keys
 curl -Lo /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-isv https://www.redhat.com/security/data/55A34A82.txt
@@ -42,8 +42,8 @@ OCP_RELEASE=$(grep 'Name:' /tmp/release.txt | awk -F ' ' '{print $2}')-x86_64
 NAMESPACE={{ namespace }}
 echo $REGISTRY:5000/$NAMESPACE:$OCP_RELEASE > /root/version.txt
 
-REGISTRY_USER={{ disconnected_user or "dummy" }}
-REGISTRY_PASSWORD={{ disconnected_password or "dummy" }}
+REGISTRY_USER={{ disconnected_user }}
+REGISTRY_PASSWORD={{ disconnected_password }}
 podman login -u $REGISTRY_USER -p $REGISTRY_PASSWORD $REGISTRY:5000
 REDHAT_CREDS=$(cat /root/openshift_pull.json | jq .auths.\"registry.redhat.io\".auth -r | base64 -d)
 RHN_USER=$(echo $REDHAT_CREDS | cut -d: -f1)

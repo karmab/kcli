@@ -1078,10 +1078,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         disconnected_url = os.popen(urlcmd).read().strip()
         overrides['disconnected_url'] = disconnected_url
         data['disconnected_url'] = disconnected_url
-        if disconnected_user is None:
-            disconnected_user = 'dummy'
-        if disconnected_password is None:
-            disconnected_password = 'dummy'
         versioncmd = "cat /root/version.txt"
         versioncmd = ssh(disconnected_vm, ip=disconnected_ip, user='root', tunnel=config.tunnel,
                          tunnelhost=config.tunnelhost, tunnelport=config.tunnelport, tunneluser=config.tunneluser,

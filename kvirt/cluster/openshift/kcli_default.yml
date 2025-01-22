@@ -72,7 +72,6 @@ extra_worker_networks: []
 disconnected_url:
 disconnected: false
 disconnected_vm: false
-disconnected_vm_name:
 disconnected_update: false
 disconnected_haproxy: false
 disconnected_reuse: false
@@ -81,8 +80,8 @@ disconnected_reuse_name:
 disconnected_default_network: default
 disconnected_image: centos9stream
 disconnected_disk_size: 100
-disconnected_user:
-disconnected_password:
+disconnected_user: dummy
+disconnected_password: dummy
 disconnected_operators_all: false
 disconnected_operators: []
 disconnected_operators_version:
