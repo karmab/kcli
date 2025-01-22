@@ -326,6 +326,8 @@ To use this provider with kcli rpm, you’ll need to install
 
    dnf -y install python3-boto3
 
+see `AWS EKS workflow <./EKS-kcli.rst>`__ for an example process
+
 Azure
 -----
 
@@ -339,7 +341,7 @@ Azure
     secret: xxxxxxxxxxyyyyyyyy
     location: westus
 
-The following parameters are specific to aws:
+The following parameters are specific to azure:
 
 -  ``subscription_id``
 -  ``app_id``
@@ -1771,6 +1773,8 @@ For all the platforms, the workflow is the following:
 -  launch the specific subcommand. For instance, to deploy a generic Kubernetes cluster, one would use ``kcli create cluster generic --pf my_parameters.yml  $cluster``. Parameter files can be repeated and combined with specific parameters on the command line, which always take precedence.
 -  Once the installation finishes, set the following environment variable in order to interact with the csluter ``export KUBECONFIG=$HOME/.kcli/clusters/$cluster/auth/kubeconfig``
 
+see `AWS EKS workflow <./EKS-kcli.rst>`__ for an example EKS process
+
 Getting information on available parameters
 -------------------------------------------
 
@@ -2071,6 +2075,8 @@ For instance, to deploy a GKE cluster, you would use
    kcli create cluster gke mygke
 
 Note that on those platforms, we rely more on default values provided by the Platform
+
+see `AWS EKS workflow <./EKS-kcli.rst>`__ for an example EKS process.
 
 Deploying applications on top of Kubernetes/OpenShift
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
