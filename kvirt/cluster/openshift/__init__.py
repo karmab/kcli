@@ -120,9 +120,13 @@ def update_registry(config, plandir, cluster, data):
     olmcmd += f" docker://{disconnected_url}"
     pprint(f"Running {olmcmd}")
     call(olmcmd, shell=True)
-    for catalogsource in glob(f"{clusterdir}/working-dir/cluster-resources/cs*"):
-        pprint(f"Injecting catalogsource {catalogsource}")
-        copy2(catalogsource, clusterdir)
+    patch_oc_mirror(clusterdir)
+    for manifest in glob(f"{clusterdir}/cs-*.yaml") + glob(f"{clusterdir}/*oc-mirror*.yaml"):
+        if os.stat(manifest).st_size == 0:
+            warning(f"Skipping empty file {manifest}")
+        else:
+            pprint(f"Injecting manifest {manifest}")
+            copy2(manifest, clusterdir)
 
 
 def create_ignition_files(config, plandir, cluster, domain, api_ip=None, bucket_url=None, ignition_version=None):
@@ -1168,11 +1172,14 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             pprint(f"Injecting manifest {f}")
             with open(f'{clusterdir}/openshift/{f}', 'w') as f:
                 f.write(content)
-    for yamlfile in glob(f"{clusterdir}/*.yaml"):
-        if os.stat(yamlfile).st_size == 0:
-            warning(f"Skipping empty file {yamlfile}")
-        elif yamlfile.startswith(f'{clusterdir}/cs-') or 'oc-mirror' in yamlfile:
-            copy2(yamlfile, f"{clusterdir}/openshift")
+    for manifest in glob(f"{clusterdir}/*.yaml"):
+        if os.stat(manifest).st_size == 0:
+            warning(f"Skipping empty manifest {manifest}")
+        elif manifest.startswith(f'{clusterdir}/cs-') or 'oc-mirror' in manifest:
+            pprint(f"Injecting manifest {manifest}")
+            copy2(manifest, f"{clusterdir}/openshift")
+    if disconnected_operators:
+        copy2(f'{plandir}/99-operatorhub.yaml', f"{clusterdir}/openshift")
     network_type = data['network_type']
     if network_type == 'Calico':
         calico_version = data['calico_version']
@@ -1203,12 +1210,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             f.write(ovn_data)
     if workers == 0 or not mdns or kubevirt_api_service:
         copy2(f'{plandir}/cluster-scheduler-02-config.yml', f"{clusterdir}/manifests")
-    if disconnected_operators:
-        if os.path.exists(f'{clusterdir}/imageContentSourcePolicy.yaml'):
-            copy2(f'{clusterdir}/imageContentSourcePolicy.yaml', f"{clusterdir}/openshift")
-        if os.path.exists(f'{clusterdir}/catalogsource.yaml'):
-            copy2(f'{clusterdir}/catalogsource.yaml', f"{clusterdir}/openshift")
-        copy2(f'{plandir}/99-operatorhub.yaml', f"{clusterdir}/openshift")
     if 'sslip' in domain:
         ingress_sslip_data = config.process_inputfile(cluster, f"{plandir}/cluster-ingress-02-config.yml",
                                                       overrides={'cluster': cluster, 'domain': domain})
