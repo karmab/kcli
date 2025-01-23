@@ -119,12 +119,16 @@ def update_registry(config, plandir, cluster, data):
     if not os.path.isdir(dockerdir):
         os.mkdir(dockerdir)
     copy2(pull_secret_path, f"{dockerdir}/config.json")
-    olmcmd = f"oc-mirror --v2 --workspace file://{clusterdir} --config {clusterdir}/mirror-config.yaml "
+    mirrordir = data.get('mirror_dir') or clusterdir
+    olmcmd = f"oc-mirror --v2 --workspace file://{mirrordir} --config {clusterdir}/mirror-config.yaml "
     olmcmd += f" docker://{disconnected_url}"
     pprint(f"Running {olmcmd}")
-    call(olmcmd, shell=True)
-    mirrordir = f"{clusterdir}/working-dir/cluster-resources"
-    for manifest in glob(f"{mirrordir}/cs-*.yaml") + glob(f"{mirrordir}/*oc-mirror*.yaml"):
+    code = call(olmcmd, shell=True)
+    if code != 0:
+        error("Hit issue when running oc-mirror")
+        sys.exit(1)
+    resourcesdir = f"{mirrordir}/working-dir/cluster-resources"
+    for manifest in glob(f"{resourcesdir}/cs-*.yaml") + glob(f"{resourcesdir}/*oc-mirror*.yaml"):
         copy2(manifest, clusterdir)
     patch_oc_mirror(clusterdir)
 
