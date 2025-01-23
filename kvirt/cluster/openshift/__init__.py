@@ -120,13 +120,10 @@ def update_registry(config, plandir, cluster, data):
     olmcmd += f" docker://{disconnected_url}"
     pprint(f"Running {olmcmd}")
     call(olmcmd, shell=True)
+    mirrordir = f"{clusterdir}/working-dir/cluster-resources"
+    for manifest in glob(f"{mirrordir}/cs-*.yaml") + glob(f"{mirrordir}/*oc-mirror*.yaml"):
+        copy2(manifest, clusterdir)
     patch_oc_mirror(clusterdir)
-    for manifest in glob(f"{clusterdir}/cs-*.yaml") + glob(f"{clusterdir}/*oc-mirror*.yaml"):
-        if os.stat(manifest).st_size == 0:
-            warning(f"Skipping empty file {manifest}")
-        else:
-            pprint(f"Injecting manifest {manifest}")
-            copy2(manifest, clusterdir)
 
 
 def create_ignition_files(config, plandir, cluster, domain, api_ip=None, bucket_url=None, ignition_version=None):
@@ -1260,7 +1257,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if virtualization_nightly:
         pprint("Adding custom catalog for OpenShift Virtualization Nightly")
         copy2(f'{plandir}/99-openshift-virtualization-catalog.yaml', f"{clusterdir}/openshift")
-    if prega and not disconnected_vm:
+    if prega and not disconnected_vm and disconnected_url is None:
         pprint("Adding custom catalog for Prega")
         pregafile = config.process_inputfile(cluster, f'{plandir}/99-prega-catalog.yaml',
                                              overrides={'version': version})
