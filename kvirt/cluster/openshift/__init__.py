@@ -34,8 +34,11 @@ def patch_oc_mirror(clusterdir):
             continue
         entries = []
         for document in safe_load_all(open(_fic)):
-            if 'release' not in document['metadata']['name']:
-                entries.append(document)
+            if 'release' in document['metadata']['name']:
+                continue
+            if os.path.basename(_fic) == 'idms-oc-mirror.yaml':
+                document = json.loads(json.dumps(document).replace('quay.io/prega/test', 'registry.redhat.io'))
+            entries.append(document)
         with open(_fic, 'w') as f:
             safe_dump_all(entries, f, default_flow_style=False, encoding='utf-8', allow_unicode=True)
 
