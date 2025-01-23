@@ -20,7 +20,7 @@
 {% endif %}
  disks:
  - size: {{ disk_size }}
-{% if coredns or mdns or keepalived %}
+{% if coredns or mdns or keepalived or ipv6 %}
  files:
 {% endif %}
 {% if coredns %}
@@ -48,6 +48,10 @@
    origin: staticpods/keepalived.yml
  - path: /etc/kubernetes/keepalived.conf
    origin: keepalived.conf
+{% endif %}
+{% if ipv6 %}
+ - path: /etc/default/nodeip-configuration
+   content: {{ api_ip }}
 {% endif %}
 {% if files|default([]) %}
  extra_files: {{ files }}
