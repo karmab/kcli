@@ -1215,6 +1215,19 @@ centos:
 ```
 Look at the container section for details on the parameters
 
+### Kubernetes/OpenShift Clusters
+
+```YAML
+mycluster:
+  type: cluster
+  kubetype: openshift
+  upstream: true
+  ctlplanes: 3
+  workers: 3
+```
+
+All possible `kubetypes` are: `openshift`, `generic`, `microshift`, `aks`, `eks`, `gke`, `hypershift`, `k3s`, `openshift-sno`, `rke2`.
+
 ### plan's plan ( Also known as inception style)
 
 ```YAML
