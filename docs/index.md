@@ -1403,7 +1403,7 @@ When the user reprovisions, In addition to those parameters, he will be able to 
 
 ### Precreating a list of plans
 
-If you're running the same plan with different parameter files, you can simply create below the directory where your plan lives, naming them parameters_XXX.yml|yaml. The UI will then show you those as separated plans so that they can be provisioned individually applying the corresponding values from the parameter files (after merging them with the user provided data).
+If you’re running the same plan with different parameter files, you can simply create files in the directory where your plan lives, naming them parameters_XXX.yml|yaml, and/or in a subdirectory named `paramfiles`. The UI will then show you those as separated plans so that they can be provisioned individually applying the corresponding values from the parameter files (after merging them with the user provided data).
 
 ### Using several clients
 
