@@ -1709,7 +1709,7 @@ class Kconfig(Kbaseconfig):
         if inputfile is None:
             inputfile = 'kcli_plan.yml'
             pprint("using default input file kcli_plan.yml")
-        if path is not None:
+        if path not in (None, '.'):
             os.chdir(path)
             getback = True
         inputfile = os.path.expanduser(inputfile)
@@ -1887,12 +1887,9 @@ class Kconfig(Kbaseconfig):
                     path = planentry
                     if not planurl.endswith('yml'):
                         planurl = f"{planurl}/kcli_plan.yml"
-                elif '/' in planfile:
-                    path = os.path.dirname(planfile)
-                    inputfile = os.path.basename(planfile)
                 else:
-                    path = '.'
-                    inputfile = planentry
+                    path = os.path.dirname(planfile) or '.'
+                    inputfile = os.path.basename(planfile)
                 if no_overrides and parameters:
                     pprint("Using parameters from father plan in child ones")
                     for override in overrides:
