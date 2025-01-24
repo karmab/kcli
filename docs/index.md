@@ -20,7 +20,7 @@ Beyond handling virtual machines, Kubernetes clusters can also be managed for th
 If you don't have Libvirt installed on the target hypervisor, you can use the following command:
 
 ```bash
-sudo yum -y install libvirt libvirt-daemon-driver-qemu qemu-kvm 
+sudo yum -y install libvirt libvirt-daemon-driver-qemu qemu-kvm
 sudo usermod -aG qemu,libvirt $(id -un)
 sudo newgrp libvirt
 sudo systemctl enable --now libvirtd
@@ -149,7 +149,7 @@ sudo apt-get update
 sudo apt-get -y install python3-kcli
 ```
 
-## Container 
+## Container
 
 ```Shell
 podman pull quay.io/karmab/kcli
@@ -172,7 +172,7 @@ Kcli configuration is done in ~/.kcli directory, that you need to manually creat
 - id\_rsa/id\_rsa.pub/id\_dsa/id\_dsa.pub/id\_25519/id\_25519.pub You can store your default public and private keys in *.kcli* directory which will be the first place to look for them when connecting to a remote kvm hypervisor, virtual machine or when injecting your public key.
 
 You can generate a default config file (with all parameters commented) pointing to your local host with:
-    
+
 ```Shell
 kcli create host kvm -H 127.0.0.1 local
 ```
@@ -298,16 +298,16 @@ The following parameters are specific to aws:
 - `access_key_secret`
 - `region`
 - `zone` (Optional)
-- `keypair` 
+- `keypair`
 - `session_token`
 
-To use this provider with kcli rpm, you'll need to install 
+To use this provider with kcli rpm, you'll need to install
 
 ```
 dnf -y install python3-boto3
 ```
 
-see [AWS EKS workflow](https://github.com/karmab/kcli/blob/main/docs/EKS-kcli.md) for an example process 
+see [AWS EKS workflow](https://github.com/karmab/kcli/blob/main/docs/EKS-kcli.md) for an example process
 
 ## Azure
 
@@ -326,7 +326,7 @@ The following parameters are specific to azure:
 - `subscription_id`
 - `app_id`
 - `tenant_id`
-- `secret` 
+- `secret`
 - `location`
 - `admin_user`. Defaults to superadmin
 - `admin_password`. If specified, it need to be compliant with azure policy. When missing, a random one is generated (and printed) for each vm
@@ -367,7 +367,7 @@ gcp1:
 The following parameters are specific to Gcp:
 
 - `credentials` (pointing to a json service account file). if not specified, the environment variable *GOOGLE_APPLICATION_CREDENTIALS* will be used
-- `project` 
+- `project`
 - `region`
 - `zone` (Optional)
 
@@ -408,7 +408,7 @@ myhetzner:
 
 The following parameters are specific to hetzner cloud:
 
-- apikey. 
+- apikey.
 - location
 
 To use this provider with kcli rpm, you'll need to install the following packets (from pip):
@@ -430,7 +430,7 @@ myibm:
 
 The following parameters are specific to ibm cloud:
 
-- iam_api_key. 
+- iam_api_key.
 - region
 - zone
 - vpc. Default vpc
@@ -576,7 +576,7 @@ The following parameters are specific to openstack:
 - `glance_disk` (Optional). Prevents creating a disk from glance image. Defaults to false
 - `token` (Optional). Keystone Token (That can be retrieved with `openstack token issue -c id -f value`)
 
-To use this provider with kcli rpm, you'll need to install the following rpms 
+To use this provider with kcli rpm, you'll need to install the following rpms
 
 ```
 grep -q 'Red Hat' /etc/redhat-release && subscription-manager repos --enable openstack-16-tools-for-rhel-8-x86_64-rpms
@@ -600,8 +600,8 @@ myovirt:
 
 The following parameters are specific to oVirt:
 
-- `org` Organization 
-- `ca_file` Points to a local path with the cert of the oVirt engine host. It can be retrieved with 
+- `org` Organization
+- `ca_file` Points to a local path with the cert of the oVirt engine host. It can be retrieved with
 `curl "http://$HOST/ovirt-engine/services/pki-resource?resource=ca-certificate&format=X509-PEM-CA" > ~/.kcli/ovirt.pem`
 - `cluster`  Defaults to Default
 - `datacenter` Defaults to Default
@@ -650,7 +650,7 @@ myvpacket:
 
 The following parameters are specific to packet:
 
-- auth_token. 
+- auth_token.
 - project
 - facility. Can be omitted in which case you will have to specify on which facility to deploy vms.
 - tunnelhost. Optional. When creating vms using ignition, the generated ignition file will be copied to the tunnelhost so it can be served (typically via web)
@@ -683,7 +683,7 @@ The following parameters are specific to proxmox:
 
 Note that uploading images and cloud-init/ignition files requires ssh access to the Proxmox host. It's highly recommended to configure passwordless ssh authentification.
 
-To use this provider with kcli rpm, you'll need to install the following rpms 
+To use this provider with kcli rpm, you'll need to install the following rpms
 
 ```
 pip3 install proxmoxer
@@ -807,7 +807,7 @@ You can use the following to get a list of available keywords, and their default
 kcli get keywords
 ```
 
-When creating a vm, you can then combine any of those keywords 
+When creating a vm, you can then combine any of those keywords
 
 ```Shell
 kcli create vm -P keyword1=value1 -P keyword2=value2 -P keyword2=value3 (....)
@@ -996,7 +996,7 @@ The following commands are typically used when dealing with vms
 - Get detailed info on a specific vm
   - `kcli info vm vm1`
 - Start vm
-  - `kcli start vm vm1` 
+  - `kcli start vm vm1`
 - Stop vm
   - `kcli stop vm vm1`
 - Get remote-viewer console
@@ -1030,7 +1030,7 @@ We can interact using the same constructs with other objects, such as network or
   - `kcli create pool -p /home/images images`
 
 ## Omitting vm's name
- 
+
 When you don't specify a vm, the last one created by kcli on the corresponding client is used (the list is stored in *~/.kcli/vm*)
 
 So for instance, you can simply use the following command to access your last vm:
@@ -1042,7 +1042,7 @@ So for instance, you can simply use the following command to access your last vm
 If you have multiple hypervisors/clients, you can generally use the flag *-C $CLIENT* to point to a specific one.
 
 You can also use the following to list the vms of all your hosts/clients:
- 
+
 `kcli -C all list vm`
 
 # Networks
@@ -1100,7 +1100,7 @@ Although this is a simple plan, note that:
 - it's expected to behave exactly the same regardless of your target virtualization platform
 - can be relaunched in an idempotent manner
 
-## Make it more powerful with variables 
+## Make it more powerful with variables
 
 Let's modify our plan to make it more dynamic
 
@@ -1647,7 +1647,7 @@ For all the platforms, the workflow is the following:
 - launch the specific subcommand. For instance, to deploy a generic Kubernetes cluster, one would use `kcli create cluster generic --pf my_parameters.yml  $cluster`. Parameter files can be repeated and combined with specific parameters on the command line, which always take precedence.
 - Once the installation finishes, set the following environment variable in order to interact with the csluter  `export KUBECONFIG=$HOME/.kcli/clusters/$cluster/auth/kubeconfig`
 
-see [AWS EKS workflow](https://github.com/karmab/kcli/blob/main/docs/EKS-kcli.md) for an example EKS process 
+see [AWS EKS workflow](https://github.com/karmab/kcli/blob/main/docs/EKS-kcli.md) for an example EKS process
 
 
 ## Getting information on available parameters
@@ -1688,7 +1688,7 @@ The benefits of deploying OpenShift with this workflow are:
 - An available ip in your vm's network to use as *api_ip*. Make sure it is excluded from your dhcp server. An optional *ingress_ip* can be specified, otherwise api_ip will be used.
 - Direct access to the deployed vms. Use something like this otherwise `sshuttle -r your_hypervisor 192.168.122.0/24 -v`).
 - Target platform needs:
-  - Ignition support 
+  - Ignition support
   - On Openstack:
      - swift available on the install.
      - a flavor. You can create a dedicated one with `openstack flavor create --id 6 --ram 32768 --vcpus 16 --disk 30 m1.openshift`
@@ -1708,7 +1708,7 @@ cluster: mycluster
 domain: karmalabs.corp
 version: stable
 tag: '4.12'
-ctlplanes: 3 
+ctlplanes: 3
 workers: 2
 memory: 16384
 numcpus: 16
@@ -1927,7 +1927,7 @@ kcli create cluster gke mygke
 
 Note that on those platforms, we rely more on default values provided by the Platform
 
-see [AWS EKS workflow](https://github.com/karmab/kcli/blob/main/docs/EKS-kcli.md) for an example EKS process. 
+see [AWS EKS workflow](https://github.com/karmab/kcli/blob/main/docs/EKS-kcli.md) for an example EKS process.
 
 ### Deploying applications on top of Kubernetes/OpenShift
 
@@ -2023,7 +2023,7 @@ On cloud platforms, We rely on dns and load balancing services and as such dont 
 
 In the case of deploying a single ctlplane, the flag `sno_cloud_remove_lb` allows to get rid of the loadbalancer at the end of the install.
 
-# Running kcli on Kubernetes/OpenShift 
+# Running kcli on Kubernetes/OpenShift
 
 You can run the container on those platforms and either use the web interface or log in the pod to run `kcli` commandline
 
@@ -2235,7 +2235,7 @@ Additionally, there are ansible kcli modules in [ansible-kcli-modules](https://g
 
 Those modules rely on python3 so you will need to pass `-e 'ansible_python_interpreter=path_to_python3'` to your ansible-playbook invocations ( or set it in your inventory) if your default ansible installation is based on python2.
 
-Both kvirt_vm and kvirt_plan support overriding parameters. For instance, 
+Both kvirt_vm and kvirt_plan support overriding parameters. For instance,
 
 ```
 - name: Deploy fission with additional parameters
