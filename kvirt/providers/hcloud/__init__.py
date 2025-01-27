@@ -140,12 +140,12 @@ class Khcloud():
                 break
             except APIException as e:
                 if e.code == "resource_unavailable":
-                    msg = "Could not get server of type '{flavor_option}' in location '{self.location.name}' now"
+                    msg = f"Could not get server of type '{flavor_option}' in location '{self.location.name}'"
                     if len(flavor_options) > (idx + 1):
-                        warning(f"{msg}' at current time, trying next flavor")
+                        warning(f"{msg}' trying the next configured flavor option.")
                     else:
                         warning(msg)
-                        error("No more flavors available to try. Define more flavors in 'flavor_options'")
+                        error("No more flavors available to try. Define more flavors in 'flavor_options'.")
 
         created_vm = created_vm.server
 
