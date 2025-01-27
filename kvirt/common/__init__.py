@@ -2597,7 +2597,7 @@ def get_kubetype(overrides):
 
 
 def detect_openshift_version(tag, OPENSHIFT_TAG):
-    if 'rc' in tag:
+    if 'rc' in str(tag):
         version = 'stable'
     elif '0-ec.' in str(tag):
         version = 'candidate'
