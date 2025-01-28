@@ -1754,7 +1754,7 @@ Here's the list of typical variables that can be used (you can list them with `k
 |cloud_tag              |None                              ||
 |cloud_scale            |False                             ||
 |cloud\_api\_internal   |False                             ||
-|apps                   |[]                                |Extra applications to deploy on the cluster, available ones are visible with `kcli list app openshift`|
+|apps                   |[]                                |Extra applications to deploy on the cluster|
 
 #### Deploying
 
@@ -1942,34 +1942,28 @@ Applications currently supported include:
 - knative
 - tekton
 
-To list applications available on generic Kubernetes, run:
+To list applications available on your cluster, run:
 
 ```
-kcli list app generic
-```
-
-To list applications available on generic OpenShift, run:
-
-```
-kcli list app openshift
+kcli list apps
 ```
 
 For any of the supported applications, you can get information on the supported parameters with:
 
 ```
-kcli info app generic|openshift $app_name
+kcli info app $app_name
 ```
 
 To deploy an app, use the following, with additional parameters passed in the command line or in a parameter file:
 
 ```
-kcli create app generic|openshift $app_name
+kcli create app $app_name
 ```
 
 Applications can be deleted the same way:
 
 ```
-kcli delete app generic|openshift $app_name
+kcli delete app $app_name
 ```
 
 ### Architecture
