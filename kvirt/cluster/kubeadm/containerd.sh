@@ -36,6 +36,7 @@ EOF
 {% endif %}
 
 {% if registry %}
+sed -i 's%config_path = .*%config_path = "/etc/containerd/certs.d"%' /etc/containerd/config.toml
 REGISTRY={{ api_ip }}:5000
 mkdir -p /etc/containerd/certs.d/$REGISTRY
 cat > /etc/containerd/certs.d/$REGISTRY/hosts.toml << EOF
