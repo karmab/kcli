@@ -150,7 +150,4 @@ imageContentSources:
 - mirrors:
   - {{ disconnected_url }}/openshift-release-dev
   source: registry.ci.openshift.org/ocp/release
-- mirrors:
-  - {{ disconnected_url }}/openshift/release-images
-  source: quay.io/openshift-release-dev/ocp-release
 {% endif %}

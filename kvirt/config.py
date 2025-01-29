@@ -14,6 +14,7 @@ from kvirt import nameutils
 from kvirt import common
 from kvirt.common import error, pprint, success, warning, generate_rhcos_iso, pwd_path, container_mode, get_user
 from kvirt.common import ssh, scp, _ssh_credentials, valid_ip, process_files, get_rhcos_url_from_file, get_free_port
+from kvirt.common import detect_openshift_version
 from kvirt.cluster import microshift
 from kvirt.cluster import k3s
 from kvirt.cluster import kubeadm
@@ -3160,8 +3161,8 @@ class Kconfig(Kbaseconfig):
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         cluster = data.get('cluster', 'myopenshift')
         upstream = data.get('upstream', False)
-        version = data.get('version', 'stable')
         tag = data.get('tag', OPENSHIFT_TAG)
+        version = data.get('version') or detect_openshift_version(tag, OPENSHIFT_TAG)
         pprint(f"Using version {version} and tag {tag}")
         registry_vm = f"{cluster}-registry"
         registry_reuse = data.get('disconnected_reuse', False)
