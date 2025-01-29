@@ -146,7 +146,7 @@ imageContentSources:
   source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
 - mirrors:
   - {{ disconnected_url }}/openshift-release-dev
-  source: {{ 'registry.ci.openshift.org/ocp/release' if version == 'ci' else 'quay.io/openshift-release-dev' }}
+  source: registry.ci.openshift.org/ocp/release
 - mirrors:
   - {{ disconnected_url }}/openshift/release-images
   source: quay.io/openshift-release-dev/ocp-release

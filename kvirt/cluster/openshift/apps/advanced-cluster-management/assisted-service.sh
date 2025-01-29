@@ -18,6 +18,7 @@ fi
 
 export RHCOS_ISO=$(openshift-install coreos print-stream-json | jq -r '.["architectures"]["x86_64"]["artifacts"]["metal"]["formats"]["iso"]["disk"]["location"]')
 export RHCOS_ROOTFS=$(openshift-install coreos print-stream-json | jq -r '.["architectures"]["x86_64"]["artifacts"]["metal"]["formats"]["pxe"]["rootfs"]["location"]')
+export RHCOS_VERSION=$(openshift-install coreos print-stream-json | jq -r '.["architectures"]["x86_64"]["artifacts"]["metal"]["release"]')
 {% if disconnected_url != None %}
 [ -f /var/www/html/rhcos-live.x86_64.iso ] || curl -Lk $RHCOS_ISO > /var/www/html/rhcos-live.x86_64.iso
 [ -f /var/www/html/rhcos-live-rootfs.x86_64.img ] || curl -Lk $RHCOS_ROOTFS > /var/www/html/rhcos-live-rootfs.x86_64.img
@@ -28,19 +29,12 @@ export RHCOS_ROOTFS=http://${BAREMETAL_IP}/rhcos-live-rootfs.x86_64.img
 {% endif %}
 
 export MINOR=$(openshift-install version | head -1 | cut -d' ' -f2 | cut -d. -f1,2)
-
 export PULLSECRET=$(cat {{ pull_secret|default('$HOME/openshift_pull.json')|pwd_path }} | tr -d [:space:])
 export SSH_PRIV_KEY=$(cat {{ pub_key|default('$HOME/.ssh/id_rsa') }} |sed "s/^/    /")
-export VERSION=$(openshift-install coreos print-stream-json | jq -r '.["architectures"]["x86_64"]["artifacts"]["metal"]["release"]')
-export RELEASE=$(openshift-install version | grep 'release image' | cut -d' ' -f3)
+export RELEASE=$(openshift-install version | grep 'release image' | awk '{print $NF}')
 
 {% if disconnected_url != None %}
-export LOCAL_REGISTRY={{ disconnected_url }}
-export CA_CERT=$(openssl s_client -showcerts -connect $LOCAL_REGISTRY </dev/null 2>/dev/null| openssl x509 -outform PEM | sed "s/^/    /")
-export DISCONNECTED_PREFIX=openshift/release
-export DISCONNECTED_PREFIX_IMAGES=openshift/release-images
-OCP_RELEASE=$(openshift-install version | head -1 | cut -d' ' -f2)-x86_64
-export RELEASE=$LOCAL_REGISTRY/$DISCONNECTED_PREFIX_IMAGES:$OCP_RELEASE
+export CA_CERT=$(openssl s_client -showcerts -connect {{ disconnected_url }} </dev/null 2>/dev/null| openssl x509 -outform PEM | sed "s/^/    /")
 oc get imagecontentsourcepolicy operator-0 -o yaml > imageContentSourcePolicy.yaml
 python3 gen_registries.py > registries.txt
 export REGISTRIES=$(cat registries.txt)

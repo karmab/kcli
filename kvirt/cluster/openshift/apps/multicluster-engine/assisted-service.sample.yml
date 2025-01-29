@@ -54,7 +54,7 @@ spec:
       url: "$RHCOS_ISO"
       rootFSUrl: "$RHCOS_ROOTFS"
       cpuArchitecture: "x86_64"
-      version: "${VERSION}"
+      version: "${RHCOS_VERSION}"
 ---
 apiVersion: v1
 kind: Secret
@@ -73,7 +73,7 @@ metadata:
   name: assisted-deployment-pull-secret
   namespace: multicluster-engine
 stringData:
-  .dockerconfigjson: '${PULL_SECRET}'
+  .dockerconfigjson: '${PULLSECRET}'
   type: kubernetes.io/dockerconfigjson
 {% if disconnected_url != None %}
 ---
@@ -92,11 +92,14 @@ ${CA_CERT}
 
     [[registry]]
       prefix = ""
-      location = "quay.io/openshift-release-dev/ocp-release"
+      location = "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
       mirror-by-digest-only = true
 
       [[registry.mirror]]
-        location = "${LOCAL_REGISTRY}/${DISCONNECTED_PREFIX_IMAGES}"
+        location = "{{ disconnected_url }}/openshift-release-dev/ocp-v4.0-art-dev"
+
+      [[registry.mirror]]
+        location = "{{ disconnected_url }}/openshift/release"
 
     [[registry]]
       prefix = ""
@@ -104,15 +107,15 @@ ${CA_CERT}
       mirror-by-digest-only = true
 
       [[registry.mirror]]
-        location = "${LOCAL_REGISTRY}/${DISCONNECTED_PREFIX_IMAGES}"
+        location = "{{ disconnected_url }}/openshift-release-dev"
 
     [[registry]]
       prefix = ""
-      location = "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
+      location = "quay.io/openshift-release-dev/ocp-release"
       mirror-by-digest-only = true
 
       [[registry.mirror]]
-        location = "${LOCAL_REGISTRY}/${DISCONNECTED_PREFIX}"
+        location = "{{ disconnected_url }}/openshift/release-images"
 
 ${REGISTRIES}
 {% endif %}
