@@ -103,6 +103,14 @@ ${CA_CERT}
 
     [[registry]]
       prefix = ""
+      location = "quay.io/openshift-release-dev"
+      mirror-by-digest-only = true
+
+      [[registry.mirror]]
+        location = "{{ disconnected_url }}/openshift-release-dev"
+
+    [[registry]]
+      prefix = ""
       location = "registry.ci.openshift.org/ocp/release"
       mirror-by-digest-only = true
 
