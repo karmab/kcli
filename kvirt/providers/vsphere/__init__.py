@@ -1140,15 +1140,15 @@ class Ksphere:
         cookie_text = " " + cookie_value + "; $" + cookie_path
         headers = {'Content-Type': 'application/octet-stream', 'Cookie': f"{cookie_name}={cookie_text}"}
         with open(origin, "rb") as f:
-            ssl._create_default_https_context = ssl._create_unverified_context
+            context = ssl._create_unverified_context()
             try:
                 req = urllib.request.Request(url, data=f, headers=headers, method='PUT')
-                urllib.request.urlopen(req)
+                urllib.request.urlopen(req, context=context)
             except:
                 url = url.replace('/folder', '')
                 req = urllib.request.Request(url, data=f, headers=headers, method='PUT')
                 try:
-                    urllib.request.urlopen(req)
+                    urllib.request.urlopen(req, context=context)
                 except Exception as e:
                     error(f"Hit issue with with reason: {e}")
 
