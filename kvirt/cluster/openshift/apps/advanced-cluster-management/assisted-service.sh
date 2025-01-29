@@ -35,7 +35,7 @@ export RELEASE=$(openshift-install version | grep 'release image' | awk '{print 
 
 {% if disconnected_url != None %}
 export CA_CERT=$(openssl s_client -showcerts -connect {{ disconnected_url }} </dev/null 2>/dev/null| openssl x509 -outform PEM | sed "s/^/    /")
-oc get imagecontentsourcepolicy operator-0 -o yaml > imageContentSourcePolicy.yaml
+oc get imagedigestmirrorset idms-operator-0 -o yaml > idms-oc-mirror.yaml
 python3 gen_registries.py > registries.txt
 export REGISTRIES=$(cat registries.txt)
 {% endif %}
