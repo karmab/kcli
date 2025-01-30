@@ -28,3 +28,4 @@ baremetal_web: true
 baremetal_web_port: 80
 baremetal_web_dir: /var/www/html
 baremetal_sub_dir:
+baremetal_web_nic: default

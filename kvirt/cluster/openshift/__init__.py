@@ -509,7 +509,8 @@ def handle_baremetal_iso_sno(config, plandir, cluster, data, iso_pool=None):
                 call(f"sudo restorecon -Frvv {baremetal_web_dir}/{cluster}-*.iso", shell=True)
     else:
         call(f"sudo chmod a+r {iso_pool_path}/{cluster}-*.iso", shell=True)
-    nic = os.popen('ip r | grep default | cut -d" " -f5 | head -1').read().strip()
+    nic_name = data.get('baremetal_web_nic', 'default')
+    nic = os.popen(f'ip r | grep {nic_name} | cut -d" " -f5 | head -1').read().strip()
     ip_cmd = f"ip -o addr show {nic} | awk '{{print $4}}' | cut -d '/' -f 1 | head -1"
     host_ip = os.popen(ip_cmd).read().strip()
     if baremetal_web_port != 80:
