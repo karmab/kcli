@@ -148,6 +148,6 @@ imageContentSources:
   - {{ disconnected_url }}/openshift-release-dev
   source: quay.io/openshift-release-dev
 - mirrors:
-  - {{ disconnected_url }}/openshift-release-dev
-  source: registry.ci.openshift.org/ocp/release
+  - {{ disconnected_url }}/{{ 'origin' if okd else 'openshift-release-dev' }}
+  source: registry.ci.openshift.org/{{ 'origin' if okd else 'ocp/release' }}
 {% endif %}

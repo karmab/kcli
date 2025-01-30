@@ -333,7 +333,7 @@ def get_downstream_installer(version='stable', macosx=False, tag=None, debug=Fal
     return call(cmd, shell=True)
 
 
-def get_upstream_installer(tag, version='stable', debug=False):
+def get_okd_installer(tag, version='stable', debug=False):
     if 'quay.io' not in str(tag) and 'registry.ci.openshift.org' not in str(tag):
         if version == 'candidate':
             url = "https://amd64.origin.releases.ci.openshift.org/api/v1/releasestream/4-scos-next/latest"
@@ -692,7 +692,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             return {'result': 'failure', 'reason': f'domain {domain} needs to exist'}
     original_domain = None
     async_install = data['async']
-    upstream = data['upstream']
+    okd = data['okd']
     autoscale = data['autoscale']
     sslip = data['sslip']
     if 'baremetal_hosts' not in data and 'bmc_url' in data:
@@ -876,7 +876,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     ctlplanes = data['ctlplanes']
     workers = data['workers']
     tag = data['tag']
-    pull_secret = pwd_path(data.get('pull_secret')) if not upstream else f"{plandir}/fake_pull.json"
+    pull_secret = pwd_path(data.get('pull_secret')) if not okd else f"{plandir}/fake_pull.json"
     pull_secret = os.path.expanduser(pull_secret)
     macosx = data['macosx']
     if macosx and not os.path.exists('/i_am_a_container'):
@@ -936,8 +936,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if which_openshift is not None and not has_internet():
         pprint("Using existing openshift-install found in your PATH")
         warning("Not checking version")
-    elif upstream:
-        run = get_upstream_installer(tag, version=version)
+    elif okd:
+        run = get_okd_installer(tag, version=version)
     elif not same_release_images(version=version, tag=tag, pull_secret=pull_secret, path=openshift_dir):
         if version in ['ci', 'nightly'] or '/' in str(tag):
             nightly = version == 'nightly'
@@ -981,7 +981,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         image_type = provider
         region = k.region if provider == 'aws' else None
         try:
-            if upstream:
+            if okd:
                 fcos_url = 'https://builds.coreos.fedoraproject.org/streams/stable.json'
                 image_url = get_latest_fcos(fcos_url, _type=image_type)
             else:

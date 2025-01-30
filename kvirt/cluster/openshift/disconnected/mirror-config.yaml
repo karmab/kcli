@@ -10,7 +10,8 @@ mirror:
   platform:
     graph: false
 {% if version in ['ci', 'nightly'] %}
-    release: registry.ci.openshift.org/ocp/release:{{ tag }}
+{% set release = 'origin/release-scos:scos-%s' % tag if okd else 'registry.ci.openshift.org/ocp/release:%s' % tag %}
+    release: registry.ci.openshift.org/{{ release }}
 {% else %}
     channels:
     - name: {{ 'candidate' if 'rc' in tag else version }}-{{ release }}

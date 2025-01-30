@@ -153,7 +153,7 @@ sslip: false
 pub_key:
 baremetal_cidr:
 manifests: manifests
-upstream: false
+okd: false
 autoscale: false
 calico_version:
 cilium_version:

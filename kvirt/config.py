@@ -3160,7 +3160,7 @@ class Kconfig(Kbaseconfig):
         data['OPENSHIFT_TAG'] = OPENSHIFT_TAG
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         cluster = data.get('cluster', 'myopenshift')
-        upstream = data.get('upstream', False)
+        okd = data.get('okd', False)
         tag = data.get('tag', OPENSHIFT_TAG)
         version = data.get('version') or detect_openshift_version(tag, OPENSHIFT_TAG)
         pprint(f"Using version {version} and tag {tag}")
@@ -3169,8 +3169,8 @@ class Kconfig(Kbaseconfig):
         registry_sync = data.get('disconnected_sync', True)
         pprint(f"Deploying registry vm {registry_vm}")
         if registry_sync:
-            pull_secret = pwd_path(data.get('pull_secret')) if not upstream else f"{plandir}/fake_pull.json"
-            if not upstream:
+            pull_secret = pwd_path(data.get('pull_secret')) if not okd else f"{plandir}/fake_pull.json"
+            if not okd:
                 pull_secret = pwd_path(data.get('pull_secret', 'openshift_pull.json'))
             else:
                 pull_secret = f"{plandir}/fake_pull.json"

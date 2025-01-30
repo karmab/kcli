@@ -13,7 +13,7 @@ jq ".transports.docker += {\"registry.redhat.io/redhat/certified-operator-index\
 mv /etc/containers/policy.json.new /etc/containers/policy.json
 
 {% if version == 'ci' %}
-export OCP_RELEASE={{ tag }}
+export OCP_RELEASE={{ "scos-%s" % tag if okd else tag }}
 
 {% elif version in ['nightly', 'stable'] %}
 
@@ -33,11 +33,7 @@ OCP_RELEASE=$(grep 'Name:' /tmp/release.txt | awk -F ' ' '{print $2}')-x86_64
 {% endif %}
 
 {% if version == 'ci' %}
-{% set namespace = 'ocp/release' %}
-{% elif version == 'candidate' %}
-{% set namespace = 'openshift/release-images' %}
-{% else %}
-{% set namespace = 'openshift-release-dev/ocp-release' %}
+{% set namespace = 'origin/release-scos' if okd else 'openshift-release-dev/ocp-release' %}
 {% endif %}
 NAMESPACE={{ namespace }}
 echo $REGISTRY:5000/$NAMESPACE:$OCP_RELEASE > /root/version.txt
@@ -45,6 +41,11 @@ echo $REGISTRY:5000/$NAMESPACE:$OCP_RELEASE > /root/version.txt
 REGISTRY_USER={{ disconnected_user }}
 REGISTRY_PASSWORD={{ disconnected_password }}
 podman login -u $REGISTRY_USER -p $REGISTRY_PASSWORD $REGISTRY:5000
+
+KEY=$( echo -n $REGISTRY_USER:$REGISTRY_PASSWORD | base64)
+mv /root/openshift_pull.json /root/openshift_pull.json.old
+jq ".auths += {\"$REGISTRY:5000\": {\"auth\": \"$KEY\",\"email\": \"jhendrix@karmalabs.corp\"}}" < /root/openshift_pull.json.old > /root/openshift_pull.json
+
 REDHAT_CREDS=$(cat /root/openshift_pull.json | jq .auths.\"registry.redhat.io\".auth -r | base64 -d)
 RHN_USER=$(echo $REDHAT_CREDS | cut -d: -f1)
 RHN_PASSWORD=$(echo $REDHAT_CREDS | cut -d: -f2)
@@ -63,18 +64,7 @@ cp -f /root/openshift_pull.json /root/.docker/config.json
 oc-mirror --v2 --workspace file:// --config=mirror-config.yaml docker://$REGISTRY:5000
 
 {% if prega %}
-[ ! -d /root/idms ] || rm -rf /root/idms
-mkdir /root/idms
-sed -i -e '/source:/!b;/bundle/b;/cincinnati/b;s,quay.io/prega/test/,registry.redhat.io/,' /root/oc-mirror-workspace/results-*/*imageContentSourcePolicy.yaml
-oc adm migrate icsp /root/oc-mirror-workspace/results-*/*imageContentSourcePolicy.yaml --dest-dir /root/idms
+sed -i 's@quay.io/prega/test@registry.redhat.io@' /root/working-dir/cluster-resources/idms-oc-mirror.yaml
 {% endif %}
 
-if [ -d /root/idms ] ; then
-  cp /root/idms/*yaml /root/manifests/imageContentSourcePolicy.yaml
-fi
 cp /root/working-dir/cluster-resources/{cs*,*oc-mirror*} /root
-
-KEY=$( echo -n $REGISTRY_USER:$REGISTRY_PASSWORD | base64)
-jq ".auths += {\"$REGISTRY:5000\": {\"auth\": \"$KEY\",\"email\": \"jhendrix@karmalabs.corp\"}}" < $PULL_SECRET > /root/temp.json
-cat /root/temp.json | tr -d [:space:] > $PULL_SECRET
-echo "{\"auths\": {\"$REGISTRY:5000\": {\"auth\": \"$KEY\", \"email\": \"jhendrix@karmalabs.corp\"}}}" > /root/temp.json
