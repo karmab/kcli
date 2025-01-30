@@ -124,7 +124,6 @@ sno_dns:
 sno_wait: false
 sno_nic:
 sno_cpuset:
-sno_relocate: false
 sno_vm: false
 sno_extra_args:
 metal3: false

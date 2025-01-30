@@ -17,18 +17,3 @@ spec:
           mode: {{ file['mode']|default(420) }}
           path: {{ file['path'] }}
 {% endfor %}
-{% if relocate %}
-    systemd:
-      units:
-      - name: relocate-ip.service
-        enabled: true
-        contents: |
-          [Unit]
-          After=network.target ovs-configuration.service
-          Before=network-online.target kubelet.service crio.service
-          [Service]
-          Type=oneshot
-          ExecStart=/usr/local/bin/relocate-ip.sh
-          [Install]
-          WantedBy=multi-user.target
-{% endif %}

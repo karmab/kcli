@@ -769,7 +769,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     ctlplane_localhost_fix = data['ctlplane_localhost_fix'] or localhost_fix
     worker_localhost_fix = data['worker_localhost_fix'] or localhost_fix
     sno_cpuset = data['sno_cpuset']
-    sno_relocate = data['sno_relocate']
     kubevirt_api_service, kubevirt_api_service_node_port = False, False
     kubevirt_ignore_node_port = data['kubevirt_ignore_node_port']
     prega = data['prega']
@@ -1201,7 +1200,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         with open(f"{clusterdir}/cilium.sh", 'w') as f:
             f.write(cilium_script)
         call(f'bash {clusterdir}/cilium.sh', shell=True)
-    if ipsec or ipsec_mode is not None or ovn_hostrouting or sno_relocate or mtu != 1400:
+    if ipsec or ipsec_mode is not None or ovn_hostrouting or mtu != 1400:
         valid_modes = ['Full', 'Disabled', 'External']
         if ipsec_mode is not None and ipsec_mode not in valid_modes:
             warning(f"Incorrect ipsec_mode. Choose between {','.join(valid_modes)}")
@@ -1209,7 +1208,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             ipsec_mode = 'Full'
         ovn_data = config.process_inputfile(cluster, f"{plandir}/99-ovn.yaml",
                                             overrides={'ipsec': ipsec, 'ovn_hostrouting': ovn_hostrouting,
-                                                       'relocate': sno_relocate, 'mtu': mtu, 'mode': ipsec_mode})
+                                                       'mtu': mtu, 'mode': ipsec_mode})
         with open(f"{clusterdir}/openshift/99-ovn.yaml", 'w') as f:
             f.write(ovn_data)
     if workers == 0 or not mdns or kubevirt_api_service:
@@ -1393,13 +1392,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             pinning_data = config.process_inputfile(cluster, f"{plandir}/openshift-workload-pinning", overrides=data)
             sno_files.extend([{"path": "/etc/crio/crio.conf.d/01-workload-partitioning", "data": partitioning_data},
                               {"path": "/etc/kubernetes/openshift-workload-pinning", "data": pinning_data}])
-        if sno_relocate:
-            pprint("Enabling relocation")
-            relocate_script_data = config.process_inputfile(cluster, f"{plandir}/relocate-ip.sh", overrides=data)
-            sno_files.append({"path": "/usr/local/bin/relocate-ip.sh", "mode": 448, "data": relocate_script_data})
         if sno_files:
-            rendered = config.process_inputfile(cluster, f"{plandir}/99-sno.yaml", overrides={'files': sno_files,
-                                                                                              'relocate': sno_relocate})
+            rendered = config.process_inputfile(cluster, f"{plandir}/99-sno.yaml", overrides={'files': sno_files})
             with open(f"{clusterdir}/openshift/99-sno.yaml", 'w') as f:
                 f.write(rendered)
         if sno_ctlplanes:
@@ -1428,12 +1422,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             if ipv6 or sno_disable_nics:
                 nm_data = config.process_inputfile(cluster, f"{plandir}/kcli-ipv6.conf.j2", overrides=data)
                 _files.append({'path': "/etc/NetworkManager/conf.d/kcli-ipv6.conf", 'content': nm_data})
-            if sno_relocate:
-                relocate_script_data = config.process_inputfile(cluster, f"{plandir}/relocate-ip-bootstrap.sh",
-                                                                overrides=data)
-                _files.append({"path": "/usr/local/bin/relocate-ip.sh", "mode": 700, "content": relocate_script_data})
-                _files.append({"path": "/root/relocate-ip.service",
-                               "origin": f"{plandir}/relocate-ip-bootstrap.service"})
             iso_overrides['files'] = _files
             if os.path.exists(f'{clusterdir}/macs.txt'):
                 bootstrap_data = open(f'{clusterdir}/macs.txt').readlines()[0].strip().split(';')[1:]

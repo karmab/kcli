@@ -19,7 +19,6 @@ sno_workers: false
 sno_wait: false
 sno_nic:
 sno_cpuset:
-sno_relocate: false
 sno_vm: false
 baremetal_user: root
 baremetal_password: calvin
