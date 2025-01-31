@@ -1,11 +1,11 @@
-# EKS Workflow 
+# EKS Workflow
 
 This page highlights an example workflow using kcli with AWS EKS. In the workflow it uses `myeks` as the clustername and AWS keypair name. It was deployed and tested in `us-east-1` region (but should work in other regions).
 
-This workflow also introduces concepts around EKS that you might not be familiar with. 
+This workflow also introduces concepts around EKS that you might not be familiar with.
 
 - EKS Auto Mode - released 2024
-- EKS byocni (Bring Your Own CNI) - released 2024 
+- EKS byocni (Bring Your Own CNI) - released 2024
 - Pod identity - release Nov 2023.
 - cilium CNI (instead of AWS)*
 
@@ -17,13 +17,13 @@ This workflow also introduces concepts around EKS that you might not be familiar
 2. helm cli
 3. cilium cli (optional)
 4. kcli
-5. boto3 and dependencies 
+5. boto3 and dependencies
 6. kubectl cli
-7. An AWS account 
+7. An AWS account
 
 ## AWS Role Creation (optional)
 
-Specific role(s) can be created in AWS which can be used by kcli in the provisioning process for the control plane and/or worker nodes if you have specific requirements. 
+Specific role(s) can be created in AWS which can be used by kcli in the provisioning process for the control plane and/or worker nodes if you have specific requirements.
 
 If you don't create role(s) default ones will be created by kcli in the cluster creation step.
 
@@ -111,11 +111,11 @@ Alternative kcli create cluster command examples (ymmv):-
 
 > *You can create a cluster with AWS-CNI like this to have kcli deploy standard set of addons this will also deploy the cluster in Auto Mode*
 
-> `kcli create kube eks myeks` 
+> `kcli create kube eks myeks`
 
-> *You could also deploy AWS-CNI without Auto Mode and some addons like this* 
+> *You could also deploy AWS-CNI without Auto Mode and some addons like this*
 
-> `kcli create kube eks -P default_addons=false -P apps=[coredns,vpc-cni,kube-proxy,aws-ebs-csi-driver,eks-pod-identity-agent] myeks` 
+> `kcli create kube eks -P default_addons=false -P apps=[coredns,vpc-cni,kube-proxy,aws-ebs-csi-driver,eks-pod-identity-agent] myeks`
 
 > *Here you add additional arguments to specify separate roles for control plane and workers*
 
@@ -207,16 +207,16 @@ Adding app eks-pod-identity-agent
 ```
 
 - Export the kubeconfig and check all pods are in a pending state.
- 
+
 ```bash
 export KUBECONFIG=(kcli-boto3)$HOME/.kcli/clusters/myeks/auth/kubeconfig
 # after the create command has finished give things 2mins to complete - things are still rolling out
 kubectl get pods -A
 ```
 
-- Install cilium CNI - HELM or CLI 
+- Install cilium CNI - HELM or CLI
 
-If you have deployed using the byocni kcli create command in the previous sections then you will need to deploy a CNI - this example uses cilium. if you have deployed AWS CNI or are using another CNI then skip this step. 
+If you have deployed using the byocni kcli create command in the previous sections then you will need to deploy a CNI - this example uses cilium. if you have deployed AWS CNI or are using another CNI then skip this step.
 
 ```bash
 # get the control plane API address
@@ -279,7 +279,7 @@ aws iam create-role --role-name ebs-role --assume-role-policy-document file://po
 # you can list the policies available
 #aws iam list-policies | grep CSI
 
-# You could create a policy document 
+# You could create a policy document
 # example of one for EBS - https://raw.githubusercontent.com/kubernetes-sigs/aws-ebs-csi-driver/master/docs/example-iam-policy.json
 
 # and then create the policy in AWS with POLICY_NAME

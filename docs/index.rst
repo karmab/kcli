@@ -21,7 +21,7 @@ If you don’t have Libvirt installed on the target hypervisor, you can use the 
 
 .. code:: bash
 
-   sudo yum -y install libvirt libvirt-daemon-driver-qemu qemu-kvm 
+   sudo yum -y install libvirt libvirt-daemon-driver-qemu qemu-kvm
    sudo usermod -aG qemu,libvirt $(id -un)
    sudo newgrp libvirt
    sudo systemctl enable --now libvirtd
@@ -1314,6 +1314,20 @@ container
 
 Look at the container section for details on the parameters
 
+Kubernetes/OpenShift Clusters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: yaml
+
+   mycluster:
+     type: cluster
+     kubetype: openshift
+     upstream: true
+     ctlplanes: 3
+     workers: 3
+
+All possible ``kubetypes`` are: ``openshift``, ``generic``, ``microshift``, ``aks``, ``eks``, ``gke``, ``hypershift``, ``k3s``, ``openshift-sno``, ``rke2``.
+
 plan’s plan ( Also known as inception style)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1513,7 +1527,8 @@ When the user reprovisions, In addition to those parameters, he will be able to 
 Precreating a list of plans
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you’re running the same plan with different parameter files, you can simply create files in the directory where your plan lives, naming them parameters_XXX.yml|yaml, and/or in a subdirectory named ``paramfiles``. The UI will then show you those as separated plans so that they can be provisioned individually applying the corresponding values from the parameter files (after merging them with the user provided data).
+If you’re running the same plan with different parameter files, you can simply create files in the directory where your plan lives, naming them parameters_XXX.yml|yaml, and/or in a subdirectory named ``paramfiles``. The UI will then show you those as separated plans so that they can be provisioned individually applying the corresponding values from the parameter files (after merging them with the
+user provided data).
 
 Using several clients
 ~~~~~~~~~~~~~~~~~~~~~
@@ -1843,7 +1858,7 @@ A minimal one could be the following one
    domain: karmalabs.corp
    version: stable
    tag: '4.12'
-   ctlplanes: 3 
+   ctlplanes: 3
    workers: 2
    memory: 16384
    numcpus: 16
