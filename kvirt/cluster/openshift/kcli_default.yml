@@ -19,11 +19,11 @@ info: |
 version: stable
 tag: '4.17'
 pull_secret: openshift_pull.json
-image: 
+image:
 network: default
 worker_network:
-api_ip: 
-ingress_ip: 
+api_ip:
+ingress_ip:
 ctlplanes: 3
 workers: 0
 fips: false
@@ -142,6 +142,7 @@ baremetal_web: true
 baremetal_web_port: 80
 baremetal_web_dir: /var/www/html
 baremetal_sub_dir:
+baremetal_web_nic: default
 threaded: false
 ctlplanes_threaded: false
 workers_threaded: false

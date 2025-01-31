@@ -51,7 +51,8 @@ def get_info(url, headers, context):
         request = Request(chassis_url, headers=headers)
         chassis = json.loads(urlopen(request, context=context).read())['Members'][0]['@odata.id']
     except Exception as e:
-        error(f"Hit issue {e.msg} when accessing url {chassis_url}")
+        msg = getattr(e, 'msg', str(e))
+        error(f"Hit issue {msg} when accessing url {chassis_url}")
         sys.exit(1)
     request_url = f"{p.scheme}://{p.netloc}{chassis}"
     request = Request(request_url, headers=headers)
