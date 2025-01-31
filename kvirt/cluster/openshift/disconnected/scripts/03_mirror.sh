@@ -32,11 +32,16 @@ curl -Ls https://mirror.openshift.com/pub/openshift-v4/clients/ocp-dev-preview/{
 OCP_RELEASE=$(grep 'Name:' /tmp/release.txt | awk -F ' ' '{print $2}')-x86_64
 {% endif %}
 
-{% if version == 'ci' %}
-{% set namespace = 'origin/release-scos' if okd else 'openshift-release-dev/ocp-release' %}
+{% if okd %}
+PREFIX=origin/release-scos
+{% elif version == 'candidate' %}
+PREFIX=openshift/release-images
+{% elif version == 'ci' %}
+PREFFIX=ocp/ocp-release
+{% else %}
+PREFIX=openshift-release-dev/ocp-release
 {% endif %}
-NAMESPACE={{ namespace }}
-echo $REGISTRY:5000/$NAMESPACE:$OCP_RELEASE > /root/version.txt
+echo $REGISTRY:5000/$PREFIX:$OCP_RELEASE > /root/version.txt
 
 REGISTRY_USER={{ disconnected_user }}
 REGISTRY_PASSWORD={{ disconnected_password }}
