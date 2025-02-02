@@ -7,7 +7,7 @@ metadata:
 spec:
   config:
     ignition:
-      version: 3.3.0
+      version: ignition_version|default('3.2.0')
 {% if disable_ipv6|default(False) %}
     kernelArguments:
       shouldExist:
