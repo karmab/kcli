@@ -1353,7 +1353,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             _f.write(kubevirtworker)
     if sno:
         sno_name = f"{cluster}-sno"
-        sno_files = []
+        sno_files = overrides.get('sno_files', []) + overrides.get('files', [])
         sno_disable_nics = data['sno_disable_nics']
         if ipv6 or sno_disable_nics:
             nm_data = config.process_inputfile(cluster, f"{plandir}/kcli-ipv6.conf.j2", overrides=data)
@@ -1394,7 +1394,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             sno_files.extend([{"path": "/etc/crio/crio.conf.d/01-workload-partitioning", "data": partitioning_data},
                               {"path": "/etc/kubernetes/openshift-workload-pinning", "data": pinning_data}])
         if sno_files:
-            rendered = config.process_inputfile(cluster, f"{plandir}/99-sno.yaml", overrides={'files': sno_files})
+            disable_ipv6 = 'ipv6' in overrides and not overrides['ipv6']
+            sno_overrides = {'files': sno_files, 'disable_ipv6': disable_ipv6}
+            rendered = config.process_inputfile(cluster, f"{plandir}/99-sno.yaml", overrides=sno_overrides)
             with open(f"{clusterdir}/openshift/99-sno.yaml", 'w') as f:
                 f.write(rendered)
         if sno_ctlplanes:

@@ -7,7 +7,12 @@ metadata:
 spec:
   config:
     ignition:
-      version: 3.2.0
+      version: 3.3.0
+{% if disable_ipv6|default(False) %}
+    kernelArguments:
+      shouldExist:
+      - ipv6.disable=1
+{% endif %}
     storage:
       files:
 {% for file in files %}
