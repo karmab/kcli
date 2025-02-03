@@ -1394,14 +1394,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             sno_files.extend([{"path": "/etc/crio/crio.conf.d/01-workload-partitioning", "data": partitioning_data},
                               {"path": "/etc/kubernetes/openshift-workload-pinning", "data": pinning_data}])
         if sno_files:
-            sno_overrides = {'files': sno_files}
-            if 'ipv6' in overrides and not overrides['ipv6']:
-                sno_overrides['disable_ipv6'] = True
-                sno_overrides['ignition_version'] = '3.3.0'
-            else:
-                sno_overrides['disable_ipv6'] = False
-                sno_overrides['ignition_version'] = '3.2.0'
-            rendered = config.process_inputfile(cluster, f"{plandir}/99-sno.yaml", overrides=sno_overrides)
+            rendered = config.process_inputfile(cluster, f"{plandir}/99-sno.yaml", overrides={'files': sno_files})
             with open(f"{clusterdir}/openshift/99-sno.yaml", 'w') as f:
                 f.write(rendered)
         if sno_ctlplanes:
