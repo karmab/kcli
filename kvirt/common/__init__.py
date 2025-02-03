@@ -1964,13 +1964,13 @@ def generate_rhcos_iso(k, cluster, pool, version='latest', installer=False, arch
         pprint(f"Downloading {liveiso}")
         k.add_image(liveiso, pool)
     poolpath = k.get_pool_path(pool)
+    os.environ["PATH"] += f":{os.getcwd()}"
     if installer and (k.conn == 'fake' or k.host in ['localhost', '127.0.0.1']):
         if not correct_sha(f"{poolpath}/{baseiso}", get_installer_iso_sha()):
             error(f"Corrupted iso {poolpath}/{baseiso}")
             sys.exit(1)
     pprint(f"Creating iso {name}")
     isocmd = create_embed_ignition_cmd(name, poolpath, baseiso, extra_args=extra_args)
-    os.environ["PATH"] += f":{os.getcwd()}"
     if k.conn == 'fake':
         os.system(isocmd)
     elif k.host in ['localhost', '127.0.0.1']:

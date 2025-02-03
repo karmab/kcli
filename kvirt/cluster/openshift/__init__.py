@@ -1353,7 +1353,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             _f.write(kubevirtworker)
     if sno:
         sno_name = f"{cluster}-sno"
-        sno_files = overrides.get('sno_files', [])
+        sno_files = []
         sno_disable_nics = data['sno_disable_nics']
         if ipv6 or sno_disable_nics:
             nm_data = config.process_inputfile(cluster, f"{plandir}/kcli-ipv6.conf.j2", overrides=data)
