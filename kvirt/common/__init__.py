@@ -2194,7 +2194,7 @@ def start_baremetal_hosts_with_iso(hosts, iso_url, overrides={}, debug=False):
             or overrides.get('bmc_password')
         if url is not None and user is not None and password is not None:
             overrides['iso_url'] = iso_url
-            overrides['sno_worker'] = index > 1 and iso_url.endswith('-sno.iso')
+            overrides['sno_worker'] = index >= 1 and iso_url.endswith('-sno.iso')
             result = start_baremetal_host(url, user, password, overrides=overrides, debug=debug)
             if result['result'] != 'success':
                 failures.append(result['reason'])
