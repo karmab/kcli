@@ -27,6 +27,13 @@ fi
 cat /opt/openshift/master.ign.ori | jq ".storage.files |= . + [{\"mode\": 420, \"path\": \"/etc/hostname\", \"contents\": {\"source\":\"data:,{{ cluster }}-sno.{{ domain }}%0A\",\"verification\": {}}}]" > /opt/openshift/master.ign
 {% endif %}
 
+{% if disable_ipv6|default(False) %}
+[ -f /opt/openshift/master.ign.ori ] || cp /opt/openshift/master.ign /opt/openshift/master.ign.ori
+NIC=$(ip r | grep {{ baremetal_cidr or 'default' }} | head -1 | grep -oP '(?<=dev )[^ ]*')
+NM_DATA=$(echo -e "[connection]\ntype=ethernet\ninterface-name=$NIC\n[ipv6]\nmethod=disabled\n" | base64 -w0)
+cat /opt/openshift/master.ign.ori | jq ".storage.files |= . + [{\"mode\": 384, \"path\": \"/etc/NetworkManager/system-connections/$NIC.nmconnection\", \"contents\": {\"source\":\"data:text/plain;charset=utf-8;base64,$NM_DATA\",\"verification\": {}}}]" > /opt/openshift/master.ign
+{% endif %}
+
 if [ -f /root/kubeconfig ] ; then
  BASE64=$(cat /root/kubeconfig | base64 -w0)
  [ -f /opt/openshift/master.ign.ori ] || cp /opt/openshift/master.ign /opt/openshift/master.ign.ori

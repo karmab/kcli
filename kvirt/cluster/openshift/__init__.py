@@ -1412,6 +1412,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         vmrules = overrides.get('vmrules') or config.vmrules
         process_baremetal_rules(config, cluster, baremetal_hosts, vmrules=vmrules, overrides=overrides)
         move(f"{clusterdir}/bootstrap-in-place-for-live-iso.ign", f"./{sno_name}.ign")
+        data['disable_ipv6'] = 'ipv6' in overrides and not overrides['ipv6']
         with open("iso.ign", 'w') as f:
             iso_overrides = data.copy()
             iso_overrides['image'] = 'rhcos4000'
