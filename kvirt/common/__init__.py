@@ -1608,7 +1608,7 @@ def create_embed_ignition_cmd(name, poolpath, baseiso, extra_args=None):
     coreosinstaller += " quay.io/coreos/coreos-installer:release"
     isocmd = f"{coreosinstaller} iso ignition embed -fi iso.ign -o {name} {baseiso}"
     if extra_args is not None:
-        isocmd += f"; {coreosinstaller} iso kargs modify -a '{extra_args}' {baseiso}"
+        isocmd += f"; {coreosinstaller} iso kargs modify -a '{extra_args}' {name}"
     return isocmd
 
 
