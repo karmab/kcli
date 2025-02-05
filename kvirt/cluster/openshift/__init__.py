@@ -1411,8 +1411,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             return {'result': 'failure', 'reason': "Hit issue when generating bootstrap-in-place ignition"}
         vmrules = overrides.get('vmrules') or config.vmrules
         process_baremetal_rules(config, cluster, baremetal_hosts, vmrules=vmrules, overrides=overrides)
+        disable_ipv6 = 'ipv6' in overrides and not overrides['ipv6']
+        data['disable_ipv6'] = disable_ipv6
+        overrides['disable_ipv6'] = disable_ipv6
         move(f"{clusterdir}/bootstrap-in-place-for-live-iso.ign", f"./{sno_name}.ign")
-        data['disable_ipv6'] = 'ipv6' in overrides and not overrides['ipv6']
         with open("iso.ign", 'w') as f:
             iso_overrides = data.copy()
             iso_overrides['image'] = 'rhcos4000'
