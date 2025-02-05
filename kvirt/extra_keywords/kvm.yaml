@@ -18,3 +18,9 @@ boot_order: Set boot order on all disks to allow to boot from any of them
 sockets: Sockets
 cores: Cores
 threads: Threads. Defaults to 1 when specifying sockets and cores
+bandwidth_inbound_average:  Bandwidth inbound average
+bandwidth_inbound_peak: Bandwidth inbound peak
+bandwidth_inbound_burst: Bandwidth inbound burst
+bandwidth_outbound_average: Bandwidth outbound average
+bandwidth_outbound_peak: Bandwidth outbound peak
+bandwidth_outbound_burst: Bandwidth outbound bursrt

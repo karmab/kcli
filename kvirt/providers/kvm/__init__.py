@@ -1148,13 +1148,14 @@ class Kvirt(object):
                     ssdxml += """<qemu:arg value='-set'/>
 <qemu:arg value='device.sata0-0-{index}.rotation_rate=1'/>""".format(index=index)
             qemuextraxml = """<qemu:commandline>
-%s
-%s
-%s
-%s
-%s
-%s
-</qemu:commandline>""" % (ignitionxml, usermodexml, macosxml, freeformxml, nvmexml, ssdxml)
+{ignitionxml}
+{usermodexml}
+{macosxml}
+{freeformxml}
+{nvmexml}
+{ssdxml}
+</qemu:commandline>""".format(ignitionxml=ignitionxml, usermodexml=usermodexml, macosxml=macosxml,
+                              freeformxml=freeformxml, nvmexml=nvmexml, ssdxml=ssdxml)
         sharedxml = ""
         if sharedfolders:
             for folder in sharedfolders:
@@ -3421,10 +3422,10 @@ class Kvirt(object):
             return {'result': 'failure', 'reason': f"network {name} is more than 16 characters"}
         prefix = cidr.split('/')[1]
         metadata = """<metadata>
-        <kvirt:info xmlns:kvirt="kvirt">
-        <kvirt:plan>{plan}</kvirt:plan>
-        </kvirt:info>
-        </metadata>""".format(plan=plan)
+<kvirt:info xmlns:kvirt="kvirt">
+<kvirt:plan>{plan}</kvirt:plan>
+</kvirt:info>
+</metadata>""".format(plan=plan)
         mtuxml = f'<mtu size="{overrides["mtu"]}"/>'if 'mtu' in overrides else ''
         dualxml = ''
         if 'dual_cidr' in overrides:
@@ -3467,22 +3468,36 @@ class Kvirt(object):
                 option = key if key.isdigit() else f"{option}:{key}"
                 dnsmasqxml += f'<dnsmasq:option value="dhcp-option={option},{dhcpoptions[key]}"/>'
             dnsmasqxml += "</dnsmasq:options>"
+        in_average = overrides.get('bandwidth_inbound_average')
+        in_peak = overrides.get('bandwidth_inbound_peak')
+        in_burst = overrides.get('bandwidth_inbound_burst')
+        if in_average is not None and in_peak is not None and in_burst is not None:
+            out_average = overrides.get('bandwidth_outbound_average') or in_average
+            out_peak = overrides.get('bandwidth_outbound_peak') or in_peak
+            out_burst = overrides.get('bandwidth_outbound_burst') or in_burst
+            bandwidthxml = '<bandwidth>'
+            bandwidthxml += f'<inbound average="{in_average}" peak="{in_peak}" burst="{in_burst}" />'
+            bandwidthxml += f'<outbound average="{out_average}" peak="{out_peak}" burst="{out_burst}" />'
+            bandwidthxml += '</bandwidth>'
+        else:
+            bandwidthxml = ""
         networkxml = """<network {namespace}><name>{name}</name>
-                    {dnsmasqxml}
-                    {metadata}
-                    {mtuxml}
-                    {forwardxml}
-                    {bridgexml}
-                    {domainxml}
-                    {dnsxml}
-                    <ip address='{gateway}' prefix='{prefix}' family='{family}'>
-                    {dhcpxml}
-                    </ip>
-                    {dualxml}
-                    </network>""".format(name=name, metadata=metadata, mtuxml=mtuxml, forwardxml=forwardxml,
-                                         bridgexml=bridgexml, domainxml=domainxml, dnsxml=dnsxml, gateway=gateway,
-                                         prefix=prefix, family=family, dhcpxml=dhcpxml, dualxml=dualxml,
-                                         namespace=namespace, dnsmasqxml=dnsmasqxml)
+{dnsmasqxml}
+{metadata}
+{mtuxml}
+{forwardxml}
+{bandwidthxml}
+{bridgexml}
+{domainxml}
+{dnsxml}
+<ip address='{gateway}' prefix='{prefix}' family='{family}'>
+{dhcpxml}
+</ip>
+{dualxml}
+</network>""".format(name=name, metadata=metadata, mtuxml=mtuxml, forwardxml=forwardxml,
+                     bandwidthxml=bandwidthxml, bridgexml=bridgexml, domainxml=domainxml,
+                     dnsxml=dnsxml, gateway=gateway, prefix=prefix, family=family, dhcpxml=dhcpxml,
+                     dualxml=dualxml, namespace=namespace, dnsmasqxml=dnsmasqxml)
         if self.debug:
             print(networkxml)
         new_net = conn.networkDefineXML(networkxml)
