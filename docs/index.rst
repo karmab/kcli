@@ -1249,11 +1249,11 @@ image
 
 .. code:: yaml
 
-   CentOS-7-x86_64-GenericCloud.qcow2:
+   centos7:
     type: image
     url: http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
 
-If you point to an url not ending in qcow2/qc2 (or img), your browser will be opened for you to proceed. Also note that you can specify a command with the *cmd* key, so that virt-customize is used on the template once it’s downloaded.
+If you point to an url not ending in qcow2/qc2 (or img), your browser will be opened for you to proceed. Also note that you can specify a command with the *cmd* key, so that virt-customize is used on the image once it’s downloaded.
 
 disk
 ~~~~
@@ -1286,7 +1286,7 @@ profile
 
    myprofile:
      type: profile
-     template: CentOS-7-x86_64-GenericCloud.qcow2
+     image: centos9stream
      memory: 3072
      numcpus: 1
      disks:
@@ -1376,7 +1376,7 @@ You can point at an existing profile in your plans, define all parameters for th
 
    big:
      type: profile
-     template: CentOS-7-x86_64-GenericCloud.qcow2
+     image: centos9stream
      memory: 6144
      numcpus: 1
      disks:
@@ -1607,7 +1607,7 @@ The indicated objects are then rendered using jinja.
 ::
 
    centos:
-    template: CentOS-7-x86_64-GenericCloud.qcow2
+    image: centos9stream
     cmds:
      - echo x={{ x }} y={{ y }} >> /tmp/cocorico.txt
      - echo {{ password | default('unix1234') }} | passwd --stdin root
@@ -1621,7 +1621,7 @@ You can make the previous example cleaner by using the special key parameters in
     x: coucou
     y: toi
    centos:
-    template: CentOS-7-x86_64-GenericCloud.qcow2
+    image: centos9stre<m
     cmds:
      - echo x={{ x }} y={{ y }} >> /tmp/cocorico.txt
      - echo {{ password  }} | passwd --stdin root
@@ -1633,7 +1633,7 @@ Finally note that you can also use advanced jinja constructs like conditionals a
    parameters:
      net1: default
    vm4:
-     template: CentOS-7-x86_64-GenericCloud.qcow2
+     image: centos9stream
      nets:
        - {{ net1 }}
    {% if net2 is defined %}
@@ -1713,7 +1713,7 @@ Parameter          Default Value                        Comments
 *base*             None                                 Allows you to point to a parent profile so that values are taken from parent when not found in the current profile. Scripts and commands are rather concatenated between default, father and children
 *tags*             []                                   Array of tags to apply to gcp instances (usefull when matched in a firewall rule). In the case of Kubevirt, it s rather a dict of key=value used as node selector (allowing to force vms to be scheduled on a matching node)
 *networkwait*      0                                    Delay in seconds before attempting to run further commands, to be used in environments where networking takes more time to come up
-*rhnregister*      None                                 Auto registers vms whose template starts with rhel Defaults to false. Requires to either rhnuser and rhnpassword, or rhnactivationkey and rhnorg, and an optional rhnpool
+*rhnregister*      None                                 Auto registers vms whose image starts with rhel Defaults to false. Requires to either rhnuser and rhnpassword, or rhnactivationkey and rhnorg, and an optional rhnpool
 *rhnserver*        https://subscription.rhsm.redhat.com Red Hat Network server (for registering to a Satellite server)
 *rhnuser*          None                                 Red Hat Network user
 *rhnpassword*      None                                 Red Hat Network password
@@ -2416,7 +2416,7 @@ If you’re using kcli as a container, you will have to create a script such as 
 
 Additionally, there are ansible kcli modules in `ansible-kcli-modules <https://github.com/karmab/ansible-kcli-modules>`__ repository, with sample playbooks:
 
--  kvirt_vm allows you to create/delete vm (based on an existing profile or a template)
+-  kvirt_vm allows you to create/delete vm (based on an existing profile or image)
 -  kvirt_plan allows you to create/delete a plan
 -  kvirt_info allows you to retrieve a dict of values similar to ``kcli info`` output. You can select which fields to gather
 
