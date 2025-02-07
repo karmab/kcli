@@ -22,7 +22,7 @@ $ kcli create dns -n network2 -d karmalabs.corp -i 192.168.122.253 api.jhendrix
 $ kcli create dns -d karmalabs.corp -i 104.197.157.226 -a '*' api.jhendrix
 """
 
-hostcreate = """# Add a kvm host
+hostcreate = """# Add a KVM host
 $ kcli create host kvm -H 192.168.1.6 twix
 
 # Add an aws host
@@ -40,7 +40,7 @@ $ kcli create host vsphere -c mycluster -d mydatacenter -H 192.168.1.3 -u admin@
 # Add an openstack host
 $ kcli create host openstack --auth-url http://10.19.114.91:5000/v3 -u admin -p pass --project myproject myosp
 
-# Add a kubevirt host using existing k8s credentials
+# Add a KubeVirt host using existing k8s credentials
 $ kcli create host kubevirt mykubevirt
 
 # Add an ibm host
@@ -187,7 +187,10 @@ $ kcli create vm -i ubuntu-minimal-2204-lts -P gpus=['{"type": "nvidia-tesla-t4"
 # Create 3 vms to emulate baremetal
 $ kcli create vm -P start=false -P memory=20480 -P numcpus=16 -P disks=[200] -P uefi=true -P nets=[default] -c 3 myclu
 
-# Create an sriov enabled vm (on KVM only)
+# Create a KubeVirt vm on a specific host
+$ kcli create vm -i centos9stream -P host=mynode1
+
+# Create an sriov enabled vm (KVM specific)
 $ kcli create vm -i centos9stream -P nets=['{"name": "default"}','{"name": "default", "sriov": "true"}']
 """
 
@@ -423,10 +426,10 @@ $ kcli download image centos9stream -P cmds=['echo welcome here > /etc/motd']
 # Download with specific name
 $ kcli download image centos9stream -P name=centos9
 
-# Force the size (kubevirt specific)
+# Force the size (KubeVirt specific)
 $ kcli download image rhcoslatest -P size=40
 
-# Download qemu variant for rhcos (kvm specific)
+# Download qemu variant for rhcos (KVM specific)
 $ kcli download image rhcoslatest -P qemu=true
 
 # Download rhcos associated to current openshift-installer
@@ -729,19 +732,19 @@ $ kcli create network -P macvtap=true -P nic=eno2 mytap
 # Create a network with custom dnsmasq options
 $ kcli create network -c 192.168.123.0/24 -P arp-timeout=120 mynetwork
 
-# Create an ovn overlay network (on kubevirt) with a localnet topology and connected to br-ex bridge
+# Create an ovn overlay network (on KubeVirt) with a localnet topology and connected to br-ex bridge
 $ kcli create network -c 192.168.126.0/24 mynetwork
 
-# Create an ovn overlay network (on kubevirt) with a layer2 topology
+# Create an ovn overlay network (on KubeVirt) with a layer2 topology
 $ kcli create network -c 192.168.126.0/24 -P type=ovn -P topology=topology mynetwork
 
 # Do the same using an existing network attachment from some specific namespace
 $ kcli create network -c 192.168.126.0/24 -P type=ovn -P nad=default/othernad mynetwork
 
-# Create a br-ex network attachment definition using ovs cni (on kubevirt)
+# Create a br-ex network attachment definition using ovs cni (on KubeVirt)
 $ kcli create network -P type=ovs br-ex
 
-# Create a br-ex network attachment definition using ovs cni (on kubevirt)
+# Create a br-ex network attachment definition using ovs cni (on KubeVirt)
 $ kcli create network -P ovs=true br-ex
 
 # Create an ovs bridge br0 network (on libvirt)
@@ -823,13 +826,13 @@ $ kcli update vm ubuntu-20.04-server-cloudimg-amd64 -P template=true
 # Convert vm to template (vsphere specific)
 $ kcli update vm ubuntu-20.04-server-cloudimg-amd64 -P template=true
 
-# Add cpuflags to a vm (kvm specific)
+# Add cpuflags to a vm (KVM specific)
 $ kcli update vm -P cpuflags=[vmx] myvm
 
-# Remove cpuflags from a vm (kvm specific)
+# Remove cpuflags from a vm (KVM specific)
 $ kcli update vm -P cpuflags=[vmx] -P disable=true myvm
 
-# Add and remove cpuflags from a vm (kvm specific)
+# Add and remove cpuflags from a vm (KVM specific)
 $ kcli update vm -P cpuflags=['{"name": "vmx", "policy": "enable"}, {"name": "ss", "policy": "disable"}'] myvm
 """
 

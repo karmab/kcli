@@ -268,6 +268,8 @@ class Kubevirt():
         if features:
             vm['spec']['template']['spec']['domain']['features'] = features
         node_selector = overrides.get('nodeSelector', {})
+        if 'host' in overrides or 'hostname' in overrides:
+            node_selector['kubernetes.io/hostname'] = overrides['host'] or overrides['hostname']
         if isinstance(node_selector, dict) and node_selector:
             vm['spec']['template']['spec']['nodeSelector'] = node_selector
         interfaces = []
