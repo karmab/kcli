@@ -1848,6 +1848,8 @@ def delete_kube(args):
     if not yes and not yes_top:
         common.confirm("Are you sure?")
     overrides = handle_parameters(args.param, args.paramfile)
+    if args.client is not None:
+        overrides['client'] = args.client
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     clusters = [c for c in config.list_kubes()] if args.all else args.cluster
     for cluster in clusters:

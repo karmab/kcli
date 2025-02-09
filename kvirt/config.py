@@ -2737,7 +2737,7 @@ class Kconfig(Kbaseconfig):
                     gke = kubetype == 'gke'
                     eks = kubetype == 'eks'
                     aks = kubetype == 'aks'
-                    if 'client' in clusterdata and clusterdata['client'] != self.client:
+                    if 'client' in clusterdata and 'client' not in overrides and clusterdata['client'] != self.client:
                         self.__init__(client=clusterdata['client'])
                         k = self.k
         deleteclients = {self.client: k}
