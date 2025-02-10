@@ -87,3 +87,4 @@ disconnected_url:
 disconnected_user: dummy
 disconnected_password: dummy
 disconnected_sync: true
+feature_gates: []

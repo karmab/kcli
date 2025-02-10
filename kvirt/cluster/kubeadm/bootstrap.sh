@@ -19,7 +19,8 @@ CERTKEY={{ cert_key }}
 TOKEN={{ token }}
 K8S_VERSION='{{ "--kubernetes-version %s" % minor_version if minor_version is defined else "" }}'
 REGISTRY='{{ "--image-repository %s" % disconnected_url if disconnected_url != None else "" }}'
-kubeadm init --control-plane-endpoint "${API_IP}:6443" --pod-network-cidr $POD_CIDR --service-cidr $SERVICE_CIDR --certificate-key $CERTKEY --upload-certs --token $TOKEN --token-ttl 0 --apiserver-cert-extra-sans ${API_IP} $K8S_VERSION $REGISTRY
+FEATUREGATES='{{ "--feature-gates %s" % ','.join(feature_gates) if feature_gates else "" }}'
+kubeadm init --control-plane-endpoint "${API_IP}:6443" --pod-network-cidr $POD_CIDR --service-cidr $SERVICE_CIDR --certificate-key $CERTKEY --upload-certs --token $TOKEN --token-ttl 0 --apiserver-cert-extra-sans ${API_IP} $K8S_VERSION $REGISTRY $FEATUREGATES
 
 # config cluster credentials
 cp /etc/kubernetes/admin.conf /root/kubeconfig

@@ -237,6 +237,9 @@ def create(config, plandir, cluster, overrides):
                      insecure=True, cmd=urlcmd, vmport=disconnected_vmport)
         disconnected_url = os.popen(urlcmd).read().strip()
         data['disconnected_url'] = disconnected_url
+    feature_gates = data['feature_gates']
+    if feature_gates:
+        data['feature_gates'] = [f"{feature_gate}=true" for feature_gate in feature_gates]
     result = config.plan(plan, inputfile=f'{plandir}/bootstrap.yml', overrides=data)
     if result['result'] != "success":
         return result
