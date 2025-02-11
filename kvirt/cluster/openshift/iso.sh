@@ -54,9 +54,13 @@ fi
 
 {% if disable_ipv6|default(False) %}
 cp /root/config.ign /root/config.ign.ori
-NIC=$(ip r | grep {{ baremetal_cidr or 'default' }} | head -1 | grep -oP '(?<=dev )[^ ]*')
+while true ; do
+  NIC=$(ip r | grep {{ baremetal_cidr|default('default') }} | head -1 | grep -oP '(?<=dev )[^ ]*')
+  [ -z $NIC ] || break
+  sleep 10
+done
 NM_DATA=$(echo -e "[connection]\ntype=ethernet\ninterface-name=$NIC\n[ipv6]\nmethod=disabled\n" | base64 -w0)
-cat /root.ign.ori | jq ".storage.files |= . + [{\"mode\": 384, \"path\": \"/etc/NetworkManager/system-connections/$NIC.nmconnection\", \"contents\": {\"source\":\"data:text/plain;charset=utf-8;base64,$NM_DATA\",\"verification\": {}}}]" > /root/config.ign
+cat /root/config.ign.ori | jq ".storage.files |= . + [{\"mode\": 384, \"path\": \"/etc/NetworkManager/system-connections/$NIC.nmconnection\", \"contents\": {\"source\":\"data:text/plain;charset=utf-8;base64,$NM_DATA\",\"verification\": {}}}]" > /root/config.ign
 {% endif %}
 
 cmd="coreos-installer install --firstboot-args=\"${firstboot_args}\" --ignition=/root/config.ign {{ '--insecure --image-url=' + metal_url if metal_url != None else '' }} ${install_device}"
