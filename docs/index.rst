@@ -2356,11 +2356,15 @@ ksushy is bundled within kcli but ssl support requires installing manually cherr
 Deploy ksushy service
 ~~~~~~~~~~~~~~~~~~~~~
 
-ksushy can be launched manually for testing purposes but the following command creates a systemd unit instead, listening on port 9000. The call accepts different flags to:
+ksushy can be launched manually for testing purposes but the following command creates a systemd unit instead, listening on port 9000. The call parses the following environment variables:
 
--  listen on ipv6
--  enable ssl
--  specify an optional username and password for authentication
+-  KSUSHY_PORT: use a specific port
+-  KSUSHY_IPV6: listen on ipv6
+-  KSUSHY_SSL: enable ssl
+-  KSUSHY_DEBUG: enable debug
+-  KSUSHY_USER: username for authentication
+-  KSUSHY_PASSWORD: password for authentication
+-  KSUSHY_BOOTONCE: enable bootonce hack
 
 ::
 
@@ -2389,6 +2393,13 @@ Restricting access
 ~~~~~~~~~~~~~~~~~~
 
 When deploying the service, an username and password can be specified for securing access through basic authentication
+
+Bootonce hack
+~~~~~~~~~~~~~
+
+As virtualization providers don’t provide a way to restart in a given iso only one time (and because in kcli design, we don’t mess with boot orders), the ``bootonce`` flags allows to overcome this by emptying the primary disk of the corresponding vm when receiving a one time iso reboot via redfish.
+
+Note that this is destructive and as such considered a hack, but can be useful for testing purposes which involve reinstalling several times a given node.
 
 Ansible support
 ===============
