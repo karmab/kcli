@@ -848,9 +848,12 @@ $ kcli list vm -P plan=prod
 # Combine filters
 $ kcli list vm -P plan=prod -P status=up
 
-# Get vms whose ip starts with 192.168.122
+# Filter vms whose ip start with 192.168.122
 $ kcli list vm -P ip=192.168.122
 
-# Get vms whose name starts with myclu
+# Filter vms with a name that starts with myclu
 $ kcli list vm -P name=myclu
+
+# Filter vms which belong to a specific network
+$ kcli list vm -P network=baremetal
 """

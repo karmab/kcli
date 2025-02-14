@@ -730,9 +730,11 @@ def _filter_list(_list, overrides={}):
     for vm in _list:
         match = True
         for key in overrides:
-            if (overrides[key] is None and vm.get(key) is not None)\
-               or (overrides[key] is not None and vm.get(key) is None)\
-               or vm[key] != overrides[key]:
+            override = overrides[key]
+            value = vm.get(key)
+            if key == 'network' and override in [n['net'] for n in vm.get('nets')]:
+                continue
+            elif (overrides is None) != (value is None) or value != override:
                 match = False
                 break
         if match:
@@ -791,7 +793,7 @@ def _parse_vms_list(_list, overrides={}):
 def list_vm(args):
     output = args.global_output or args.output
     overrides = handle_parameters(args.param, args.paramfile)
-    filter_keys = ['name', 'ip', 'status', 'image', 'plan', 'profile']
+    filter_keys = ['name', 'ip', 'status', 'image', 'network', 'plan', 'profile']
     if [key for key in overrides if key not in filter_keys]:
         overrides = {}
     if args.client is not None and args.client == 'all':
