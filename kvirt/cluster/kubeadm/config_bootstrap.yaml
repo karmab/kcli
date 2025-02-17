@@ -1,4 +1,18 @@
 {% set api_fqdn = "api.%s.sslip.io" % api_ip.replace('.', '-').replace(':', '-') if sslip|default(False) else "api.%s.%s" % (cluster, domain) %}
+{% if feature_gates %}
+{% set feature_gates_string = [] %}
+{% for entry in feature_gates %}
+{% set entry = '%s=true' % entry %}
+{{ feature_gates_string.append(entry) or "" }}
+{% endfor %}
+{% endif %}
+{% if runtime_config %}
+{% set runtime_config_string = [] %}
+{% for entry in runtime_config %}
+{% set entry = '%s=true' % entry  %}
+{{ runtime_config_string.append(entry) or "" }}
+{% endfor %}
+{% endif %}
 apiVersion: kubeadm.k8s.io/v1beta4
 kind: InitConfiguration
 bootstrapTokens:
@@ -20,9 +34,6 @@ networking:
   podSubnet: {{ cluster_network_ipv4 }}
   serviceSubnet: {{ service_network_ipv4 }}
   dnsDomain: "{{ cluster }}.{{ domain }}"
-apiServer:
-  certSANs:
-  - {{ api_fqdn }}
 {% if disconnected_url != None %}
 imageRepository: {{ disconnected_url }}
 {% endif %}
@@ -34,8 +45,26 @@ dns:
 proxy:
   disabled: true
 {% endif %}
----
+apiServer:
+  certSANs:
+  - {{ api_fqdn }}
 {% if feature_gates %}
+  extraArgs:
+{% if runtime_config %}
+  - name: "runtime-config"
+    value: "{{ runtime_config_string|join(',') }}"
+{% endif %}
+  - name: "feature-gates"
+    value: "{{ feature_gates_string|join(',') }}"
+controllerManager:
+  extraArgs:
+  - name: "feature-gates"
+    value: "{{ feature_gates_string|join(',') }}"
+scheduler:
+  extraArgs:
+  - name: "feature-gates"
+    value: "{{ feature_gates_string|join(',') }}"
+---
 apiVersion: kubelet.config.k8s.io/v1beta1
 cgroupDriver: systemd
 featureGates:
