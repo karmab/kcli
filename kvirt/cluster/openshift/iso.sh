@@ -8,6 +8,9 @@
 
 for vg in $(vgs -o name --noheadings) ; do vgremove -y $vg ; done
 for pv in $(pvs -o name --noheadings) ; do pvremove -y $pv ; done
+for disk in $(lsblk -dno NAME,TYPE | awk '$2=="disk" {print $1}') ; do
+  wipefs -a /dev/$disk
+done
 {% if install_disk is defined %}
 install_device='/dev/{{ install_disk | basename }}'
 {% else %}
@@ -53,6 +56,7 @@ if [ -f /root/macs.txt ] ; then
 fi
 
 {% if disable_ipv6|default(False) %}
+firstboot_args="$firstboot_args ipv6.disable=1"
 cp /root/config.ign /root/config.ign.ori
 while true ; do
   NIC=$(ip r | grep {{ baremetal_cidr|default('default') }} | head -1 | grep -oP '(?<=dev )[^ ]*')

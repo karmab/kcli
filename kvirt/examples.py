@@ -590,7 +590,7 @@ $ kcli start baremetal-host -P user=admin -P password=admin 10.10.10.10
 $ kcli start baremetal-host -u admin -p admin 10.10.10.10
 
 # Start a baremetal host with a specific iso
-$ kcli start baremetal-host -u admin -p admin -p iso_url=http://192.168.122.1/my.iso 10.10.10.10
+$ kcli start baremetal-host -u admin -p admin -P iso_url=http://192.168.122.1/my.iso 10.10.10.10
 """
 
 stophost = """# Stop a baremetal host
