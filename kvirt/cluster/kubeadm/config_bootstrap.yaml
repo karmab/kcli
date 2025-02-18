@@ -1,4 +1,11 @@
-{% set api_fqdn = "api.%s.sslip.io" % api_ip.replace('.', '-').replace(':', '-') if sslip|default(False) else "api.%s.%s" % (cluster, domain) %}
+{% if sslip|default(False) %}
+{% set api_fqdn = "api.%s.sslip.io" % api_ip.replace('.', '-').replace(':', '-') %}
+{% elif domain != None %}
+{% set api_fqdn = "api.%s.%s" % (cluster, domain) %}
+{% else %}
+{% set api_fqdn = api_ip %}
+{% endif %}
+
 {% if feature_gates %}
 {% set feature_gates_string = [] %}
 {% for entry in feature_gates %}
@@ -33,7 +40,9 @@ controlPlaneEndpoint: {{ api_fqdn }}:6443
 networking:
   podSubnet: {{ cluster_network_ipv4 }}
   serviceSubnet: {{ service_network_ipv4 }}
+{% if domain != None %}
   dnsDomain: "{{ cluster }}.{{ domain }}"
+{% endif %}
 {% if disconnected_url != None %}
 imageRepository: {{ disconnected_url }}
 {% endif %}
