@@ -109,6 +109,9 @@ def create(config, plandir, cluster, overrides):
     data['kube'] = data['cluster']
     data['kubetype'] = 'generic'
     domain = data['domain']
+    if domain is None:
+        msg = "A valid domain must be provided"
+        return {'result': 'failure', 'reason': msg}
     cloud_lb = data['cloud_lb']
     cloud_dns = data['cloud_dns']
     cloud_storage = data['cloud_storage']
