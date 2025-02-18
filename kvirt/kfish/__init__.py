@@ -294,11 +294,13 @@ class Redfish(object):
                 except Exception as e:
                     if self.debug:
                         traceback.print_exception(e)
+                    raise
             try:
                 result = self.insert_iso(iso_url)
             except Exception as e:
                 if self.debug:
                     traceback.print_exception(e)
+                raise
             if result.code not in [200, 202, 204]:
                 error(f"Hit {result.reason} When plugging {iso_url}")
                 sys.exit(1)
