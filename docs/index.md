@@ -2208,7 +2208,6 @@ ksushy can be launched manually for testing purposes but the following command c
 - KSUSHY_DEBUG: enable debug
 - KSUSHY_USER: username for authentication
 - KSUSHY_PASSWORD: password for authentication
-- KSUSHY_BOOTONCE: enable bootonce hack
 
 ```
 kcli create sushy-service
@@ -2235,12 +2234,6 @@ For plugging an iso, only virtualization providers can be used.
 ### Restricting access
 
 When deploying the service, an username and password can be specified for securing access through basic authentication
-
-### Bootonce hack
-
-As virtualization providers don't provide a way to restart in a given iso only one time (and because in kcli design, we don't mess with boot orders), the `bootonce` flags allows to overcome this by emptying the primary disk of the corresponding vm when receiving a one time iso reboot via redfish.
-
-Note that this is destructive and as such considered a hack, but can be useful for testing purposes which involve reinstalling several times a given node.
 
 # Ansible support
 

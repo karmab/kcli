@@ -1409,8 +1409,8 @@ class Kvirt(object):
                 os_tag.remove(initrd)
             if cmdline is not None:
                 os_tag.remove(cmdline)
-            newxml = ET.tostring(root)
-            conn.defineXML(newxml.decode("utf-8"))
+            newxml = ET.tostring(root).decode("utf-8")
+            conn.defineXML(newxml)
         return {'result': 'success'}
 
     def start(self, name):
@@ -2321,8 +2321,8 @@ class Kvirt(object):
             for serial in list(tree.iter('serial')):
                 source = serial.find('source')
                 source.set('service', str(common.get_free_port()))
-        newxml = ET.tostring(tree)
-        conn.defineXML(newxml.decode("utf-8"))
+        newxml = ET.tostring(tree).decode("utf-8")
+        conn.defineXML(newxml)
         vm = conn.lookupByName(new)
         vm.setAutostart(oldautostart)
         if start:
@@ -2444,8 +2444,8 @@ class Kvirt(object):
                     base = list(root.iter('network'))[0]
                     dns = ET.Element("dns")
                     base.append(dns)
-                    newxml = ET.tostring(root)
-                    conn.networkDefineXML(newxml.decode("utf-8"))
+                    newxml = ET.tostring(root).decode("utf-8")
+                    conn.networkDefineXML(newxml)
                 elif dns[0].get('enable', 'yes') == 'no':
                     warning("Ignoring reservedns as network was created with dns explicitely disabled")
                     continue
@@ -2604,8 +2604,8 @@ class Kvirt(object):
                     return {'result': 'success'}
             warning("Note it will only be effective upon next start")
         cpunode.text = str(numcpus)
-        newxml = ET.tostring(root)
-        conn.defineXML(newxml.decode("utf-8"))
+        newxml = ET.tostring(root).decode("utf-8")
+        conn.defineXML(newxml)
         return {'result': 'success'}
 
     def update_cpuflags(self, name, cpuflags, disable=False):
@@ -2654,8 +2654,8 @@ class Kvirt(object):
             pprint(f"Adding flag {feature}")
             new_entry = f"<feature policy='require' name='{feature}'/>"
             cpu.append((ET.fromstring(new_entry)))
-        newxml = ET.tostring(root)
-        conn.defineXML(newxml.decode("utf-8"))
+        newxml = ET.tostring(root).decode("utf-8")
+        conn.defineXML(newxml)
         return {'result': 'success'}
 
     def update_memory(self, name, memory):
@@ -2680,8 +2680,8 @@ class Kvirt(object):
         elif vm.isActive() != 0:
             warning("Note it will only be effective upon next start")
         currentmemory.text = memory
-        newxml = ET.tostring(root)
-        conn.defineXML(newxml.decode("utf-8"))
+        newxml = ET.tostring(root).decode("utf-8")
+        conn.defineXML(newxml)
         return {'result': 'success'}
 
     def update_iso(self, name, iso):
@@ -2721,7 +2721,8 @@ class Kvirt(object):
             if source is None:
                 source = element.find('source')
             if iso is None:
-                element.remove(source)
+                if source is not None:
+                    element.remove(source)
             elif source is not None:
                 source.set('file', iso)
             else:
@@ -2738,11 +2739,33 @@ class Kvirt(object):
 </disk>""" % iso
             base = list(root.iter('devices'))[-1]
             base.append((ET.fromstring(isoxml)))
+        newxml = ET.tostring(root).decode("utf-8")
         if vm.isActive() != 0:
             warning("Note it will only be effective upon next start")
-        newxml = ET.tostring(root)
-        conn.defineXML(newxml.decode("utf-8"))
+        conn.defineXML(newxml)
         return {'result': 'success'}
+
+    def start_from_cd(self, name):
+        self.stop(name)
+        conn = self.conn
+        vm = conn.lookupByName(name)
+        xml = vm.XMLDesc(0)
+        root = ET.fromstring(xml)
+        newxml = ET.tostring(root).decode("utf-8")
+        newxml = newxml.replace('dev="hd"', 'dev="cdrom"')
+        for element in list(root.iter('disk')):
+            if element.get('device') == 'cdrom':
+                iso_file = element.find('source').get('file') if element.find('source') is not None else None
+                if iso_file is None or iso_file.endswith(f'{name}.ISO'):
+                    self.start(name)
+                boot = element.find('boot') or {}
+                cd_order = boot.get('order')
+                if cd_order is not None:
+                    newxml = newxml.replace("<boot order='1'/>", "<boot order='XX'/>")
+                    newxml = newxml.replace(f"<boot order='{cd_order}'/>", "<boot order='1'/>")
+                    newxml = newxml.replace("<boot order='XX'/>", f"<boot order='{cd_order}'/>")
+                break
+        conn.createXML(newxml)
 
     def update_flavor(self, name, flavor):
         pprint("Not implemented")
@@ -2767,8 +2790,8 @@ class Kvirt(object):
                 volume = conn.storageVolLookupByPath(path)
                 volume.delete(0)
                 element.remove(source)
-        newxml = ET.tostring(root)
-        conn.defineXML(newxml.decode("utf-8"))
+        newxml = ET.tostring(root).decode("utf-8")
+        conn.defineXML(newxml)
 
     def update_start(self, name, start=True):
         conn = self.conn
@@ -3980,8 +4003,8 @@ class Kvirt(object):
                 break
         if vm.isActive() != 0:
             warning("Note it will only be effective upon next start")
-        newxml = ET.tostring(root)
-        conn.defineXML(newxml.decode("utf-8"))
+        newxml = ET.tostring(root).decode("utf-8")
+        conn.defineXML(newxml)
         return {'result': 'success'}
 
     def update_network(self, name, dhcp=None, nat=None, domain=None, plan=None, overrides={}):
@@ -4059,8 +4082,8 @@ class Kvirt(object):
         if modified:
             warning("Network will be restarted")
             network.destroy()
-            newxml = ET.tostring(root)
-            conn.networkDefineXML(newxml.decode("utf-8"))
+            newxml = ET.tostring(root).decode("utf-8")
+            conn.networkDefineXML(newxml)
             network.create()
         else:
             return {'result': 'failure', 'reason': 'No changes needed'}
@@ -4113,8 +4136,8 @@ class Kvirt(object):
                 if element.find('source').get(_type) is not None:
                     element.find('source').set(_type, new_path)
                     break
-        newxml = ET.tostring(root)
-        conn.defineXML(newxml.decode("utf-8"))
+        newxml = ET.tostring(root).decode("utf-8")
+        conn.defineXML(newxml)
         return {'result': 'success'}
 
     def list_security_groups(self, network=None):

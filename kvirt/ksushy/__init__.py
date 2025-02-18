@@ -132,8 +132,6 @@ class Ksushy():
         @app.route('/redfish/v1/Systems/<client>/<name>', method='PATCH')
         @auth_basic(credentials)
         def system_resource(client, name):
-            if not self.bootonce:
-                return
             boot = request.json.get('Boot', {})
             if not boot:
                 response.status = 400
@@ -148,29 +146,6 @@ class Ksushy():
                 error(msg)
                 return msg
             else:
-                baseconfig = Kbaseconfig()
-                if client not in baseconfig.clients:
-                    response.status = 404
-                    msg = f'Client {client} not found'
-                    error(msg)
-                    return msg
-                config = Kconfig(client)
-                k = config.k
-                info = k.info(name)
-                pprint('Forcing to boot from ISO by deleting primary disk')
-                try:
-                    pool = config.pool
-                    diskname = os.path.basename(info['disks'][0]['path'])
-                    size = info['disks'][0]['size']
-                    interface = info['disks'][0]['format']
-                    k.stop(name)
-                    k.delete_disk(name=name, diskname=diskname, pool=pool)
-                    k.add_disk(name=name, size=size, pool=pool, interface=interface, diskname=diskname)
-                except Exception as e:
-                    msg = f'Failed to set boot from virtualcd once. Hit {e}'
-                    error(msg)
-                    response.status = 400
-                    return msg
                 response.status = 204
                 return ''
 
@@ -225,7 +200,7 @@ class Ksushy():
             if reset_type in ['On', 'ForceRestart']:
                 try:
                     pprint(f"Starting vm {name}")
-                    k.start(name)
+                    k.start_from_cd(name) if config.type == 'kvm' else k.start(name)
                 except subprocess.CalledProcessError as e:
                     error(e)
                     response.status = 400
@@ -354,7 +329,6 @@ class Ksushy():
         self.debug = 'KSUSHY_DEBUG' in os.environ
         self.ipv6 = 'KSUSHY_IPV6' in os.environ
         self.host = '::' if self.ipv6 else '0.0.0.0'
-        self.bootonce = 'KSUSHY_BOOTONCE' in os.environ
 
     def run(self):
         data = {'host': self.host, 'port': self.port, 'debug': self.debug}
