@@ -698,8 +698,7 @@ myvsphere:
  user: administrator@karmalabs.corp
  password: mypassword
  datacenter: Madrid
- cluster: xxx
- filtervms: true
+ cluster: mycluster
  pool: mysuperdatastore
 ```
 
@@ -707,7 +706,7 @@ The following parameters are specific to Vsphere:
 
 - `cluster`
 - `datacenter` Defaults to Default
-- `filtervms` Defaults to True. Only list vms created by kcli. Useful for environments when you are superadmin and have a ton of vms!!!
+- `filtervms` Defaults to False. Only list vms created by kcli. Useful for environments when you are superadmin and have a ton of vms!!!
 - `category` Defaults to kcli. Category where to create tags in order to apply them to vms. If tags are requested for a given vm, they will be created on the fly along with the category, if missing
 - `basefolder` Optional base folder where to create all vms
 - `isofolder` Optional folder where to keep ISOs
@@ -724,6 +723,22 @@ To use this provider with kcli rpm, you'll need to install
 
 ```
 dnf -y install python3-pyvmomi python3-cryptography
+```
+
+### Using an standalone ESX
+
+For an esx, a couple of adjustments are needed.
+The cluster should point to the hostname of the esx and the keys datacenter, pools and user have fixed values.
+
+```
+myesx:
+  type: vsphere
+  host: 10.6.118.114
+  user: root
+  password: mypassword
+  datacenter: ha-datacenter
+  pool: datastore1
+  cluster: superesx
 ```
 
 ### Using hostgroups and vm-host rules
