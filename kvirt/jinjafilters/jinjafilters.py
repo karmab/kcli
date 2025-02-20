@@ -25,7 +25,7 @@ def none(value):
 def base64(value):
     if value is None:
         return None
-    return str(b64encode(value.encode('utf-8')), 'utf-8')
+    return str(b64encode(str(value).encode('utf-8')), 'utf-8')
 
 
 def _type(value):
