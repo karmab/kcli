@@ -1380,7 +1380,71 @@ Workflow allows you to launch scripts locally after they are rendered
      files:
      - frout.txt
 
-This would execute the two scripts after rendering them into a temporary directory, along with the files if provided. Note that you can omit the scripts section and instead indicate the script to run as name of the workflow. This requires it to be a sh/bash script and as such beeing suffixed by .sh
+This would execute the two scripts after rendering them into a temporary directory, along with the files if provided. Note that you can omit the scripts section and instead indicate the script to run as name of the workflow. This requires it to be a sh/bash script and as such being suffixed by .sh
+
+By default ``files`` items are rendered directly in the ``/root`` directory with the same directory structure as the original files, and ``scripts`` items are rendered in a temporary directory.  For example:
+
+.. code:: yaml
+
+   myworkflow:
+     type: workflow
+     scripts:
+     - arch/frout.sh
+     files:
+     - arch/frout.txt
+     - arch/template/frout.j2
+
+Will create files similar to this:
+
+.. code::
+
+   /tmp/tmpfiox_arx/frout.sh
+   /root/arch/frout.txt
+   /root/arch/template/frout.j2
+
+There is an optional field called ``destdir`` that we can use to force the destination directory, so that:
+
+.. code:: yaml
+
+   myworkflow:
+     type: workflow
+     destdir: outdir
+     scripts:
+     - arch/frout.sh
+     files:
+     - arch/frout.txt
+     - arch/template/frout.j2
+
+Will create the following file structure:
+
+.. code::
+
+   ./outdir/frout.sh
+   ./outdir/arch/frout.txt
+   ./outdir/arch/template/frout.j2
+
+Additionally elements from ``files`` can use a mapping instead of a string to specify the destination directories of the files:
+
+.. code:: yaml
+
+   myworkflow:
+     type: workflow
+     destdir: outdir
+     scripts:
+     - arch/frout.sh
+     files:
+     - origin: arch/frout.txt
+       path: ./outdir/frout.txt
+     - origin: arch/template/frout.j2
+       path: ./outdir/frout.j2
+
+Will create the following file structure:
+
+.. code::
+
+   ./outdir/frout.sh
+   ./outdir/frout.txt
+   ./outdir/frout.j2
 
 vms
 ~~~
@@ -1672,10 +1736,10 @@ Specific parameters for a client
 =============== ============= ====================================================
 Parameter       Default Value Comments
 =============== ============= ====================================================
-*host*          127.0.0.1     
+*host*          127.0.0.1
 *port*                        Defaults to 22 if ssh protocol is used
-*user*          root          
-*protocol*      ssh           
+*user*          root
+*protocol*      ssh
 *url*                         can be used to specify an exotic qemu url
 *tunnel*        False         make kcli use tunnels for console and for ssh access
 *keep_networks* False         make kcli keeps networks when deleting plan
@@ -1689,37 +1753,37 @@ Parameter          Default Value                        Comments
 ================== ==================================== =====================================================================================================================================================================================================================================================================================================================
 *client*           None                                 Allows to target a different client/host for the corresponding entry
 *virttype*         None                                 Only used for Libvirt where it evaluates to kvm if acceleration shows in capabilities, or qemu emulation otherwise. If a value is provided, it must be either kvm, qemu, xen or lxc
-*cpumodel*         host-model                           
+*cpumodel*         host-model
 *cpuflags*         []                                   You can specify a list of strings with features to enable or use dict entries with *name* of the feature and *policy* either set to require,disable, optional or force. The value for vmx is ignored, as it’s handled by the nested flag
-*numcpus*          2                                    
-*cpuhotplug*       False                                
+*numcpus*          2
+*cpuhotplug*       False
 *numamode*         None                                 numamode to apply to the workers only.
 *cpupinning*       []                                   cpupinning conf to apply
-*memory*           512M                                 
-*memoryhotplug*    False                                
+*memory*           512M
+*memoryhotplug*    False
 *flavor*                                                Specific to gcp, aws, openstack and packet
-*guestid*          guestrhel764                         
-*pool*             default                              
+*guestid*          guestrhel764
+*pool*             default
 *image*            None                                 Should point to your base cloud image(optional). You can either specify short name or complete path. If you omit the full path and your image lives in several pools, the one from last (alphabetical) pool will be used\\
 *diskinterface*    virtio                               You can set it to ide, ssd or nvme instead
-*diskthin*         True                                 
+*diskthin*         True
 *disks*            []                                   Array of disks to define. For each of them, you can specify pool, size, thin (as boolean), interface (either ide or virtio) and a wwn.If you omit parameters, default values will be used from config or profile file (You can actually let the entire entry blank or just indicate a size number directly)
-*iso*              None                                 
+*iso*              None
 *nets*             []                                   Array of networks to define. For each of them, you can specify just a string for the name, or a dict containing name, public and alias and ip, mask and gateway, and bridge. Any visible network is valid, in particular bridges or specific interfaces can be used on Libvirt, beyond regular nat networks
-*gateway*          None                                 
+*gateway*          None
 *dns*              None                                 Dns server
 *domain*           None                                 Dns search domain
-*start*            true                                 
+*start*            true
 *vnc*              false                                if set to true, vnc is used for console instead of spice
-*cloudinit*        true                                 
+*cloudinit*        true
 *reserveip*        false                                if set to true and an ip was provided, create a dhcp reservation in libvirt network
-*reservedns*       false                                
-*reservehost*      false                                
+*reservedns*       false
+*reservehost*      false
 *keys*             []                                   Array of ssh public keys to inject to the vm. Whether the actual content or the public key path
 *cmds*             []                                   Array of commands to run
 *profile*          None                                 name of one of your profile
 *scripts*          []                                   array of paths of custom script to inject with cloudinit. It will be merged with cmds parameter. You can either specify full paths or relative to where you’re running kcli. Only checked in profile or plan file
-*nested*           True                                 
+*nested*           True
 *sharedkey*        False                                Share a private/public key between all the nodes of your plan. Additionally, root access will be allowed
 *privatekey*       False                                Inject your private key to the nodes of your plan
 *files*            []                                   Array of files to inject to the vm. For each of them, you can specify path, owner ( root by default) , permissions (600 by default ) and either origin or content to gather content data directly or from specified origin. When specifying a directory as origin, all the files it contains will be parsed and added
@@ -1883,42 +1947,42 @@ Here’s the list of typical variables that can be used (you can list them with 
 ===================== =================== ===============================================================================================================================
 Parameter             Default Value       Comments
 ===================== =================== ===============================================================================================================================
-cluster               testk               
-domain                karmalabs.corp      
+cluster               testk
+domain                karmalabs.corp
 *version*             stable              You can choose between stable, dev-preview, nightly, ci or stable. both ci and nightly require specific data in the pull secret
-tag                   4.12                
+tag                   4.12
 async                 false               Exit once vms are created and let job in cluster delete bootstrap
 notify                false               Whether to send notifications once cluster is deployed. Mean to be used in async mode
-pull_secret           openshift_pull.json 
+pull_secret           openshift_pull.json
 network               default             Any existing network can be used
-api_ip                None                
-ingress_ip            None                
+api_ip                None
+ingress_ip            None
 ctlplanes             1                   number of ctlplane
 workers               0                   number of workers
-network_type          OVNKubernetes       
-pool                  default             
-flavor                None                
-flavor_bootstrap      None                
-flavor_ctlplane       None                
-flavor_worker         None                
-numcpus               4                   
-bootstrap_numcpus     None                
-ctlplane_numcpus      None                
-worker_numcpus        None                
-memory                8192                
-bootstrap_memory      None                
-ctlplane_memory       None                
-worker_memory         None                
+network_type          OVNKubernetes
+pool                  default
+flavor                None
+flavor_bootstrap      None
+flavor_ctlplane       None
+flavor_worker         None
+numcpus               4
+bootstrap_numcpus     None
+ctlplane_numcpus      None
+worker_numcpus        None
+memory                8192
+bootstrap_memory      None
+ctlplane_memory       None
+worker_memory         None
 disk_size             30                  disk size in Gb for final nodes
-extra_disks           []                  
-disconnected_url      None                
-disconnected_user     None                
-disconnected_password None                
-imagecontentsources   []                  
+extra_disks           []
+disconnected_url      None
+disconnected_user     None
+disconnected_password None
+imagecontentsources   []
 baremetal             False               Whether to also deploy the metal3 operator, for provisioning physical workers
-cloud_tag             None                
-cloud_scale           False               
-cloud_api_internal    False               
+cloud_tag             None
+cloud_scale           False
+cloud_api_internal    False
 apps                  []                  Extra applications to deploy on the cluster
 ===================== =================== ===============================================================================================================================
 

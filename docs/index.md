@@ -1278,7 +1278,71 @@ myworkflow:
 ```
 
 This would execute the two scripts after rendering them into a temporary directory, along with the files if provided.
-Note that you can omit the scripts section and instead indicate the script to run as name of the workflow. This requires it to be a sh/bash script and as such beeing suffixed by .sh
+Note that you can omit the scripts section and instead indicate the script to run as name of the workflow. This requires it to be a sh/bash script and as such being suffixed by .sh
+
+By default `files` items are rendered directly in the `/root` directory with the same directory structure as the original files, and `scripts` items are rendered in a temporary directory.  For example:
+
+```YAML
+myworkflow:
+  type: workflow
+  scripts:
+  - arch/frout.sh
+  files:
+  - arch/frout.txt
+  - arch/template/frout.j2
+```
+
+Will create files similar to this:
+
+```
+/tmp/tmpfiox_arx/frout.sh
+/root/arch/frout.txt
+/root/arch/template/frout.j2
+```
+
+There is an optional field called `destdir` that we can use to force the destination directory, so that:
+
+```YAML
+myworkflow:
+  type: workflow
+  destdir: outdir
+  scripts:
+  - arch/frout.sh
+  files:
+  - arch/frout.txt
+  - arch/template/frout.j2
+```
+
+Will create the following file structure:
+
+```
+./outdir/frout.sh
+./outdir/arch/frout.txt
+./outdir/arch/template/frout.j2
+```
+
+Additionally elements from `files` can use a mapping instead of a string to specify the destination directories of the files:
+
+```YAML
+myworkflow:
+  type: workflow
+  destdir: outdir
+  scripts:
+  - arch/frout.sh
+  files:
+  - origin: arch/frout.txt
+    path: ./outdir/frout.txt
+  - origin: arch/template/frout.j2
+    path: ./outdir/frout.j2
+```
+
+Will create the following file structure:
+
+```
+./outdir/frout.sh
+./outdir/frout.txt
+./outdir/frout.j2
+```
 
 ### vms
 You can point at an existing profile in your plans, define all parameters for the vms, or combine both approaches. You can even add your own profile definitions in the plan file and reference them within the same plan:

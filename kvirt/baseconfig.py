@@ -1258,6 +1258,7 @@ class Kbaseconfig:
                 msg = "No scripts provided"
                 error(msg)
                 return {'result': 'failure', 'reason': msg}
+        outputdir = os.path.realpath(outputdir or overrides.get('destdir'))
         default_destdir = outputdir or '/root'
         directoryfiles = []
         treatedfiles = []
