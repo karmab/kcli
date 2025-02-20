@@ -1437,6 +1437,30 @@ class Kvirt(object):
                     return {'result': 'failure', 'reason': e}
         return {'result': 'success'}
 
+    def start_from_cd(self, name):
+        self.stop(name)
+        conn = self.conn
+        vm = conn.lookupByName(name)
+        xml = vm.XMLDesc(0)
+        root = ET.fromstring(xml)
+        newxml = ET.tostring(root).decode("utf-8")
+        newxml = newxml.replace('dev="hd"', 'dev="cdrom"')
+        for element in list(root.iter('disk')):
+            if element.get('device') == 'cdrom':
+                iso_file = element.find('source').get('file') if element.find('source') is not None else None
+                if iso_file is None or iso_file.endswith(f'{name}.ISO'):
+                    warning(f"No iso found in VM {name}, starting normally")
+                    return self.start(name)
+                boot = element.find('boot') or {}
+                cd_order = boot.get('order')
+                if cd_order is not None:
+                    newxml = newxml.replace("<boot order='1'/>", "<boot order='XX'/>")
+                    newxml = newxml.replace(f"<boot order='{cd_order}'/>", "<boot order='1'/>")
+                    newxml = newxml.replace("<boot order='XX'/>", f"<boot order='{cd_order}'/>")
+                break
+        conn.createXML(newxml)
+        return {'result': 'success'}
+
     def stop(self, name, soft=False):
         conn = self.conn
         status = {0: 'down', 1: 'up'}
@@ -2744,28 +2768,6 @@ class Kvirt(object):
             warning("Note it will only be effective upon next start")
         conn.defineXML(newxml)
         return {'result': 'success'}
-
-    def start_from_cd(self, name):
-        self.stop(name)
-        conn = self.conn
-        vm = conn.lookupByName(name)
-        xml = vm.XMLDesc(0)
-        root = ET.fromstring(xml)
-        newxml = ET.tostring(root).decode("utf-8")
-        newxml = newxml.replace('dev="hd"', 'dev="cdrom"')
-        for element in list(root.iter('disk')):
-            if element.get('device') == 'cdrom':
-                iso_file = element.find('source').get('file') if element.find('source') is not None else None
-                if iso_file is None or iso_file.endswith(f'{name}.ISO'):
-                    self.start(name)
-                boot = element.find('boot') or {}
-                cd_order = boot.get('order')
-                if cd_order is not None:
-                    newxml = newxml.replace("<boot order='1'/>", "<boot order='XX'/>")
-                    newxml = newxml.replace(f"<boot order='{cd_order}'/>", "<boot order='1'/>")
-                    newxml = newxml.replace("<boot order='XX'/>", f"<boot order='{cd_order}'/>")
-                break
-        conn.createXML(newxml)
 
     def update_flavor(self, name, flavor):
         pprint("Not implemented")

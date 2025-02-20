@@ -102,8 +102,8 @@ class Khcloud():
             placement_group = self.conn.placement_groups.get_by_name(placement_group_name)
             if not placement_group:
                 response = self.conn.placement_groups.create(name=placement_group_name, type="spread",
-                                                            labels={"kcli-managed": "placement-group",
-                                                                    "plan": labels["plan"]})
+                                                             labels={"kcli-managed": "placement-group",
+                                                                     "plan": labels["plan"]})
                 if response.action:
                     response.action.wait_until_finished(300)
 
@@ -283,8 +283,8 @@ class Khcloud():
             for alias_ip in private_net.alias_ips:
                 ips.append(alias_ip)
 
-            nets.append({'device': 'enp7s0', 'mac': private_net.mac_address, 'net': private_net.network.name, 'type': "private",
-                         "ip": yamlinfo['private_ip']})
+            nets.append({'device': 'enp7s0', 'mac': private_net.mac_address, 'net': private_net.network.name,
+                         'type': "private", "ip": yamlinfo['private_ip']})
 
         if nets:
             yamlinfo['nets'] = nets

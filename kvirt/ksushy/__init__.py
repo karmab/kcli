@@ -200,7 +200,7 @@ class Ksushy():
             if reset_type in ['On', 'ForceRestart']:
                 try:
                     pprint(f"Starting vm {name}")
-                    k.start_from_cd(name) if config.type == 'kvm' else k.start(name)
+                    k.start(name)
                 except subprocess.CalledProcessError as e:
                     error(e)
                     response.status = 400
