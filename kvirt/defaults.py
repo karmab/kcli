@@ -228,6 +228,19 @@ Environment=PYTHONUNBUFFERED=true
 [Install]
 WantedBy=multi-user.target"""
 
+ISOSERVICE = """[Unit]
+Description=Ksushy iso remover service
+After=syslog.target
+[Service]
+Type=simple
+ExecStart={executable}
+StandardOutput=journal
+StandardError=journal
+Environment=HOME={home}
+Environment=PYTHONUNBUFFERED=true
+[Install]
+WantedBy=multi-user.target"""
+
 WEBSERVICE = """[Unit]
 Description=Kweb service
 After=syslog.target

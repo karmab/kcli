@@ -200,7 +200,7 @@ class Ksushy():
             if reset_type in ['On', 'ForceRestart']:
                 try:
                     pprint(f"Starting vm {name}")
-                    k.start(name)
+                    k.start_from_cd(name) if self.bootonce and config.type == 'kvm' else k.start(name)
                 except subprocess.CalledProcessError as e:
                     error(e)
                     response.status = 400
@@ -329,6 +329,7 @@ class Ksushy():
         self.debug = 'KSUSHY_DEBUG' in os.environ
         self.ipv6 = 'KSUSHY_IPV6' in os.environ
         self.host = '::' if self.ipv6 else '0.0.0.0'
+        self.bootonce = 'KSUSHY_BOOTONCE' in os.environ
 
     def run(self):
         data = {'host': self.host, 'port': self.port, 'debug': self.debug}

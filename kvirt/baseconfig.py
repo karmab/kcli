@@ -1511,6 +1511,7 @@ class Kbaseconfig:
             os.makedirs(os.path.dirname(service_file))
         update = os.path.exists(service_file)
         home = os.environ.get('HOME', '/root')
+        iso_remover = bootonce
         executable = which('ksushy')
         port = f"Environment=KSUSHY_PORT={port}\n" if port != 9000 else ''
         ssl = "Environment=KSUSHY_SSL=true\n" if ssl else ''
@@ -1522,10 +1523,21 @@ class Kbaseconfig:
                                                    password=password, bootonce=bootonce, executable=executable)
         with open(service_file, "w") as f:
             f.write(sushydata)
-        cmd = "systemctl restart ksushy" if update else "systemctl enable --now ksushy"
         user_space = "--user" if not root else ""
         cmd = f"systemctl {user_space} restart ksushy" if update else f"systemctl {user_space} enable --now ksushy"
         call(cmd, shell=True)
+        if iso_remover:
+            executable = which('ksushy-isoremover')
+            isoremoverdata = kdefaults.ISOSERVICE.format(home=home, executable=executable)
+            if root:
+                service_file = "/etc/systemd/system/ksushy-isoremover.service"
+            else:
+                service_file = f"{os.environ.get('HOME')}/.config/systemd/user/ksushy-isoremover.service"
+            with open(service_file, "w") as f:
+                f.write(isoremoverdata)
+            cmd = f"systemctl {user_space} restart" if update else f"systemctl {user_space} enable --now"
+            cmd += " ksushy-isoremover"
+            call(cmd, shell=True)
 
     def deploy_web_service(self, port=8000, ssl=False, ipv6=False):
         update = os.path.exists("/usr/lib/systemd/system/kweb.service")

@@ -2272,6 +2272,7 @@ ksushy can be launched manually for testing purposes but the following command c
 - KSUSHY_DEBUG: enable debug
 - KSUSHY_USER: username for authentication
 - KSUSHY_PASSWORD: password for authentication
+- KSUSHY_BOOTONCE: enable bootonce hack
 
 ```
 kcli create sushy-service
@@ -2298,6 +2299,10 @@ For plugging an iso, only virtualization providers can be used.
 ### Restricting access
 
 When deploying the service, an username and password can be specified for securing access through basic authentication
+
+### Bootonce hack
+
+Since virtualization providers don't provide a way to restart in a given iso only one time (and because in kcli design, we don't mess with boot orders), the `bootonce` overcomes this by running a side process which monitors vms getting rebooted, and restart them instead after removing their iso so that they boot from OS.
 
 # Ansible support
 
