@@ -3303,7 +3303,7 @@ def update_securitygroup(args):
 def create_ksushy_service(args):
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     baseconfig.deploy_ksushy_service(port=args.port, ipv6=args.ipv6, ssl=args.ssl, user=args.user,
-                                     password=args.password, bootonce=args.bootonce)
+                                     password=args.password, bootonce=args.bootonce, plan=args.plan)
 
 
 def create_web_service(args):
@@ -3984,6 +3984,7 @@ def cli():
     sushycreate_parser.add_argument('-s', '--ssl', action='store_true', help='Enable ssl')
     sushycreate_parser.add_argument('-u', '--user', help='User for authentication')
     sushycreate_parser.add_argument('-p', '--password', help='Password for authentication')
+    sushycreate_parser.add_argument('--plan', help='Plan for filtering vms when using bootonce')
     sushycreate_parser.set_defaults(func=create_ksushy_service)
 
     vmcreate_desc = 'Create Vm'

@@ -1499,7 +1499,8 @@ class Kbaseconfig:
                 call(cmcmd, shell=True)
         return {'result': 'success'}
 
-    def deploy_ksushy_service(self, port=9000, ssl=False, ipv6=False, user=None, password=None, bootonce=False):
+    def deploy_ksushy_service(self, port=9000, ssl=False, ipv6=False, user=None, password=None, bootonce=False,
+                              plan=None):
         if ssl:
             warning("ssl support requires installing manually pyopenssl and cherrypy")
         root = os.getuid() == 0
@@ -1528,7 +1529,8 @@ class Kbaseconfig:
         call(cmd, shell=True)
         if iso_remover:
             executable = which('ksushy-isoremover')
-            isoremoverdata = kdefaults.ISOSERVICE.format(home=home, executable=executable)
+            plan = f"Environment=KSUSHY_PLAN={plan}\n" if plan is not None else ''
+            isoremoverdata = kdefaults.ISOSERVICE.format(home=home, executable=executable, plan=plan)
             if root:
                 service_file = "/etc/systemd/system/ksushy-isoremover.service"
             else:
