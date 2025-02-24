@@ -267,8 +267,7 @@ IBM = {'region': 'eu-gb'}
 GCP = {'region': 'europe-west1'}
 
 KUBEVIRT = {'readwritemany': False, 'disk_hotplug': False, 'access_mode': 'NodePort',
-            'volume_mode': 'Filesystem', 'volume_access': 'ReadWriteOnce', 'harvester': False, 'embed_userdata': False,
-            'registry': 'quay.io'}
+            'harvester': False, 'embed_userdata': False, 'registry': 'quay.io'}
 
 OPENSTACK = {'version': '2', 'domain': 'Default', 'user': 'admin', 'project': 'admin'}
 

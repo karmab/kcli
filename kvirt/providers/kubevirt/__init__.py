@@ -358,11 +358,11 @@ class Kubevirt():
                 if 'name' in disk:
                     existingpvc = True
             pool = self.check_pool(diskpool)
-            pool_details = self.get_sc_details(pool)
-            if volume_mode not in pool_details:
-                return {'result': 'failure', 'reason': f"Pool {pool} doesn't support volume mode {volume_mode}"}
-            elif volume_access not in pool_details[volume_mode]:
-                return {'result': 'failure', 'reason': f"Pool {pool} doesn't support volume access {volume_access}"}
+            volume_mode, volume_access = self.get_volume_details(pool, volume_mode, volume_access)
+            if volume_mode is None:
+                return {'result': 'failure', 'reason': "Incorrect volume_mode"}
+            if volume_access is None:
+                return {'result': 'failure', 'reason': "Incorrect volume_access"}
             myvolume = {'name': diskname}
             if image is not None and index == 0:
                 if '/' in image:
@@ -1106,13 +1106,11 @@ class Kubevirt():
         index = len(currentdisks)
         diskname = f'{name}-disk{index}'
         pool = self.check_pool(pool)
-        pool_details = self.get_sc_details(pool)
-        volume_mode = self.volume_mode
-        volume_access = self.volume_access
-        if volume_mode not in pool_details:
-            return {'result': 'failure', 'reason': f"Pool {pool} doesn't support volume mode {volume_mode}"}
-        elif volume_access not in pool_details[volume_mode]:
-            return {'result': 'failure', 'reason': f"Pool {pool} doesn't support volume access {volume_access}"}
+        volume_mode, volume_access = self.get_volume_details(pool, self.volume_mode, self.volume_access)
+        if volume_mode is None:
+            return {'result': 'failure', 'reason': "Incorrect volume_mode"}
+        if volume_access is None:
+            return {'result': 'failure', 'reason': "Incorrect volume_access"}
         myvolume = {'name': diskname, 'persistentVolumeClaim': {'claimName': diskname}}
         if self.disk_hotplug:
             pprint(f"Hotplugging disk {diskname}")
@@ -1269,13 +1267,11 @@ class Kubevirt():
             size = _base_image_size(url)
             warning(f"Setting size of image to {size}G. This will be the size of primary disks using this")
         pool = self.check_pool(pool)
-        pool_details = self.get_sc_details(pool)
-        volume_mode = self.volume_mode
-        volume_access = self.volume_access
-        if volume_mode not in pool_details:
-            return {'result': 'failure', 'reason': f"Pool {pool} doesn't support volume mode {volume_mode}"}
-        elif volume_access not in pool_details[volume_mode]:
-            return {'result': 'failure', 'reason': f"Pool {pool} doesn't support volume access {volume_access}"}
+        volume_mode, volume_access = self.get_volume_details(pool, self.volume_mode, self.volume_access)
+        if volume_mode is None:
+            return {'result': 'failure', 'reason': "Incorrect volume_mode"}
+        if volume_access is None:
+            return {'result': 'failure', 'reason': "Incorrect volume_access"}
         namespace = self.namespace
         harvester = self.harvester
         shortimage = os.path.basename(url).split('?')[0]
@@ -1759,15 +1755,34 @@ class Kubevirt():
                 default_sc = sc['metadata']['name']
         return default_sc
 
-    def get_sc_details(self, name):
+    def get_sc_details(self, pool):
         kubectl = self.kubectl
         data = {}
         for entry in _get_all_resources(kubectl, 'storageprofile', debug=self.debug):
-            if entry['metadata']['name'] == name and 'claimPropertySets' in entry['status']:
+            if entry['metadata']['name'] == pool and 'claimPropertySets' in entry['status']:
                 for claimset in entry['status']['claimPropertySets']:
                     data[claimset['volumeMode']] = claimset['accessModes']
                 break
         return data
+
+    def get_volume_details(self, pool, volume_mode, volume_access):
+        pool_details = self.get_sc_details(pool)
+        if volume_mode is None:
+            volume_modes = list(pool_details.keys())
+            if volume_modes:
+                volume_mode = volume_modes[0]
+                volume_access = pool_details[volume_mode][0]
+            else:
+                volume_mode = 'Filesystem'
+                volume_access = 'ReadWriteOnce'
+        elif volume_mode in pool_details:
+            if volume_access is None:
+                volume_access = pool_details[volume_mode][0]
+            elif volume_access not in pool_details[volume_mode]:
+                volume_access = None
+        elif volume_mode not in pool_details:
+            volume_mode = None
+        return volume_mode, volume_access
 
     def update_reference(self, owners, namespace, reference):
         kubectl = self.kubectl

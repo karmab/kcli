@@ -85,16 +85,8 @@ class Kconfig(Kbaseconfig):
                     msg = f"Incorrect access_mode {access_mode}. Should be External, NodePort or LoadBalancer"
                     error(msg)
                     sys.exit(1)
-                volume_mode = KUBEVIRT_VOLUME_MODE or options.get('volume_mode', KUBEVIRT['volume_mode'])
-                if volume_mode not in ['Filesystem', 'Block']:
-                    msg = f"Incorrect volume_mode {volume_mode}. Should be Filesystem or Block"
-                    error(msg)
-                    sys.exit(1)
-                volume_access = KUBEVIRT_VOLUME_ACCESS or options.get('volume_access', KUBEVIRT['volume_access'])
-                if volume_access not in ['ReadWriteMany', 'ReadWriteOnce']:
-                    msg = f"Incorrect volume_access {volume_access}. Should be ReadWriteOnce or ReadWriteOnce"
-                    error(msg)
-                    sys.exit(1)
+                volume_mode = KUBEVIRT_VOLUME_MODE or options.get('volume_mode')
+                volume_access = KUBEVIRT_VOLUME_ACCESS or options.get('volume_access')
                 harvester = KUBEVIRT_HARVESTER or options.get('harvester', KUBEVIRT['harvester'])
                 embed_userdata = KUBEVIRT_EMBED_USERDATA or options.get('embed_userdata', KUBEVIRT['embed_userdata'])
                 registry = KUBEVIRT_REGISTRY or options.get('registry', KUBEVIRT['registry'])

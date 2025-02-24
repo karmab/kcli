@@ -513,8 +513,8 @@ You can use additional parameters for the Kubevirt section:
 -  ``namespace`` target namespace.
 -  ``tags`` additional list of tags in a key=value format to put to all created vms in their *nodeSelector*. Can be further indicated at profile or plan level in which case values are combined. This provides an easy way to force vms to run on specific nodes, by matching labels.
 -  ``access_mode`` Way to access vms other ssh. Defaults to NodePort,in which case a svc with a nodeport pointing to the ssh port of the vm will be created. Otherpossible values are LoadBalancer to create a svc of type loadbalancer to point to the vm or External to connect using the sdn ip of the vm. If tunnel options are set, they take precedence
--  ``volume_mode`` Volume Mode. Defaults to Filesystem (Block can be specified instead).
--  ``volume_access`` Volume access mode. Defaults to ReadWriteOnce.
+-  ``volume_mode`` Volume Mode. Defaults to None
+-  ``volume_access`` Volume access mode. Defaults to None
 -  ``disk_hotplug`` Whether to allow to hotplug (and unplug) disks. Defaults to false. Note it also requires to enable The HotplugVolumes featureGate within Kubevirt
 -  ``embed_userdata`` Whether to embed userdata directly in the vm spec. Defaults to false
 -  ``registry`` Specific registry where to gather karmab/curl image used when pool/sc has a volume binding mode of WaitForFirstConsumer. Defaults to quay.io
