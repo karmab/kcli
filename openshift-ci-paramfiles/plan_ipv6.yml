@@ -33,3 +33,4 @@ parameters:
   disconnected_keep: {{ disconnected_keep }}
   pull_secret: {{ pull_secret }}
   apps: {{ apps }}
+  retries: 4
