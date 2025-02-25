@@ -1,6 +1,5 @@
 platform: assisted
 version: latest
-tag: "4.17"
 ingress_ip: 192.168.254.252
 uefi: true
 workers: 2

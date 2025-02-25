@@ -1,6 +1,5 @@
 cluster: ci-hypershift
 version: latest
-tag: "4.17"
 # ingress_ip: 10.19.135.130
 # ingress_ip: 10.1.98.106
 # ingress_ip: 10.19.32.61

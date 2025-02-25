@@ -14,7 +14,7 @@ info: |
     With platform assisted, you will need to provision vms via a preliminary step (or use baremetal nodes) and still define baremetal_hosts array
     or you can use the assisted_vms flags to have vms provision for you
 version: latest
-tag: '4.17'
+tag: '4.18'
 platform:
 pull_secret: openshift_pull.json
 image:

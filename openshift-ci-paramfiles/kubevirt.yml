@@ -6,7 +6,6 @@ ctlplanes: 3
 workers: 2
 version: nightly
 sslip: true
-tag: "4.18"
 api_ip: 10.6.118.222
 network: br-ex
 memory: 16384

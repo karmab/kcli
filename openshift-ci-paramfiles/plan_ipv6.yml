@@ -1,7 +1,6 @@
 parameters:
   cluster: marquez
   version: stable
-  tag: '4.13'
   ctlplanes: 3
   workers: 0
   memory: 32768
@@ -21,7 +20,6 @@ parameters:
   type: kube
   kubetype: openshift
   cluster: {{ cluster }}
-  tag: {{ tag }}
   ctlplanes: {{ ctlplanes }}
   workers: {{ workers }}
   version: {{ version }}
