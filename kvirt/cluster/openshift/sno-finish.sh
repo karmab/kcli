@@ -46,7 +46,7 @@ coreos-installer install --firstboot-args="${firstboot_args}" --ignition=/opt/op
 
 if [ -d /sys/firmware/efi ] ; then
  for NUM in $(efibootmgr -v | grep 'DVD\|CD\|RHCOS' | cut -f1 -d' ' | sed 's/Boot000\([0-9]\)\*/\1/'); do
-   efibootmgr -b 000$NUM -B $NUM
+   efibootmgr -b 000$NUM -B
  done
 
  mount /${install_device}2 /mnt
