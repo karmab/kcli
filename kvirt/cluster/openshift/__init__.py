@@ -1203,17 +1203,27 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         with open(f"{clusterdir}/cilium.sh", 'w') as f:
             f.write(cilium_script)
         call(f'bash {clusterdir}/cilium.sh', shell=True)
-    if ipsec or ipsec_mode is not None or ovn_hostrouting or mtu != 1400:
-        valid_modes = ['Full', 'Disabled', 'External']
-        if ipsec_mode is not None and ipsec_mode not in valid_modes:
-            warning(f"Incorrect ipsec_mode. Choose between {','.join(valid_modes)}")
-            warning("Setting ipsec_mode to Full")
-            ipsec_mode = 'Full'
-        ovn_data = config.process_inputfile(cluster, f"{plandir}/99-ovn.yaml",
-                                            overrides={'ipsec': ipsec, 'ovn_hostrouting': ovn_hostrouting,
-                                                       'mtu': mtu, 'mode': ipsec_mode})
-        with open(f"{clusterdir}/openshift/99-ovn.yaml", 'w') as f:
-            f.write(ovn_data)
+
+    if ipsec or ipsec_mode:
+        default_ipsec_mode = 'Full'
+    else:
+        default_ipsec_mode = 'Disabled'
+        # When ipsec_mode is not set, silently use the default
+        ipsec_mode = ipsec_mode or default_ipsec_mode
+
+    valid_modes = ['Full', 'Disabled', 'External']
+    if ipsec_mode not in valid_modes:
+        warning(f"Incorrect ipsec_mode. Choose between {','.join(valid_modes)}")
+        warning(f"Setting ipsec_mode to {default_ipsec_mode}")
+        ipsec_mode = default_ipsec_mode
+
+    # Always set the mtu value of the cluster to avoid issues
+    ovn_data = config.process_inputfile(cluster, f"{plandir}/99-ovn.yaml",
+                                        overrides={'ipsec': ipsec, 'ovn_hostrouting': ovn_hostrouting,
+                                                   'mtu': mtu, 'mode': ipsec_mode})
+    with open(f"{clusterdir}/openshift/99-ovn.yaml", 'w') as f:
+        f.write(ovn_data)
+
     if workers == 0 or not mdns or kubevirt_api_service:
         copy2(f'{plandir}/cluster-scheduler-02-config.yml', f"{clusterdir}/manifests")
     if 'sslip' in domain:
