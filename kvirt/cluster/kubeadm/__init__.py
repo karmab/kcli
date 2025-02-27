@@ -3,7 +3,7 @@ from ipaddress import ip_network
 import json
 from kvirt.common import success, pprint, warning, info2, container_mode, wait_cloud_dns, update_etc_hosts, fix_typos
 from kvirt.common import get_kubectl, create_app_generic, get_ssh_pub_key, _ssh_credentials, ssh, deploy_cloud_storage
-from kvirt.common import get_new_vip, wait_for_nodes
+from kvirt.common import get_new_vip, wait_for_nodes, process_postscripts
 from kvirt.defaults import UBUNTUS
 import os
 from random import choice
@@ -348,4 +348,5 @@ def create(config, plandir, cluster, overrides):
         if provider == 'aws':
             pprint("Deploying cloud storage class")
             deploy_cloud_storage(config, cluster)
+    process_postscripts(clusterdir, data['postscripts'])
     return {'result': 'success'}

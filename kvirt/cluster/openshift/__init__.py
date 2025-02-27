@@ -8,7 +8,7 @@ from kvirt.common import get_oc, pwd_path, get_oc_mirror, patch_ingress_controll
 from kvirt.common import get_latest_fcos, generate_rhcos_iso, olm_app
 from kvirt.common import get_installer_rhcos, wait_cloud_dns, delete_lastvm, detect_openshift_version
 from kvirt.common import ssh, scp, _ssh_credentials, get_ssh_pub_key
-from kvirt.common import start_baremetal_hosts_with_iso, update_baremetal_hosts, get_new_vip
+from kvirt.common import start_baremetal_hosts_with_iso, update_baremetal_hosts, get_new_vip, process_postscripts
 from kvirt.defaults import LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG
 import os
 import re
@@ -421,17 +421,6 @@ def process_apps(config, clusterdir, apps, overrides):
         result = config.create_app_openshift(name, app_data)
         if result != 0:
             error(f"Issue adding app {name}")
-
-
-def process_postscripts(clusterdir, postscripts):
-    if not postscripts:
-        return
-    os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
-    currentdir = pwd_path(".")
-    for script in postscripts:
-        script_path = os.path.expanduser(script) if script.startswith('/') else f'{currentdir}/{script}'
-        pprint(f"Running script {os.path.basename(script)}")
-        call(script_path, shell=True)
 
 
 def wait_for_ignition(cluster, domain, role='worker'):

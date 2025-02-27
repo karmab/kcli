@@ -2614,3 +2614,14 @@ def patch_ingress_controller_wildcard():
     cmd += "'[{ \"op\": \"add\", \"path\": \"/spec/routeAdmission\", "
     cmd += "\"value\": {wildcardPolicy: \"WildcardsAllowed\"}}]'"
     call(cmd, shell=True)
+
+
+def process_postscripts(clusterdir, postscripts):
+    if not postscripts:
+        return
+    os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
+    currentdir = pwd_path(".")
+    for script in postscripts:
+        script_path = os.path.expanduser(script) if script.startswith('/') else f'{currentdir}/{script}'
+        pprint(f"Running script {os.path.basename(script)}")
+        call(script_path, shell=True)
