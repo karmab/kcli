@@ -41,7 +41,7 @@ def _type(value):
         return 'list'
 
 
-def ocpnodes(cluster, platform, ctlplanes, workers):
+def kubenodes(cluster, ctlplanes=1, workers=1):
     ctlplanes = [f'{cluster}-ctlplane-{num}' for num in range(ctlplanes)]
     workers = [f'{cluster}-worker-{num}' for num in range(workers)]
     return ctlplanes + workers
@@ -212,7 +212,7 @@ def max_ocp_version(version1, version2):
     return version1 if version1 > version2 else version2
 
 
-jinjafilters = {'basename': basename, 'dirname': dirname, 'ocpnodes': ocpnodes, 'none': none, 'type': _type,
+jinjafilters = {'basename': basename, 'dirname': dirname, 'kubenodes': kubenodes, 'none': none, 'type': _type,
                 'certificate': certificate, 'base64': base64, 'github_version': github_version,
                 'defaultnodes': defaultnodes, 'wait_crd': wait_crd, 'local_ip': local_ip, 'network_ip': network_ip,
                 'kcli_info': kcli_info, 'find_manifests': find_manifests, 'exists': exists, 'ipv6_wrap': ipv6_wrap,
