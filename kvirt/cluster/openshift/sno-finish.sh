@@ -45,8 +45,10 @@ echo "Executing coreos-installer with ignition file /opt/openshift/master.ign an
 coreos-installer install --firstboot-args="${firstboot_args}" --ignition=/opt/openshift/master.ign $install_device
 
 if [ -d /sys/firmware/efi ] ; then
- NUM=$(efibootmgr -v | grep 'DVD\|CD' | cut -f1 -d' ' | sed 's/Boot000\([0-9]\)\*/\1/')
- efibootmgr -b 000$NUM -B $NUM
+ for NUM in $(efibootmgr -v | grep 'DVD\|CD\|RHCOS' | cut -f1 -d' ' | sed 's/Boot\([0-9,A-F,a-f]\{4\}\)\*/\1/'); do
+   efibootmgr -b $NUM -B
+ done
+
  mount /${install_device}2 /mnt
  efibootmgr -d ${install_device} -p 2 -c -L RHCOS -l \\EFI\\BOOT\\BOOTX64.EFI
 fi
