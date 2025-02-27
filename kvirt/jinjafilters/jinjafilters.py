@@ -44,7 +44,7 @@ def _type(value):
 def ocpnodes(cluster, platform, ctlplanes, workers):
     ctlplanes = [f'{cluster}-ctlplane-{num}' for num in range(ctlplanes)]
     workers = [f'{cluster}-worker-{num}' for num in range(workers)]
-    return [f"{cluster}-bootstrap"] + ctlplanes + workers
+    return ctlplanes + workers
 
 
 def certificate(value):
