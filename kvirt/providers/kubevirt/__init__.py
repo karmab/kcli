@@ -506,7 +506,6 @@ class Kubevirt():
                                         'accessModes': pvc_access_mode,
                                         'resources':
                                         {'requests': {'storage': f'{pvcsize}Gi'}}},
-                                'storage': {'storageClassName': pool},
                                 'source': {'pvc': {'name': image, 'namespace': self.namespace}}},
                        'status': {}}
                 if harvester:
