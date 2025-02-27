@@ -506,6 +506,7 @@ class Kubevirt():
                                         'accessModes': pvc_access_mode,
                                         'resources':
                                         {'requests': {'storage': f'{pvcsize}Gi'}}},
+                                'storage': {'storageClassName': pool},
                                 'source': {'pvc': {'name': image, 'namespace': self.namespace}}},
                        'status': {}}
                 if harvester:
@@ -521,7 +522,8 @@ class Kubevirt():
                     dvt['apiVersion'] = f"{CDIDOMAIN}/{CDIVERSION}"
                     del dvt['spec']['pvc']
                     dvt['spec']['source'] = {'registry': {'pullMethod': 'node', 'url': f"docker://{image}"}}
-                    dvt['spec']['storage'] = {'resources': {'requests': {'storage': f'{pvcsize}Gi'}}}
+                    dvt['spec']['storage'] = {'storageClassName': pool,
+                                              'resources': {'requests': {'storage': f'{pvcsize}Gi'}}}
                 vm['spec']['dataVolumeTemplates'] = [dvt]
                 continue
             _create_resource(kubectl, pvc, namespace, debug=self.debug)
