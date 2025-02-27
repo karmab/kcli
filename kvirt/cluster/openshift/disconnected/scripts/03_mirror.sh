@@ -34,12 +34,11 @@ OCP_RELEASE=$(grep 'Name:' /tmp/release.txt | awk -F ' ' '{print $2}')-x86_64
 
 {% if okd %}
 PREFIX=origin/release-scos
-{% elif version == 'candidate' %}
-PREFIX=openshift/release-images
 {% elif version == 'ci' %}
 PREFFIX=ocp/ocp-release
 {% else %}
-PREFIX=openshift-release-dev/ocp-release
+PREFIX=openshift/release-images
+# PREFIX=openshift-release-dev/ocp-release
 {% endif %}
 echo $REGISTRY:5000/$PREFIX:$OCP_RELEASE > /root/version.txt
 
