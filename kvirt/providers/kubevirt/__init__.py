@@ -525,7 +525,7 @@ class Kubevirt():
                 vm['spec']['dataVolumeTemplates'] = [dvt]
                 continue
             _create_resource(kubectl, pvc, namespace, debug=self.debug)
-            bound = self.pvc_bound(pvcname, namespace, diskpool)
+            bound = self.pvc_bound(pvcname, namespace, pool)
             if not bound:
                 error(f'timeout waiting for pvc {pvcname} to get bound')
                 return {'result': 'failure', 'reason': f'timeout waiting for pvc {pvcname} to get bound'}
