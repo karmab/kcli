@@ -2444,13 +2444,13 @@ def download_openshift_installer(args):
 
 def render_file(args):
     plan = None
+    inputfile = args.inputfile or 'kcli_plan.yml'
     ignore = args.ignore
     overrides = {}
     allparamfiles = [paramfile for paramfile in glob("*_default.y*ml")]
     for paramfile in allparamfiles:
         overrides.update(common.get_overrides(paramfile=paramfile))
     overrides.update(handle_parameters(args.param, args.paramfile))
-    inputfile = overrides.get('inputfile') or args.inputfile or 'kcli_plan.yml'
     if container_mode():
         inputfile = f"/workdir/{inputfile}"
     offline = overrides.get('offline', False)
@@ -4817,8 +4817,8 @@ def cli():
     render_desc = 'Render file'
     render_parser = subparsers.add_parser('render', description=render_desc, help=render_desc, parents=[parent_parser])
     render_parser.add_argument('-c', '--cmd', action='store_true', help='Convert to command line')
-    render_parser.add_argument('-f', '--inputfile', help='Input Plan/File', default='kcli_plan.yml')
     render_parser.add_argument('-i', '--ignore', action='store_true', help='Ignore missing variables')
+    render_parser.add_argument('inputfile', metavar='INPUTFILE', nargs='?')
     render_parser.set_defaults(func=render_file)
 
     restart_desc = 'Restart Vm/Plan/Container'
