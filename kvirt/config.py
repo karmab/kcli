@@ -687,7 +687,7 @@ class Kconfig(Kbaseconfig):
             env_data = ''
             for key in env_parameters:
                 value = profile.get(key) or overrides.get(key)
-                env_data += f"export {key}={value}\nexport {key.lower()}={value}\n"
+                env_data += f"export {key}={value}\n"
             files.append({'path': '/etc/profile.d/kcli.sh', 'content': env_data, 'mode': 644})
         enableroot = profile.get('enableroot', default_enableroot)
         tags = profile.get('tags', [])
@@ -1993,6 +1993,7 @@ class Kconfig(Kbaseconfig):
                         sys.exit(1)
                     rule = next(iter(entry))
                     if (re.match(rule, name) or fnmatch(name, rule)) and isinstance(entry[rule], dict):
+                        pprint("Found matching vmrule {rule} for {name}")
                         rulefound = True
                         listkeys = ['cmds', 'files', 'scripts']
                         for rule in entry:
@@ -2000,11 +2001,22 @@ class Kconfig(Kbaseconfig):
                             for key in current:
                                 if key in listkeys and isinstance(current[key], list) and key in profile:
                                     current[key] = profile[key] + current[key]
-                            profile.update(entry[rule])
-                            if 'name' in entry[rule]:
+                            new_value = entry[rule].copy()
+                            for index, group in enumerate(re.findall(rule, name), 1):
+                                if group == name:
+                                    continue
+                                for key in new_value:
+                                    if type(new_value[key]) == int:
+                                        new_value[key] = int(str(new_value[key]).replace(f'\\{index}', group))
+                                    elif type(new_value[key]) == bool:
+                                        new_value[key] = bool(str(new_value[key]).replace(f'\\{index}', group))
+                                    elif type(new_value[key]) == str:
+                                        new_value[key] = new_value[key].replace(f'\\{index}', group)
+                            profile.update(new_value)
+                            if 'name' in new_value:
                                 old_name = name
-                                warning(f"Renaming {name} to {entry[rule]['name']}")
-                                name = entry[rule]['name']
+                                warning(f"Renaming {name} to {new_value['name']}")
+                                name = new_value['name']
                                 if 'ctlplane' or 'worker' in old_name:
                                     profile['role'] = 'ctlplane' if 'ctlplane' in old_name else 'worker'
                 if vmrules_strict and not rulefound:
