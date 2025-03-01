@@ -5,6 +5,9 @@
  {% set extra_disks = extra_ctlplane_disks %}
 {% endif %}
 
+{% set all_cmds = cmds|default([]) %}
+{% do all_cmds.append("bash /root/deploy.sh") %}
+
 {{ cluster }}-ctlplane-0:
 {% set primary_network = {'name': network} %}
 {% if config_type in ['aws', 'azure', 'gcp', 'hcloud', 'ibm'] %}
@@ -57,5 +60,4 @@
    origin: 90-flannel.rules
 {% endif %}
  - registry.yml
- cmds:
- - bash /root/deploy.sh
+ cmds: {{ all_cmds }}
