@@ -7,9 +7,6 @@
  {% set extra_disks = extra_ctlplane_disks %}
 {% endif %}
 
-{% set all_cmds = cmds|default([]) %}
-{% do all_cmds.append("bash /root/deploy.sh") %}
-
 {{ cluster }}-ctlplane-{{ number }}:
 {% set primary_network = {'name': network} %}
  image: {{ image }}
@@ -47,5 +44,6 @@
  - path: /etc/udev/rules.d/90-flannel.rules
    origin: 90-flannel.rules
 {% endif %}
- cmds: {{ all_cmds }}
+ cmds:
+ - bash /root/deploy.sh
 {% endfor %}

@@ -6,9 +6,6 @@
  {% set extra_disks = extra_worker_disks %}
 {% endif %}
 
-{% set all_cmds = cmds|default([]) %}
-{% do all_cmds.append("bash /root/deploy.sh") %}
-
 {{cluster }}-worker-{{ number }}:
  image: {{ image }}
  pool: {{ pool or config_pool }}
@@ -39,5 +36,6 @@
  - path: /etc/udev/rules.d/90-flannel.rules
    origin: 90-flannel.rules
 {% endif %}
- cmds: {{ all_cmds }}
+ cmds:
+ - bash /root/deploy.sh
 {% endfor %}
