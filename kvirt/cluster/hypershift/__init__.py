@@ -418,8 +418,8 @@ def create(config, plandir, cluster, overrides):
     kubevirt_crd_cmd = 'oc get crd hyperconvergeds.hco.kubevirt.io -o yaml 2>/dev/null'
     if kubevirt and safe_load(os.popen(kubevirt_crd_cmd).read()) is None:
         warning("Kubevirt not fully installed. Installing it for you")
-        app_name, source, channel, csv, description, x_namespace, channels, crds = olm_app('kubevirt-hyperconverged')
-        app_data = {'name': app_name, 'source': source, 'channel': channel, 'namespace': x_namespace, 'csv': csv}
+        app_name, source, channel, csv, description, x_namespace, channels, crds, installmode = olm_app('kubevirt-hyperconverged')
+        app_data = {'name': app_name, 'source': source, 'channel': channel, 'namespace': x_namespace, 'csv': csv, 'installmode': installmode}
         result = config.create_app_openshift(app_name, app_data)
         if result != 0:
             return {'result': 'failure', 'reason': "Couldnt install kubevirt properly"}
@@ -437,10 +437,10 @@ def create(config, plandir, cluster, overrides):
             warning("Hypershift needed. Installing it for you")
         if need_assisted:
             warning("Assisted needed. Installing it for you")
-        app_name, source, channel, csv, description, x_namespace, channels, crds = olm_app('multicluster-engine')
+        app_name, source, channel, csv, description, x_namespace, channels, crds, installmode = olm_app('multicluster-engine')
         app_data = {'name': app_name, 'source': source, 'channel': channel, 'namespace': x_namespace, 'csv': csv,
                     'mce_hypershift': mce_hypershift, 'assisted': need_assisted, 'version': version, 'tag': tag,
-                    'pull_secret': pull_secret}
+                    'pull_secret': pull_secret, 'installmode': installmode}
         result = config.create_app_openshift(app_name, app_data)
         if result != 0:
             return {'result': 'failure', 'reason': "Couldnt install mce properly"}
