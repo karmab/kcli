@@ -204,6 +204,10 @@ def pwd_path(path):
         return path
 
 
+def real_path(path):
+    return path and os.path.realpath(path)
+
+
 def min_ocp_version(version1, version2):
     return version1 if version1 < version2 else version2
 
@@ -217,7 +221,7 @@ jinjafilters = {'basename': basename, 'dirname': dirname, 'kubenodes': kubenodes
                 'defaultnodes': defaultnodes, 'wait_crd': wait_crd, 'local_ip': local_ip, 'network_ip': network_ip,
                 'kcli_info': kcli_info, 'find_manifests': find_manifests, 'exists': exists, 'ipv6_wrap': ipv6_wrap,
                 'has_ctlplane': has_ctlplane, 'wait_csv': wait_csv, 'count': count, 'pwd_path': pwd_path,
-                'min_ocp_version': min_ocp_version, 'max_ocp_version': max_ocp_version}
+                'min_ocp_version': min_ocp_version, 'max_ocp_version': max_ocp_version, 'real_path': real_path}
 
 
 class FilterModule(object):
