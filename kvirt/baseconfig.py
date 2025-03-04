@@ -8,7 +8,7 @@ from jinja2.runtime import Undefined as defaultundefined
 from jinja2.exceptions import TemplateSyntaxError, TemplateError, TemplateNotFound
 from kvirt import common
 from kvirt.common import error, pprint, warning, container_mode, ssh, scp, NoAliasDumper, olm_app
-from kvirt.common import PlanLoader, get_kubetype, detect_openshift_version
+from kvirt.common import PlanLoader, get_kubetype, detect_openshift_version, valid_ip
 from kvirt import defaults as kdefaults
 from kvirt.cluster import hypershift
 from kvirt.cluster import k3s
@@ -1222,17 +1222,20 @@ class Kbaseconfig:
         if target is not None:
             if isinstance(target, str):
                 tunnel, tunnelhost, tunnelport, tunneluser, vmport = False, None, 22, 'root', None
+                user = None
                 if '@' in target:
-                    target = target.split('@')
-                    if len(target) == 2:
-                        user, hostname = target
-                        ip = hostname
-                    else:
+                    if len(target) != 2:
                         msg = f"Invalid target {target}"
                         error(msg)
                         return {'result': 'failure', 'reason': msg}
+                    user, target = target.split('@')
+                if '.' not in target and not valid_ip(target):
+                    credentials = common._ssh_credentials(self.k, target)
+                    hostname = credentials[1]
+                    user = user or credentials[0]
                 else:
-                    user, hostname, ip = 'root', target, target
+                    hostname, ip = target, target
+                    user = user or 'root'
             elif isinstance(target, dict):
                 hostname = target.get('hostname')
                 user = target.get('user')
