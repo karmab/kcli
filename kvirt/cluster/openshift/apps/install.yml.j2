@@ -11,9 +11,11 @@ kind: OperatorGroup
 metadata:
   name: {{ name }}-operatorgroup
   namespace: {{ namespace }}
+{% if namespace != 'openstack-operators' %}
 spec:
   targetNamespaces:
   - {{ namespace }}
+{% endif %}
 ---
 {% endif %}
 apiVersion: operators.coreos.com/v1alpha1
