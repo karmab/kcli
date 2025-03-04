@@ -1344,7 +1344,7 @@ class Kbaseconfig:
                 destfile = entry.get('path')
             if not os.path.exists(os.path.dirname(destfile)):
                 pprint(f"Creating directory {os.path.dirname(destfile)}")
-                os.makedirs(os.path.exists(os.path.dirname(destfile)))
+                os.makedirs(os.path.dirname(destfile))
             with open(destfile, 'w') as f:
                 f.write(rendered)
             finalscripts.append(scriptname)
@@ -1358,8 +1358,8 @@ class Kbaseconfig:
             pprint("Not running as dry mode was requested")
             return {'result': 'success'}
         if target is not None:
-            remotedir = f"/tmp/{os.path.basename(tmpdir)}"
-            scpcmd = scp(hostname, ip=ip, user=user, source=tmpdir, destination=remotedir, download=False,
+            remotedir = f"/tmp/{os.path.basename(destdir)}"
+            scpcmd = scp(hostname, ip=ip, user=user, source=destdir, destination=remotedir, download=False,
                          insecure=True, tunnel=tunnel, tunnelhost=tunnelhost, tunnelport=tunnelport,
                          tunneluser=tunneluser, vmport=vmport)
             os.system(scpcmd)
