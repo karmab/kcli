@@ -1224,11 +1224,12 @@ class Kbaseconfig:
             if isinstance(target, str):
                 user = None
                 if '@' in target:
-                    if len(target) != 2:
+                    target_details = target.split('@')
+                    if len(target_details) != 2:
                         msg = f"Invalid target {target}"
                         error(msg)
                         return {'result': 'failure', 'reason': msg}
-                    user, target = target.split('@')
+                    user, target = target_details
                 if '.' not in target and not valid_ip(target):
                     credentials = common._ssh_credentials(self.k, target)
                     user = user or credentials[0]
@@ -1376,7 +1377,7 @@ class Kbaseconfig:
             cmd = ';'.join(cmd)
             pprint(f"Running script {script} on {hostname}")
             sshcommand = ssh(hostname, ip=ip, user=user, cmd=cmd, tunnel=tunnel, tunnelhost=tunnelhost,
-                             tunnelport=tunnelport, tunneluser=tunneluser, vmport=vmport)
+                             tunnelport=tunnelport, tunneluser=tunneluser, vmport=vmport, insecure=True)
             os.system(sshcommand)
         else:
             os.chdir(outputdir)

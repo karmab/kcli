@@ -1630,7 +1630,11 @@ def get_hypershift(version='latest', macosx=False, debug=False):
 def get_kubectl(version='latest', debug=False):
     SYSTEM = 'darwin' if os.path.exists('/Users') else 'linux'
     pprint("Downloading kubectl in current directory")
-    if version == 'latest':
+    el8 = os.path.exists('/etc/redhat-release') and 'release 8' in open('/etc/redhat-release').read()
+    if el8:
+        warning("Downloading kubectl v1.28.13 as you're using an el8 box")
+        version = 'v1.28.13'
+    elif version == 'latest':
         r = urlopen("https://storage.googleapis.com/kubernetes-release/release/stable.txt")
         version = str(r.read(), 'utf-8').strip()
     else:
@@ -1665,7 +1669,7 @@ def get_oc(version='stable', tag=OPENSHIFT_TAG, macosx=False, debug=False):
     occmd = "curl -Ls "
     el8 = os.path.exists('/etc/redhat-release') and 'release 8' in open('/etc/redhat-release').read()
     if el8:
-        warning("Downloading 4.15 oc as you're using an el8 box")
+        warning("Downloading oc 4.15 as you're using an el8 box")
         tag = '4.15.0'
     if str(tag).count('.') == 1:
         tag = f'latest-{tag}'
