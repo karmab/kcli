@@ -1220,8 +1220,8 @@ class Kbaseconfig:
         cwd = os.getcwd()
         target = overrides.get('target')
         if target is not None:
+            tunnel, tunnelhost, tunnelport, tunneluser, vmport = False, None, 22, 'root', None
             if isinstance(target, str):
-                tunnel, tunnelhost, tunnelport, tunneluser, vmport = False, None, 22, 'root', None
                 user = None
                 if '@' in target:
                     if len(target) != 2:
@@ -1231,20 +1231,21 @@ class Kbaseconfig:
                     user, target = target.split('@')
                 if '.' not in target and not valid_ip(target):
                     credentials = common._ssh_credentials(self.k, target)
-                    hostname = credentials[1]
                     user = user or credentials[0]
+                    ip = credentials[1]
+                    hostname = ip
                 else:
                     hostname, ip = target, target
                     user = user or 'root'
             elif isinstance(target, dict):
-                hostname = target.get('hostname')
-                user = target.get('user')
-                ip = target.get('ip')
+                user = target.get('user', 'root')
+                hostname = target.get('hostname', 'localhost')
+                ip = target.get('ip', 'localhost')
                 vmport = target.get('vmport')
-                tunnel = self.tunnel
-                tunnelhost = self.tunnelhost
-                tunnelport = self.tunnelport
-                tunneluser = self.tunneluser
+                tunnel = target.get('tunnel', False)
+                tunnelhost = target.get('tunnelhost', None)
+                tunnelport = target.get('tunnelport', 22)
+                tunneluser = target.get('tunneluser', 'root')
         requirefile = overrides.get('requirefile')
         if requirefile is not None:
             requirefile = os.path.expanduser(requirefile)
@@ -1261,8 +1262,7 @@ class Kbaseconfig:
                 msg = "No scripts provided"
                 error(msg)
                 return {'result': 'failure', 'reason': msg}
-        outputdir = os.path.realpath(outputdir or overrides.get('destdir'))
-        default_destdir = outputdir or '/root'
+        outputdir = os.path.realpath(outputdir or overrides.get('destdir', '.'))
         directoryfiles = []
         treatedfiles = []
         directories = []
@@ -1273,7 +1273,7 @@ class Kbaseconfig:
             if 'path' in entry:
                 destdir = os.path.dirname(entry['path'])
             else:
-                destdir = f"{default_destdir}/{os.path.dirname(entry['origin'])}"
+                destdir = f"{destdir}/{os.path.dirname(entry['origin'])}"
             if not os.path.exists(destdir):
                 pprint(f"Creating directory {destdir}")
                 os.makedirs(destdir)
@@ -1317,15 +1317,18 @@ class Kbaseconfig:
             entrydir = os.path.dirname(entry)
             entryname = os.path.basename(entry)
             rendered = self.process_inputfile(workflow, entry, overrides=overrides)
-            destfile = f"{default_destdir}/{entrydir}/{entryname}"
+            destfile = f"{destdir}/{entrydir}/{entryname}"
             with open(destfile, 'w') as f:
                 f.write(rendered)
                 os.chmod(destfile, stat.S_IMODE(os.stat(entry).st_mode))
         finalscripts = []
         tmpdir = None
-        if outputdir is None:
+        if 'destdir' in overrides:
+            outputdir = overrides['destdir']
+        elif outputdir is None:
             tmpdir = TemporaryDirectory()
-        destdir = outputdir or tmpdir.name
+            outputdir = tmpdir.name
+        outputdir = os.path.realpath(outputdir)
         for entry in scripts:
             origin = os.path.expanduser(entry)
             if not os.path.exists(origin):
@@ -1334,15 +1337,15 @@ class Kbaseconfig:
                 return {'result': 'failure', 'reason': msg}
             elif os.path.isdir(origin):
                 origin = entry.get('origin')
-                if not os.path.exists(f"{destdir}/{origin}"):
-                    os.makedirs(f"{destdir}/{origin}")
+                if not os.path.exists(f"{outputdir}/{origin}"):
+                    os.makedirs(f"{outputdir}/{origin}")
                     directories.append(origin)
                 for _fic in os.listdir(origin):
                     directoryfiles.append(f'{origin}/{_fic}')
                 continue
             scriptname = os.path.basename(origin)
             rendered = self.process_inputfile(workflow, origin, overrides=overrides)
-            destfile = f"{destdir}/{scriptname}"
+            destfile = f"{outputdir}/{scriptname}"
             if 'path' in destfile:
                 destfile = entry.get('path')
             if not os.path.exists(os.path.dirname(destfile)):
@@ -1353,7 +1356,7 @@ class Kbaseconfig:
             finalscripts.append(scriptname)
         if cmds:
             cmdscontent = '\n'.join(cmds)
-            destfile = f"{destdir}/cmds.sh"
+            destfile = f"{outputdir}/cmds.sh"
             with open(destfile, 'w') as f:
                 f.write(cmdscontent)
             finalscripts.append('cmds.sh')
@@ -1361,8 +1364,8 @@ class Kbaseconfig:
             pprint("Not running as dry mode was requested")
             return {'result': 'success'}
         if target is not None:
-            remotedir = f"/tmp/{os.path.basename(destdir)}"
-            scpcmd = scp(hostname, ip=ip, user=user, source=destdir, destination=remotedir, download=False,
+            remotedir = f"/tmp/{os.path.basename(outputdir)}"
+            scpcmd = scp(hostname, ip=ip, user=user, source=outputdir, destination=remotedir, download=False,
                          insecure=True, tunnel=tunnel, tunnelhost=tunnelhost, tunnelport=tunnelport,
                          tunneluser=tunneluser, vmport=vmport)
             os.system(scpcmd)
@@ -1376,7 +1379,7 @@ class Kbaseconfig:
                              tunnelport=tunnelport, tunneluser=tunneluser, vmport=vmport)
             os.system(sshcommand)
         else:
-            os.chdir(destdir)
+            os.chdir(outputdir)
             for script in finalscripts:
                 os.chmod(script, 0o700)
                 pprint(f"Running script {script} locally")
