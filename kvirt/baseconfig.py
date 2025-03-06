@@ -1263,7 +1263,13 @@ class Kbaseconfig:
                 msg = "No scripts provided"
                 error(msg)
                 return {'result': 'failure', 'reason': msg}
-        outputdir = os.path.realpath(outputdir or overrides.get('destdir', '.'))
+        tmpdir = None
+        if 'destdir' in overrides:
+            outputdir = overrides['destdir']
+        elif outputdir is None:
+            tmpdir = TemporaryDirectory()
+            outputdir = tmpdir.name
+        outputdir = os.path.realpath(outputdir)
         directoryfiles = []
         treatedfiles = []
         directories = []
@@ -1323,13 +1329,6 @@ class Kbaseconfig:
                 f.write(rendered)
                 os.chmod(destfile, stat.S_IMODE(os.stat(entry).st_mode))
         finalscripts = []
-        tmpdir = None
-        if 'destdir' in overrides:
-            outputdir = overrides['destdir']
-        elif outputdir is None:
-            tmpdir = TemporaryDirectory()
-            outputdir = tmpdir.name
-        outputdir = os.path.realpath(outputdir)
         for entry in scripts:
             origin = os.path.expanduser(entry)
             if not os.path.exists(origin):

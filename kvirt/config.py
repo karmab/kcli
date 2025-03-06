@@ -2633,6 +2633,7 @@ class Kconfig(Kbaseconfig):
         self.create_kube(cluster, kubetype, kube_overrides)
 
     def create_kube(self, cluster, kubetype, overrides={}):
+        cwd = os.getcwd()
         cluster = overrides.get('cluster') or cluster or f"my{kubetype}"
         if self.type == 'web' and self.k.localkube:
             return self.k.create_kube(cluster, kubetype, overrides)
@@ -2664,6 +2665,7 @@ class Kconfig(Kbaseconfig):
             result = self.create_kube_aks(cluster, overrides)
         else:
             result = self.create_kube_generic(cluster, overrides)
+        os.chdir(cwd)
         return result
 
     def create_kube_aks(self, cluster, overrides={}):
