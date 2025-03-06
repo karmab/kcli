@@ -2341,7 +2341,7 @@ class Kconfig(Kbaseconfig):
                         baseinputfile = f"/workdir/{basedir}/{baseplan}"
                     self.plan(plan, inputfile=baseinputfile, overrides=overrides)
                     baseplans.append(baseplan)
-                self.create_workflow(workflow, overrides=workflow_overrides)
+                self.create_workflow(workflow, overrides=workflow_overrides, basedir=basedir)
         returndata = {'result': 'success', 'plan': plan}
         returndata['newvms'] = newvms if newvms else []
         returndata['existingvms'] = existingvms if existingvms else []

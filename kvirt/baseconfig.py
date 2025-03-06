@@ -1216,7 +1216,7 @@ class Kbaseconfig:
             with open(f"{directory}/files/myfile01", "w") as f:
                 f.write(myfile01data)
 
-    def create_workflow(self, workflow, overrides={}, outputdir=None, run=True):
+    def create_workflow(self, workflow, overrides={}, outputdir=None, run=True, basedir=None):
         cwd = os.getcwd()
         target = overrides.get('target')
         if target is not None:
@@ -1277,6 +1277,8 @@ class Kbaseconfig:
             if not isinstance(entry, dict):
                 entry = {'origin': entry}
             origin = os.path.expanduser(entry['origin'])
+            if not os.path.isabs(origin) and basedir is not None:
+                origin = f'{basedir}/{origin}'
             if 'path' in entry:
                 destdir = os.path.dirname(entry['path'])
             else:
@@ -1331,6 +1333,8 @@ class Kbaseconfig:
         finalscripts = []
         for entry in scripts:
             origin = os.path.expanduser(entry)
+            if not os.path.isabs(origin) and basedir is not None:
+                origin = f'{basedir}/{origin}'
             if not os.path.exists(origin):
                 msg = f"Origin file {origin} not found"
                 error(msg)
