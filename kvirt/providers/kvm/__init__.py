@@ -1238,7 +1238,7 @@ class Kvirt(object):
                 else:
                     ramxml += "<firmware><feature enabled='no' name='secure-boot'/></firmware>"
         arch = 'aarch64' if aarch64 else overrides.get('arch', 'x86_64')
-        if not aarch64 or sriov_nic:
+        if not (aarch64 and not as390x) or sriov_nic:
             acpixml = '<acpi/>\n<apic/>'
         elif aarch64_full:
             acpixml = "<acpi/><gic version='3'/>"
