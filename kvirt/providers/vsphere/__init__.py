@@ -1838,3 +1838,11 @@ class Ksphere:
         confspec.deviceChange = devconfspec
         t = vm.Reconfigure(confspec)
         waitForMe(t)
+
+    def reconnect_hosts(self):
+        si = self.si
+        rootFolder = self.rootFolder
+        view = si.content.viewManager.CreateContainerView(rootFolder, [vim.HostSystem], True)
+        for host in view.view:
+            pprint(f"Reconnecting Host {host.name}")
+            host.Reconnect()
