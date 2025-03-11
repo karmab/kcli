@@ -4283,7 +4283,7 @@ def cli():
 
     vmsnapshotdelete_desc = 'Delete Snapshot Of Vm'
     vmsnapshotdelete_parser = delete_subparsers.add_parser('vm-snapshot', description=vmsnapshotdelete_desc,
-                                                           help=vmsnapshotdelete_desc)
+                                                           help=vmsnapshotdelete_desc, aliases=['snapshot'])
     vmsnapshotdelete_parser.add_argument('-n', '--name', help='vm name', required=True, metavar='VMNAME')
     vmsnapshotdelete_parser.add_argument('snapshot')
     vmsnapshotdelete_parser.set_defaults(func=snapshotdelete_vm)
@@ -4871,7 +4871,7 @@ def cli():
 
     vmsnapshotrevert_desc = 'Revert Snapshot Of Vm'
     vmsnapshotrevert_parser = revert_subparsers.add_parser('vm-snapshot', description=vmsnapshotrevert_desc,
-                                                           help=vmsnapshotrevert_desc, aliases=['vm'])
+                                                           help=vmsnapshotrevert_desc, aliases=['snapshot'])
     vmsnapshotrevert_parser.add_argument('-n', '--name', help='vm name', required=True, metavar='VMNAME')
     vmsnapshotrevert_parser.add_argument('snapshot')
     vmsnapshotrevert_parser.set_defaults(func=snapshotrevert_vm)
