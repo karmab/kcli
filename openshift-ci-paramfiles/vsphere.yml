@@ -1,4 +1,4 @@
-client: sphere_karim
+client: mysphere
 cluster: ci-vsphere
 domain: karmalabs.corp
 sslip: true

@@ -11,8 +11,9 @@ def waitForMe(t):
     while t.info.state not in [vim.TaskInfo.State.success, vim.TaskInfo.State.error]:
         time.sleep(1)
     if t.info.state == vim.TaskInfo.State.error:
-        error(t.info.description)
-        error(t.info.error)
+        if t.info.description is not None:
+            error(t.info.description)
+        error(t.info.error.msg)
         sys.exit(1)
 
 
