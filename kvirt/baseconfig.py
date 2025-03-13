@@ -1282,7 +1282,7 @@ class Kbaseconfig:
             if 'path' in entry:
                 destdir = os.path.dirname(entry['path'])
             else:
-                destdir = f"{destdir}/{os.path.dirname(entry['origin'])}"
+                destdir = f"{outputdir}/{os.path.dirname(entry['origin'])}"
             if not os.path.exists(destdir):
                 pprint(f"Creating directory {destdir}")
                 os.makedirs(destdir)
