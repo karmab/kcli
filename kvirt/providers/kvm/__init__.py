@@ -1166,7 +1166,7 @@ class Kvirt(object):
                 sharedxml += "<address type='pci' domain='0x0000' bus='0x00' slot='0x09' function='0x0'/>"
                 sharedxml += "</filesystem>"
                 foldercmd = f"sudo mkdir {folder} ; sudo chmod 777 {folder}"
-                if self.host == 'localhost' or self.host == '127.0.0.1' and not os.path.exists(folder):
+                if not os.path.exists(folder) and self.host in ['localhost', '127.0.0.1']:
                     oldmask = os.umask(000)
                     os.makedirs(folder)
                     os.umask(oldmask)
