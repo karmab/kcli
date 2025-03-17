@@ -1002,26 +1002,15 @@ def info_confpool(args):
 
 
 def info_profile(args):
-    profile = args.profile
+    profilename = args.profile
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     profiles = baseconfig.list_profiles()
-    for entry in profiles:
-        if entry[0] == profile:
-            profile, flavor, pool, disks, image, nets, cloudinit, nested, reservedns, reservehost = entry
-            print(f"profile: {profile}")
-            print(f"flavor: {flavor}")
-            print(f"pool: {pool}")
-            print(f"disks: {disks}")
-            print(f"image: {image}")
-            print(f"nets: {nets}")
-            print(f"cloudinit: {cloudinit}")
-            print(f"nested: {nested}")
-            print(f"reservedns: {reservedns}")
-            print(f"reservehost: {reservehost}")
-            sys.exit(0)
-            break
-    error(f"Profile {profile} not found")
-    sys.exit(1)
+    if profilename not in profiles:
+        error(f"Profile {profilename} not found")
+        sys.exit(1)
+    profile = profiles[profilename]
+    for key in sorted(profile):
+        print(f"{key}: {profile[key]}")
 
 
 def list_profile(args):
@@ -1033,15 +1022,26 @@ def list_profile(args):
         _list_output(profiles, output)
     if short:
         profilestable = PrettyTable(["Profile"])
-        for profile in sorted(profiles):
-            profilename = profile[0]
+        for profilename in sorted(profiles):
             profilestable.add_row([profilename])
     else:
-        profilestable = PrettyTable(["Profile", "Flavor",
-                                     "Pool", "Disks", "Image",
-                                     "Nets", "Cloudinit", "Nested",
-                                     "Reservedns", "Reservehost"])
-        for profile in sorted(profiles):
+        profilestable = PrettyTable(["Profile", "Flavor", "Numcpus", "Memory", "Pool", "Disks", "Image", "Nets"])
+        for profilename in sorted(profiles):
+            profile = profiles[profilename]
+            numcpus = profile['numcpus']
+            memory = profile['memory']
+            flavor = profile['flavor']
+            pool = profile['pool']
+            disks = []
+            for disk in profile['disks']:
+                if isinstance(disk, int):
+                    disks.append(str(disk))
+                else:
+                    disks.append(str(disk['size']))
+            disks = ','.join([d for d in disks])
+            image = profile['image']
+            nets = ','.join([n for n in profile['nets']])
+            profile = [profilename, flavor, numcpus, memory, pool, disks, image, nets]
             profilestable.add_row(profile)
     profilestable.align["Profile"] = "l"
     print(profilestable)

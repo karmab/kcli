@@ -29,13 +29,6 @@ from time import sleep
 import yaml
 
 
-def other_client(profile, clients):
-    for cli in clients:
-        if profile.startswith(f"{cli}_"):
-            return True
-    return False
-
-
 def libvirt_macosx():
     return which('brew') is not None and 'libvirt started' in os.popen('brew services list').read()
 
@@ -712,85 +705,22 @@ class Kbaseconfig:
         return entries, overrides, basefile, basedir
 
     def list_profiles(self):
-        default_disksize = '10'
-        default = self.default
-        results = []
-        other_clients = [cli for cli in self.clients if cli != self.client]
-        for profile in [p for p in self.profiles if 'base' not in self.profiles[p]] + [p for p in self.profiles
-                                                                                       if 'base' in self.profiles[p]]:
-            if other_client(profile, other_clients):
-                continue
-            info = self.profiles[profile]
-            if 'base' in info:
-                father = self.profiles[info['base']]
-                default_numcpus = father.get('numcpus', default['numcpus'])
-                default_memory = father.get('memory', default['memory'])
-                default_pool = father.get('pool', default['pool'])
-                default_disks = father.get('disks', default['disks'])
-                default_nets = father.get('nets', default['nets'])
-                default_image = father.get('image', '')
-                default_cloudinit = father.get('cloudinit', default['cloudinit'])
-                default_nested = father.get('nested', default['nested'])
-                default_reservedns = father.get('reservedns', default['reservedns'])
-                default_reservehost = father.get('reservehost', default['reservehost'])
-                default_flavor = father.get('flavor', default['flavor'])
-            else:
-                default_numcpus = default['numcpus']
-                default_memory = default['memory']
-                default_pool = default['pool']
-                default_disks = default['disks']
-                default_nets = default['nets']
-                default_image = ''
-                default_cloudinit = default['cloudinit']
-                default_nested = default['nested']
-                default_reservedns = default['reservedns']
-                default_reservehost = default['reservehost']
-                default_flavor = default['flavor']
-            profiletype = info.get('type', '')
-            if profiletype == 'container':
-                continue
-            numcpus = info.get('numcpus', default_numcpus)
-            memory = info.get('memory', default_memory)
-            pool = info.get('pool', default_pool)
-            diskinfo = []
-            disks = info.get('disks')
-            if disks is None:
-                if 'disksize' in info:
-                    disks = [info['disksize']]
-                else:
-                    disks = default_disks
-            for disk in disks:
-                if disk is None:
-                    size = default_disksize
-                elif isinstance(disk, int):
-                    size = str(disk)
-                elif isinstance(disk, dict):
-                    size = str(disk.get('size', default_disksize))
-                diskinfo.append(size)
-            diskinfo = ','.join(diskinfo)
-            netinfo = []
-            nets = info.get('nets', default_nets)
-            for net in nets:
-                if isinstance(net, str):
-                    netname = net
-                elif isinstance(net, dict) and 'name' in net:
-                    netname = net['name']
-                netinfo.append(netname)
-            netinfo = ','.join(netinfo)
-            template = info.get('template', default_image)
-            image = info.get('image', template)
-            cloudinit = info.get('cloudinit', default_cloudinit)
-            nested = info.get('nested', default_nested)
-            reservedns = info.get('reservedns', default_reservedns)
-            reservehost = info.get('reservehost', default_reservehost)
-            flavor = info.get('flavor', default_flavor)
-            if flavor is None:
-                flavor = f"{numcpus}cpus {memory}Mb ram"
-            if profile.startswith(f'{self.client}_'):
-                profile = profile.replace(f'{self.client}_', '')
-            results.append([profile, flavor, pool, diskinfo, image, netinfo, cloudinit, nested,
-                            reservedns, reservehost])
-        return sorted(results, key=lambda x: x[0])
+        cli = self.client
+        all_profiles = self.profiles
+        valid_profiles = {p: all_profiles[p] for p in all_profiles if all_profiles[p].get('type', 'vm') == 'vm'}
+        for profile in valid_profiles:
+            entry = self.default.copy()
+            base_profiles = []
+            base_profile = valid_profiles[profile].get('base')
+            while base_profile is not None:
+                base_profiles.append(base_profile)
+                base_profile = valid_profiles[base_profile].get('base')
+            for base_profile in reversed(base_profiles):
+                entry.update(valid_profiles[base_profile])
+            entry.update(valid_profiles[profile])
+            valid_profiles[profile] = entry
+        valid_profiles = {p: valid_profiles[p] for p in valid_profiles if all_profiles[p].get('client', cli) == cli}
+        return valid_profiles
 
     def list_clusterprofiles(self):
         return self.clusterprofiles
