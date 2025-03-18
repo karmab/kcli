@@ -1608,9 +1608,11 @@ def create_vmdisk(args):
     name = args.name
     force = args.force
     novm = args.novm
-    size = overrides.get('size') or args.size
-    thin = overrides.get('thin', True)
     pool = overrides.get('pool') or args.pool
+    size = overrides.get('size') or args.size
+    existing = overrides.get('diskname')
+    shareable = overrides.get('shared', False)
+    thin = overrides.get('thin', not shareable)
     image = args.image
     interface = overrides.get('diskinterface') or args.interface
     if interface not in ['virtio', 'ide', 'scsi']:
@@ -1639,7 +1641,7 @@ def create_vmdisk(args):
         k.add_disk(name=name, size=size, pool=pool, interface=interface, diskname=diskname, thin=thin)
     else:
         k.add_disk(name=name, size=size, pool=pool, image=image, interface=interface, novm=novm, overrides=overrides,
-                   thin=thin)
+                   thin=thin, existing=existing, shareable=shareable)
 
 
 def delete_vmdisk(args):

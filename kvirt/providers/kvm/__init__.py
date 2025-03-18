@@ -2964,7 +2964,7 @@ class Kvirt(object):
                 name = os.path.basename(diskname).split('_')[0]
                 pprint(f"Using {name} as vm associated to this disk")
             else:
-                warning("Couldn't find a vm associated to this disk")
+                warning("No vm associated to this disk")
                 result = self.delete_disk_by_name(diskname, pool)
                 return result
         try:
