@@ -26,6 +26,27 @@ If you don’t have Libvirt installed on the target hypervisor, you can use the 
    sudo newgrp libvirt
    sudo systemctl enable --now libvirtd
 
+
+Make sure that the default pool exists:
+
+.. code:: bash
+
+   if ! sudo virsh pool-info default; then
+     virsh pool-define /dev/stdin <<EOF
+     <pool type='dir'>
+       <name>default</name>
+       <target>
+         <path>/var/lib/libvirt/images</path>
+       </target>
+     </pool>
+     EOF
+
+     sudo virsh pool-start default
+     sudo virsh pool-autostart default
+     sudo chmod 0770 /var/lib/libvirt/images
+     sudo usermod -aG wheel $(whoami)
+   fi
+
 Supported installation methods
 ------------------------------
 

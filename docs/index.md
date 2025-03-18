@@ -26,6 +26,27 @@ sudo newgrp libvirt
 sudo systemctl enable --now libvirtd
 ```
 
+Make sure that the default pool exists:
+
+```bash
+if ! sudo virsh pool-info default; then
+  virsh pool-define /dev/stdin <<EOF
+  <pool type='dir'>
+    <name>default</name>
+    <target>
+      <path>/var/lib/libvirt/images</path>
+    </target>
+  </pool>
+  EOF
+
+  sudo virsh pool-start default
+  sudo virsh pool-autostart default
+  sudo chmod 0770 /var/lib/libvirt/images
+  sudo useradd 0770 /var/lib/libvirt/images
+  sudo usermod -aG wheel $(whoami)
+fi
+```
+
 ## Supported installation methods
 
 The following methods are supported for installation and are all updated automatically when new pushes to kcli are made.
