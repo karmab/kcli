@@ -1,6 +1,6 @@
 {% set api_ip = api_ip or ('{0}-ctlplane-1'.format(cluster)|kcli_info('ip') if scale|default(False) and 'ctlplane-0' in name else first_ip) %}
 
-apiVersion: kubeadm.k8s.io/v1beta4
+apiVersion: kubeadm.k8s.io/v1beta3
 kind: JoinConfiguration
 discovery:
   tlsBootstrapToken: {{ token }}
