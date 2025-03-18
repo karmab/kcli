@@ -1492,9 +1492,7 @@ class Kvirt(object):
             return {'result': 'failure', 'reason': f"VM {base} not found"}
         if name in vm.snapshotListNames():
             return {'result': 'failure', 'reason': f"Snapshot {name} already exists"}
-        if vm.isActive() == 0:
-            memoryxml = ''
-        memory_snapshot = 'internal' if vm.isActive() == 0 else 'no'
+        memory_snapshot = 'internal' if vm.isActive() != 0 else 'no'
         memoryxml = f"<memory snapshot='{memory_snapshot}'/>"
         snapxml = """<domainsnapshot>
           <name>%s</name>
