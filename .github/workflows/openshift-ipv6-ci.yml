@@ -13,14 +13,6 @@ on:
         description: 'Pull Secret'
         required: false
         default: /root/openshift_pull.json
-      VERSION:
-        description: 'version'
-        required: false
-        default: stable
-      TAG:
-        description: 'tag'
-        required: false
-        default: "4.15"
       NETWORK:
         description: 'network'
         required: false
@@ -37,8 +29,6 @@ env:
  INPUTFILE: ${{github.event.inputs.INPUTFILE}}
  EXTRAPARAMS: ${{github.event.inputs.EXTRAPARAMS}}
  PULLSECRET: ${{github.event.inputs.PULLSECRET}}
- VERSION: ${{github.event.inputs.VERSION}}
- TAG: ${{github.event.inputs.TAG}}
  NETWORK: ${{github.event.inputs.NETWORK}}
  NETWORK_CIDR: ${{github.event.inputs.NETWORK_CIDR}}
 
@@ -53,4 +43,4 @@ jobs:
        - name: Deploy network if needed
          run: kcli create network -c $NETWORK_CIDR $NETWORK || true
        - name: Deploy Openshift on ipv6
-         run: kcli create cluster openshift -P clusterprofile=sample-openshift-ipv6 -P network=$NETWORK -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $EXTRAPARAMS $PLAN --force
+         run: kcli create cluster openshift -P clusterprofile=sample-openshift-ipv6 -P network=$NETWORK -P pull_secret=$PULLSECRET $EXTRAPARAMS $PLAN --force

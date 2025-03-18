@@ -17,14 +17,6 @@ on:
         description: 'Pull Secret'
         required: false
         default: /root/openshift_pull.json
-      VERSION:
-        description: 'version'
-        required: false
-        default: latest
-      TAG:
-        description: 'tag'
-        required: false
-        default: "4.17"
 
 env:
  HOME: /root
@@ -35,8 +27,6 @@ env:
  PARAMFILE: ${{github.event.inputs.PARAMFILE}}
  EXTRAPARAMS: ${{github.event.inputs.EXTRAPARAMS}}
  PULLSECRET: ${{github.event.inputs.PULLSECRET}}
- VERSION: ${{github.event.inputs.VERSION}}
- TAG: ${{github.event.inputs.TAG}}
 
 jobs:
     requirements:
@@ -58,4 +48,4 @@ jobs:
       steps:
       - name: Deploy HYPERSHIFT ASSISTED
         run: |
-          kcli create cluster hypershift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $EXTRAPARAMS $CLUSTER
+          kcli create cluster hypershift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET $EXTRAPARAMS $CLUSTER

@@ -25,14 +25,6 @@ on:
         description: 'network_cidr'
         required: false
         default: 192.168.131.0/24
-      VERSION:
-        description: 'version'
-        required: false
-        default: stable
-      TAG:
-        description: 'tag'
-        required: false
-        default: "4.17"
 
 env:
  HOME: /root
@@ -44,8 +36,6 @@ env:
  PULLSECRET: ${{github.event.inputs.PULLSECRET}}
  NETWORK: ${{github.event.inputs.NETWORK}}
  NETWORK_CIDR: ${{github.event.inputs.NETWORK_CIDR}}
- VERSION: ${{github.event.inputs.VERSION}}
- TAG: ${{github.event.inputs.TAG}}
 
 jobs:
     deploy-okd:
@@ -58,4 +48,4 @@ jobs:
        - name: Deploy network if needed
          run: kcli create network -c $NETWORK_CIDR $NETWORK || true
        - name: Deploy OKD on libvirt
-         run: kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $EXTRAPARAMS $PLAN --force
+         run: kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET $EXTRAPARAMS $PLAN --force

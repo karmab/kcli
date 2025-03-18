@@ -17,14 +17,6 @@ on:
         description: 'Pull Secret'
         required: false
         default: /root/openshift_pull.json
-      VERSION:
-        description: 'version'
-        required: false
-        default: stable
-      TAG:
-        description: 'tag'
-        required: false
-        default: "4.17"
 
 env:
  HOME: /root
@@ -34,8 +26,6 @@ env:
  PARAMFILE: ${{github.event.inputs.PARAMFILE}}
  EXTRAPARAMS: ${{github.event.inputs.EXTRAPARAMS}}
  PULLSECRET: ${{github.event.inputs.PULLSECRET}}
- VERSION: ${{github.event.inputs.VERSION}}
- TAG: ${{github.event.inputs.TAG}}
 
 jobs:
     deploy-openshift:
@@ -46,4 +36,4 @@ jobs:
        - name: Install kcli
          run: curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
        - name: Deploy Openshift on kubevirt
-         run: kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $EXTRAPARAMS $PLAN --force
+         run: kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET $EXTRAPARAMS $PLAN --force

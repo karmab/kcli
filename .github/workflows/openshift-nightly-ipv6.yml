@@ -12,8 +12,6 @@ env:
  EXTRAPARAMS: ""
  NETWORK: ipv6-network
  NETWORK_CIDR: 2620:52:0:1306::/64
- VERSION: stable
- TAG: "4.17"
 
 jobs:
     deploy-openshift:
@@ -27,7 +25,7 @@ jobs:
        - name: Deploy network if needed
          run: kcli create network -c $NETWORK_CIDR $NETWORK || true
        - name: Deploy Openshift on ipv6
-         run: kcli create cluster openshift -P clusterprofile=$CLUSTERPROFILE -P network=$NETWORK -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $EXTRAPARAMS $CLUSTER --force
+         run: kcli create cluster openshift -P clusterprofile=$CLUSTERPROFILE -P network=$NETWORK -P pull_secret=$PULLSECRET $EXTRAPARAMS $CLUSTER --force
        - name: Clean everything
-         if: success()
+         if: always()
          run: kcli delete plan --yes $CLUSTER

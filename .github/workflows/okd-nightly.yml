@@ -11,8 +11,6 @@ env:
  PARAMFILE: "openshift-ci-paramfiles/okd.yml"
  NETWORK: okd-network
  NETWORK_CIDR: 192.168.131.0/24
- VERSION: stable
- TAG: "4.17"
 
 jobs:
     deploy-okd:

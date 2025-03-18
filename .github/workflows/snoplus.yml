@@ -17,14 +17,6 @@ on:
         description: 'Pull Secret'
         required: false
         default: /root/openshift_pull.json
-      VERSION:
-        description: 'version'
-        required: false
-        default: stable
-      TAG:
-        description: 'tag'
-        required: false
-        default: "4.17"
       PLANFILE:
         description: 'planfile'
         required: true
@@ -39,8 +31,6 @@ env:
  PLANFILE: ${{github.event.inputs.PLANFILE}}
  EXTRAPARAMS: ${{github.event.inputs.EXTRAPARAMS}}
  PULLSECRET: ${{github.event.inputs.PULLSECRET}}
- VERSION: ${{github.event.inputs.VERSION}}
- TAG: ${{github.event.inputs.TAG}}
 
 jobs:
     requirements:
@@ -67,4 +57,4 @@ jobs:
       runs-on: libvirt
       steps:
       - name: Deploy SNO and additional nodes
-        run: kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $EXTRAPARAMS $CLUSTER
+        run: kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET $EXTRAPARAMS $CLUSTER

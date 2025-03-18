@@ -8,8 +8,6 @@ env:
  PYTHONUNBUFFERED: true
  CLUSTER: ci-microshift
  PULLSECRET: /root/openshift_pull.json
- VERSION: stable
- TAG: "4.17"
 
 jobs:
  requirements:
@@ -29,7 +27,7 @@ jobs:
    runs-on: u08
    steps:
    - name: Deploy Microshift
-     run: kcli create cluster microshift -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $CLUSTER
+     run: kcli create cluster microshift -P pull_secret=$PULLSECRET $CLUSTER
 
  verify-microshift:
    needs: deploy-microshift

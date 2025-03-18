@@ -17,14 +17,6 @@ on:
         description: 'Pull Secret'
         required: false
         default: /root/openshift_pull.json
-      VERSION:
-        description: 'version'
-        required: false
-        default: stable
-      TAG:
-        description: 'tag'
-        required: false
-        default: "4.17"
       DISKS:
         description: 'disks'
         required: false
@@ -47,8 +39,6 @@ env:
  PARAMFILE: ${{github.event.inputs.PARAMFILE}}
  EXTRAPARAMS: ${{github.event.inputs.EXTRAPARAMS}}
  PULLSECRET: ${{github.event.inputs.PULLSECRET}}
- VERSION: ${{github.event.inputs.VERSION}}
- TAG: ${{github.event.inputs.TAG}}
  DISKS: ${{github.event.inputs.DISKS}}
  MEMORY: ${{github.event.inputs.MEMORY}}
  NUMCPUS: ${{github.event.inputs.NUMCPUS}}
@@ -80,4 +70,4 @@ jobs:
       steps:
       - name: Deploy SNO
         run: |
-          kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET -P version=$VERSION -P tag="$TAG" $EXTRAPARAMS $CLUSTER
+          kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET $EXTRAPARAMS $CLUSTER
