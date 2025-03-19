@@ -5,7 +5,7 @@ from ipaddress import ip_address, ip_network
 import json
 from kvirt.common import error, pprint, success, warning, info2, fix_typos
 from kvirt.common import get_oc, pwd_path, get_oc_mirror, patch_ingress_controller_wildcard
-from kvirt.common import get_latest_fcos, generate_rhcos_iso, olm_app
+from kvirt.common import generate_rhcos_iso, olm_app
 from kvirt.common import get_installer_rhcos, wait_cloud_dns, delete_lastvm, detect_openshift_version
 from kvirt.common import ssh, scp, _ssh_credentials, get_ssh_pub_key
 from kvirt.common import start_baremetal_hosts_with_iso, update_baremetal_hosts, get_new_vip, process_postscripts
@@ -972,11 +972,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         image_type = provider
         region = k.region if provider == 'aws' else None
         try:
-            if okd:
-                fcos_url = 'https://builds.coreos.fedoraproject.org/streams/stable.json'
-                image_url = get_latest_fcos(fcos_url, _type=image_type)
-            else:
-                image_url = get_installer_rhcos(_type=image_type, region=region, arch=arch)
+            image_url = get_installer_rhcos(_type=image_type, region=region, arch=arch)
         except:
             msg = f"Couldn't gather the {provider} image associated to this installer version"
             msg += "Force an image in your parameter file"
