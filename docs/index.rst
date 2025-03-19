@@ -1446,6 +1446,38 @@ Will create the following file structure:
    ./outdir/frout.txt
    ./outdir/frout.j2
 
+When using a directory in a ``files`` section the structure will be recreated and all files within it will be rendered.
+
+If we have this file structure:
+
+::
+
+   ./arch/frout.sh
+   ./arch/frout.txt
+   ./arch/frout.j2
+   ./arch/subdir/anotherfile.sh
+
+And we use this workflow:
+
+.. code:: yaml
+
+   myworkflow:
+     type: workflow
+     destdir: outdir
+     scripts:
+     - arch/frout.sh
+     files:
+     - origin: arch
+
+We’ll end up with the following:
+
+::
+
+   ./outdir/frout.sh
+   ./outdir/arch/frout.txt
+   ./outdir/arch/frout.j2
+   ./outdir/arch/subdir/anotherfile.sh
+
 vms
 ~~~
 

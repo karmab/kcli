@@ -1212,29 +1212,31 @@ class Kbaseconfig:
             if 'path' in entry:
                 destdir = os.path.dirname(entry['path'])
             else:
-                destdir = f"{destdir}/{os.path.dirname(entry['origin'])}"
+                destdir = f"{outputdir}/{os.path.dirname(entry['origin'])}"
             if not os.path.exists(destdir):
                 pprint(f"Creating directory {destdir}")
                 os.makedirs(destdir)
-            content = entry.get('content')
-            render = entry.get('render', True)
-            if isinstance(render, str):
-                render = render.lower() == 'true'
-            if origin in directories:
+            # If we've already processed the directory tree then there's no point in looking at individual files.
+            if any(origin.startswith(d) for d in directories):
                 continue
             elif not os.path.exists(origin):
                 msg = f"Origin file {origin} not found"
                 error(msg)
                 return {'result': 'failure', 'reason': msg}
             elif os.path.isdir(origin):
-                origin = entry.get('origin')
-                if not os.path.exists(f"{destdir}/{os.path.basename(origin)}"):
-                    pprint(f"Creating directory {destdir}/{os.path.basename(origin)}")
-                    os.makedirs(f"{destdir}/{os.path.basename(origin)}")
-                    directories.append(origin)
-                for _fic in os.listdir(origin):
-                    directoryfiles.append(f'{origin}/{_fic}')
+                for path, _, files in os.walk(origin):
+                    new_destdir = f"{destdir}{path}"
+                    if not os.path.exists(new_destdir):
+                        pprint(f"Creating directory {new_destdir}")
+                        os.makedirs(new_destdir)
+                    directories.append(path)
+                    for _fic in files:
+                        directoryfiles.append(f'{path}/{_fic}')
                 continue
+            content = entry.get('content')
+            render = entry.get('render', True)
+            if isinstance(render, str):
+                render = render.lower() == 'true'
             filename = os.path.basename(origin)
             if not render:
                 content = open(origin, 'r').read()
