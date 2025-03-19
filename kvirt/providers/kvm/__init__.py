@@ -1597,6 +1597,8 @@ class Kvirt(object):
             new_xml = ET.tostring(root, encoding='unicode')
             conn.defineXML(new_xml)
             warning(f"Deleting external snapshot {name}")
+            pool = conn.storageVolLookupByPath(original_path).storagePoolLookupByVolume().name()
+            self.delete_disk(name=None, diskname=snapshot_path, pool=pool, novm=True)
             snap.delete(2)
         else:
             vm.revertToSnapshot(snap)
