@@ -343,7 +343,7 @@ def console_container(args):
 def delete_vm(args):
     yes = args.yes
     yes_top = args.yes_top
-    snapshots = args.snapshots
+    snapshots = args.force
     count = args.count
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.extraclients:
@@ -4242,7 +4242,7 @@ def cli():
     vmdelete_parser = argparse.ArgumentParser(add_help=False)
     vmdelete_parser.add_argument('-a', '--all', action='store_true', help='Delete all vms')
     vmdelete_parser.add_argument('-c', '--count', help='How many vms to delete', type=int, default=0, metavar='COUNT')
-    vmdelete_parser.add_argument('-s', '--snapshots', action='store_true', help='Remove snapshots if needed')
+    vmdelete_parser.add_argument('-f', '--force', action='store_true', help='Remove snapshots if needed')
     vmdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     vmdelete_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     vmdelete_parser.set_defaults(func=delete_vm)
@@ -4809,9 +4809,10 @@ def cli():
     plansnapshotlist_parser.add_argument('name', metavar='PLAN')
     plansnapshotlist_parser.set_defaults(func=snapshotlist_plan)
 
-    vmsnapshotlist_desc = 'List Snapshots Of Vm'
-    vmsnapshotlist_parser = list_subparsers.add_parser('vm-snapshot', description=vmsnapshotlist_desc,
-                                                       help=vmsnapshotlist_desc, aliases=['vm-snapshots'],
+    vmsnapshotlist_desc = 'List Snapshots Of a Vm'
+    vmsnapshotlist_parser = list_subparsers.add_parser('snapshot', description=vmsnapshotlist_desc,
+                                                       help=vmsnapshotlist_desc, aliases=['snapshots', 'vm-snapshot',
+                                                                                          'vm-snapshots'],
                                                        parents=[output_parser])
     vmsnapshotlist_parser.add_argument('name', metavar='VMNAME')
     vmsnapshotlist_parser.set_defaults(func=snapshotlist_vm)

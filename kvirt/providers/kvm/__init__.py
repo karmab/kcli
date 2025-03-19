@@ -13,6 +13,8 @@ from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE as vir_src_lease
 from libvirt import (VIR_DOMAIN_NOSTATE, VIR_DOMAIN_RUNNING, VIR_DOMAIN_BLOCKED, VIR_DOMAIN_PAUSED,
                      VIR_DOMAIN_SHUTDOWN, VIR_DOMAIN_SHUTOFF, VIR_DOMAIN_CRASHED)
 from libvirt import VIR_CONNECT_LIST_STORAGE_POOLS_ACTIVE
+from libvirt import VIR_DOMAIN_SNAPSHOT_CREATE_DISK_ONLY, VIR_DOMAIN_SNAPSHOT_CREATE_ATOMIC
+from libvirt import VIR_DOMAIN_BLOCK_COMMIT_ACTIVE, VIR_DOMAIN_BLOCK_JOB_ABORT_PIVOT
 try:
     from libvirt import VIR_DOMAIN_UNDEFINE_KEEP_NVRAM
 except:
@@ -1492,17 +1494,37 @@ class Kvirt(object):
             return {'result': 'failure', 'reason': f"VM {base} not found"}
         if name in vm.snapshotListNames():
             return {'result': 'failure', 'reason': f"Snapshot {name} already exists"}
-        memory_snapshot = 'internal' if vm.isActive() != 0 else 'no'
+        raw_disks = []
+        xml = vm.XMLDesc(0)
+        root = ET.fromstring(xml)
+        for index, element in enumerate(list(root.iter('disk'))):
+            if element.get('device') == 'cdrom':
+                continue
+            device = element.find('target').get('dev')
+            if index == 0:
+                primary_disk = device
+            if element.find('driver').get('type') == 'raw':
+                raw_disks.append(device)
+        memory_snapshot = 'internal' if vm.isActive() != 0 and not raw_disks else 'no'
+        snapshot_type = 'external' if raw_disks else 'internal'
+        if snapshot_type == 'external' and not vm.isActive():
+            msg = f"VM {base} needs to be up in order to create an external snapshot"
+            return {'result': 'failure', 'reason': msg}
+        disksxml = f"<disk name='{primary_disk}' snapshot='{snapshot_type}'/>"
+        for disk in raw_disks:
+            disksxml += f"<disk name='{disk}' snapshot='no'/>"
         memoryxml = f"<memory snapshot='{memory_snapshot}'/>"
         snapxml = """<domainsnapshot>
           <name>%s</name>
           %s
           <disks>
-            <disk name='vda' snapshot='internal'/>
+          %s
           </disks>
           %s
-          </domainsnapshot>""" % (name, memoryxml, vmxml)
-        vm.snapshotCreateXML(snapxml)
+          </domainsnapshot>""" % (name, memoryxml, disksxml, vmxml)
+        flags = VIR_DOMAIN_SNAPSHOT_CREATE_DISK_ONLY | VIR_DOMAIN_SNAPSHOT_CREATE_ATOMIC\
+            if snapshot_type == 'external' else 0
+        vm.snapshotCreateXML(snapxml, flags=flags)
         return {'result': 'success'}
 
     def delete_snapshot(self, name, base):
@@ -1513,8 +1535,29 @@ class Kvirt(object):
             return {'result': 'failure', 'reason': f"VM {base} not found"}
         if name not in vm.snapshotListNames():
             return {'result': 'failure', 'reason': f"Snapshot {name} doesn't exist"}
+        snap_metadata = 0
         snap = vm.snapshotLookupByName(name)
-        snap.delete()
+        if 'external' in snap.getXMLDesc():
+            xml = vm.XMLDesc(0)
+            root = ET.fromstring(xml)
+            disk = list(root.iter('disk'))[0]
+            disk_name = disk.find('target').get('dev')
+            imagefiles = [disk.find('source').get('file'), disk.find('source').get('dev'),
+                          disk.find('source').get('volume')]
+            snapshot_path = next(item for item in imagefiles if item is not None)
+            base_path = snapshot_path.replace(f'.{name}', '.img')
+            vm.blockCommit(disk_name, base_path, snapshot_path, 0, VIR_DOMAIN_BLOCK_COMMIT_ACTIVE)
+            while True:
+                info = vm.blockJobInfo(disk_name, 0)
+                if not info or info["cur"] == info["end"]:
+                    break
+                pprint(f"Progress: {info['cur']}/{info['end']} bytes committed")
+                time.sleep(1)
+            vm.blockJobAbort(disk_name, VIR_DOMAIN_BLOCK_JOB_ABORT_PIVOT)
+            pool = conn.storageVolLookupByPath(base_path).storagePoolLookupByVolume().name()
+            self.delete_disk(name=None, diskname=snapshot_path, pool=pool, novm=True)
+            snap_metadata = 2
+        snap.delete(snap_metadata)
         return {'result': 'success'}
 
     def list_snapshots(self, base):
@@ -1534,7 +1577,29 @@ class Kvirt(object):
         if name not in vm.snapshotListNames():
             return {'result': 'failure', 'reason': f"Snapshot {name} doesn't exist"}
         snap = vm.snapshotLookupByName(name)
-        vm.revertToSnapshot(snap)
+        if 'external' in snap.getXMLDesc():
+            if vm.isActive():
+                msg = f"VM {base} needs to be down for reverting to an external snapshot"
+                return {'result': 'failure', 'reason': msg}
+            xml = vm.XMLDesc(0)
+            root = ET.fromstring(xml)
+            disk = list(root.iter('disk'))[0]
+            snapshot_path = disk.find('source').get('file')
+            if snapshot_path.endswith(f'.{name}'):
+                return {'result': 'failure', 'reason': f"Didnt find snapshot {name} in {base}"}
+            top_backingstore = disk.find('backingStore')
+            original_path = top_backingstore.find('source').get('file')
+            child_backingstore = top_backingstore.find('backingStore')
+            original_image_path = child_backingstore.find('source').get('file')
+            disk.find('source').set('file', original_path)
+            top_backingstore.find('source').set('file', original_image_path)
+            top_backingstore.remove(child_backingstore)
+            new_xml = ET.tostring(root, encoding='unicode')
+            conn.defineXML(new_xml)
+            warning(f"Deleting external snapshot {name}")
+            snap.delete(2)
+        else:
+            vm.revertToSnapshot(snap)
         return {'result': 'success'}
 
     def restart(self, name):
@@ -2090,8 +2155,7 @@ class Kvirt(object):
             else:
                 for snapshot in vm.snapshotListNames():
                     pprint(f"Deleting snapshot {snapshot}")
-                    snap = vm.snapshotLookupByName(snapshot)
-                    snap.delete()
+                    self.delete_snapshot(snapshot, name)
         ip = self.ip(name)
         status = {0: 'down', 1: 'up'}
         vmxml = vm.XMLDesc(0)
