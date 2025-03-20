@@ -1473,6 +1473,7 @@ class Kconfig(Kbaseconfig):
 
     def snapshot_plan(self, plan, snapshotname=None):
         k = self.k
+        failures = []
         snapshotfound = False
         pprint(f"Snapshotting vms from plan {plan}")
         if snapshotname is None:
@@ -1483,17 +1484,26 @@ class Kconfig(Kbaseconfig):
             description = vm['plan']
             if description == plan:
                 snapshotfound = True
-                k.create_snapshot(snapshotname, name)
-                success(f"{name} snapshotted!")
+                result = k.create_snapshot(snapshotname, name)
+                if result['result'] == 'success':
+                    success(f"snapshot of {name} snapshotted!")
+                else:
+                    msg = result['reason']
+                    error(msg)
+                    failures.append(msg)
         if snapshotfound:
             success(f"Plan {plan} snapshotted!")
         else:
             warning("No matching vms found")
-        return {'result': 'success'}
+        if failures:
+            return {'result': 'failure', 'reason': f'Hit {",".join(failures)}'}
+        else:
+            return {'result': 'success'}
 
     def revert_plan(self, plan, snapshotname=None):
         k = self.k
         revertfound = False
+        failures = []
         pprint(f"Reverting snapshots of vms from plan {plan}")
         if snapshotname is None:
             warning(f"Using {plan} as snapshot name as None was provided")
@@ -1503,13 +1513,21 @@ class Kconfig(Kbaseconfig):
             description = vm['plan']
             if description == plan:
                 revertfound = True
-                k.revert_snapshot(snapshotname, name)
-                success(f"snapshot of {name} reverted!")
+                result = k.revert_snapshot(snapshotname, name)
+                if result['result'] == 'success':
+                    success(f"snapshot of {name} reverted!")
+                else:
+                    msg = result['reason']
+                    error(msg)
+                    failures.append(msg)
         if revertfound:
             success(f"Plan {plan} reverted with snapshot {snapshotname}!")
         else:
             warning("No matching vms found")
-        return {'result': 'success'}
+        if failures:
+            return {'result': 'failure', 'reason': f'Hit {",".join(failures)}'}
+        else:
+            return {'result': 'success'}
 
     def select_client(self, vmclient, hosts):
         if vmclient is None:
