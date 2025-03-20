@@ -1535,6 +1535,9 @@ class Kvirt(object):
         snap_metadata = 0
         snap = vm.snapshotLookupByName(name)
         if 'external' in snap.getXMLDesc():
+            if not vm.isActive():
+                msg = f"VM {base} needs to be up for deleting an external snapshot"
+                return {'result': 'failure', 'reason': msg}
             xml = vm.XMLDesc(0)
             root = ET.fromstring(xml)
             disk = list(root.iter('disk'))[0]
@@ -1583,7 +1586,7 @@ class Kvirt(object):
             disk = list(root.iter('disk'))[0]
             snapshot_path = disk.find('source').get('file')
             if snapshot_path.endswith(f'.{name}'):
-                return {'result': 'failure', 'reason': f"Didnt find snapshot {name} in {base}"}
+                return {'result': 'failure', 'reason': f"Snapshot {name} was not found in {base}"}
             top_backingstore = disk.find('backingStore')
             original_path = top_backingstore.find('source').get('file')
             child_backingstore = top_backingstore.find('backingStore')
