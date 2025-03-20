@@ -1554,8 +1554,9 @@ class Kvirt(object):
                 pprint(f"Progress: {info['cur']}/{info['end']} bytes committed")
                 time.sleep(1)
             vm.blockJobAbort(disk_name, VIR_DOMAIN_BLOCK_JOB_ABORT_PIVOT)
-            pool = conn.storageVolLookupByPath(base_path).storagePoolLookupByVolume().name()
-            self.delete_disk(diskname=snapshot_path, pool=pool)
+            pool = conn.storageVolLookupByPath(base_path).storagePoolLookupByVolume()
+            pool.refresh()
+            self.delete_disk(diskname=snapshot_path, pool=pool.name())
             snap_metadata = 2
         snap.delete(snap_metadata)
         return {'result': 'success'}
@@ -1585,7 +1586,7 @@ class Kvirt(object):
             root = ET.fromstring(xml)
             disk = list(root.iter('disk'))[0]
             snapshot_path = disk.find('source').get('file')
-            if snapshot_path.endswith(f'.{name}'):
+            if not snapshot_path.endswith(f'.{name}'):
                 return {'result': 'failure', 'reason': f"Snapshot {name} was not found in {base}"}
             top_backingstore = disk.find('backingStore')
             original_path = top_backingstore.find('source').get('file')
@@ -1597,8 +1598,9 @@ class Kvirt(object):
             new_xml = ET.tostring(root, encoding='unicode')
             conn.defineXML(new_xml)
             warning(f"Deleting external snapshot {name}")
-            pool = conn.storageVolLookupByPath(original_path).storagePoolLookupByVolume().name()
-            self.delete_disk(diskname=snapshot_path, pool=pool)
+            pool = conn.storageVolLookupByPath(original_path).storagePoolLookupByVolume()
+            pool.refresh()
+            self.delete_disk(diskname=snapshot_path, pool=pool.name())
             snap.delete(2)
         else:
             vm.revertToSnapshot(snap)
