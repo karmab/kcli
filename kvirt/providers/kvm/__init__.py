@@ -1507,9 +1507,6 @@ class Kvirt(object):
                 raw_disks.append(device)
         memory_snapshot = 'internal' if vm.isActive() != 0 and not raw_disks else 'no'
         snapshot_type = 'external' if raw_disks else 'internal'
-        if snapshot_type == 'external' and not vm.isActive():
-            msg = f"VM {base} needs to be up in order to create an external snapshot"
-            return {'result': 'failure', 'reason': msg}
         disksxml = f"<disk name='{primary_disk}' snapshot='{snapshot_type}'/>"
         for disk in raw_disks:
             disksxml += f"<disk name='{disk}' snapshot='no'/>"
