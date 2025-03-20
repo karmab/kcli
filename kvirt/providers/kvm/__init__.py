@@ -1555,7 +1555,7 @@ class Kvirt(object):
                 time.sleep(1)
             vm.blockJobAbort(disk_name, VIR_DOMAIN_BLOCK_JOB_ABORT_PIVOT)
             pool = conn.storageVolLookupByPath(base_path).storagePoolLookupByVolume().name()
-            self.delete_disk(name=None, diskname=snapshot_path, pool=pool, novm=True)
+            self.delete_disk(diskname=snapshot_path, pool=pool)
             snap_metadata = 2
         snap.delete(snap_metadata)
         return {'result': 'success'}
@@ -1598,7 +1598,7 @@ class Kvirt(object):
             conn.defineXML(new_xml)
             warning(f"Deleting external snapshot {name}")
             pool = conn.storageVolLookupByPath(original_path).storagePoolLookupByVolume().name()
-            self.delete_disk(name=None, diskname=snapshot_path, pool=pool, novm=True)
+            self.delete_disk(diskname=snapshot_path, pool=pool)
             snap.delete(2)
         else:
             vm.revertToSnapshot(snap)
@@ -3020,16 +3020,16 @@ class Kvirt(object):
 
     def delete_disk(self, name=None, diskname=None, pool=None, novm=False):
         conn = self.conn
-        if novm:
-            result = self.delete_disk_by_name(os.path.basename(diskname), pool)
-            return result
         if name is None:
+            if diskname is None:
+                msg = "Neither vm name or diskname was provided"
+                error(msg)
+                return {'result': 'failure', 'reason': msg}
             if '_' in os.path.basename(diskname) and diskname.endswith('.img'):
                 name = os.path.basename(diskname).split('_')[0]
                 pprint(f"Using {name} as vm associated to this disk")
             else:
-                warning("No vm associated to this disk")
-                result = self.delete_disk_by_name(diskname, pool)
+                result = self.delete_disk_by_name(os.path.basename(diskname), pool)
                 return result
         try:
             vm = conn.lookupByName(name)
