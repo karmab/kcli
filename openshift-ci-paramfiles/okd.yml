@@ -1,5 +1,5 @@
 cluster: ci-okd
-upstream: true
+okd: true
 force: true
 domain: karmalabs.corp
 network_type: OVNKubernetes
