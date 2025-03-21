@@ -21,7 +21,7 @@ If you don’t have Libvirt installed on the target hypervisor, you can use the 
 
 .. code:: bash
 
-   sudo yum -y install libvirt libvirt-daemon-driver-qemu qemu-kvm
+   sudo yum -y install libvirt libvirt-daemon-driver-qemu qemu-kvm tar
    sudo usermod -aG qemu,libvirt $(id -un)
    sudo newgrp libvirt
    sudo systemctl enable --now libvirtd
