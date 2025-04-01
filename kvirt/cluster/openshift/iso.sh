@@ -12,7 +12,7 @@ for disk in $(lsblk -dno NAME,TYPE | awk '$2=="disk" {print $1}') ; do
   wipefs -a /dev/$disk
 done
 {% if install_disk is defined %}
-install_device='/dev/{{ install_disk | basename }}'
+install_device='/dev/{{ install_disk|diskpath }}'
 {% else %}
 install_device=/dev/$(lsblk | grep disk | head -1 | cut -d" " -f1)
 if [ "$install_device" == "/dev/" ]; then

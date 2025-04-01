@@ -14,6 +14,10 @@ def basename(path):
     return os.path.basename(path)
 
 
+def diskpath(path):
+    return os.path.relpath(path, "/dev")
+
+
 def dirname(path):
     return os.path.dirname(path)
 
@@ -216,8 +220,8 @@ def max_ocp_version(version1, version2):
     return version1 if version1 > version2 else version2
 
 
-jinjafilters = {'basename': basename, 'dirname': dirname, 'kubenodes': kubenodes, 'none': none, 'type': _type,
-                'certificate': certificate, 'base64': base64, 'github_version': github_version,
+jinjafilters = {'basename': basename, 'dirname': dirname, 'diskpath': diskpath, 'kubenodes': kubenodes, 'none': none,
+                'type': _type, 'certificate': certificate, 'base64': base64, 'github_version': github_version,
                 'defaultnodes': defaultnodes, 'wait_crd': wait_crd, 'local_ip': local_ip, 'network_ip': network_ip,
                 'kcli_info': kcli_info, 'find_manifests': find_manifests, 'exists': exists, 'ipv6_wrap': ipv6_wrap,
                 'has_ctlplane': has_ctlplane, 'wait_csv': wait_csv, 'count': count, 'pwd_path': pwd_path,

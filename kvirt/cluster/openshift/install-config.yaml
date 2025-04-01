@@ -14,7 +14,7 @@
 {% if sno_disk == None %}
 {% set sno_disk = '/dev/sda' %}
 {% elif '/dev/' not in sno_disk %}
-{% set sno_disk = '/dev/' + sno_disk|basename %}
+{% set sno_disk = '/dev/' + sno_disk|diskpath %}
 {% endif %}
 apiVersion: v1
 {% if fips %}
