@@ -33,6 +33,7 @@ curl -L https://raw.githubusercontent.com/projectcalico/calico/$CALICO_VERSION/m
 curl -L https://raw.githubusercontent.com/projectcalico/calico/$CALICO_VERSION/manifests/custom-resources.yaml > /root/tigera-custom-resources.yaml
 sed -i "s@192.168.0.0/16@$POD_CIDR@" /root/tigera-custom-resources.yaml
 kubectl create -f /root/tigera-operator.yaml
+sleep 10
 kubectl create -f /root/tigera-custom-resources.yaml
 {% elif sdn == 'canal' %}
 kubectl apply -f https://docs.projectcalico.org/v3.1/getting-started/kubernetes/installation/hosted/canal/rbac.yaml
