@@ -845,10 +845,9 @@ class Kconfig(Kbaseconfig):
             metadata['owner'] = profile.get('owner') or overrides.get('owner')
         if 'redfish_iso' in profile or 'redfish_iso' in overrides:
             metadata['redfish_iso'] = profile.get('redfish_iso') or overrides.get('redfish_iso')
-        if 'vmuser' in profile or 'vmuser' in overrides:
-            metadata['user'] = profile.get('vmuser') or overrides.get('vmuser')
-        elif 'user' in profile or 'user' in overrides:
-            metadata['user'] = profile.get('user') or overrides.get('user')
+        vmuser = profile.get('vmuser') or overrides.get('vmuser') or profile.get('user') or overrides.get('user')
+        if vmuser is not None:
+            metadata['user'] = vmuser
         if kube is not None and kubetype is not None:
             metadata['kubetype'] = kubetype
             metadata['kube'] = kube
