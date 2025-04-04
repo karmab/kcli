@@ -12,8 +12,10 @@ metadata:
   name: {{ name }}-operatorgroup
   namespace: {{ namespace }}
 spec:
+{% if installmode = 'namespaced' %}
   targetNamespaces:
   - {{ namespace }}
+{% endif %}
 ---
 {% endif %}
 apiVersion: operators.coreos.com/v1alpha1
