@@ -40,11 +40,15 @@ class Kopenstack(object):
             error(f"Unsupported auth_type {auth_type}")
             self.conn = None
             return
+        insecure = False
+        cacert = None
         if ca_file is not None:
             if ca_file in ('False', 'false'):
                 sess = session.Session(auth=auth, verify=False)
+                insecure = True
             else:
-                sess = session.Session(auth=auth, verify=os.path.expanduser(ca_file))
+                cacert = os.path.expanduser(ca_file)
+                sess = session.Session(auth=auth, verify=cacert)
         else:
             sess = session.Session(auth=auth)
         self.nova = novaclient.Client(version, session=sess, region_name=region_name)
@@ -52,7 +56,7 @@ class Kopenstack(object):
         self.cinder = cinderclient.Client('3', session=sess, region_name=region_name)
         self.neutron = neutronclient(session=sess, region_name=region_name)
         os_options = {'user_domain_name': domain, 'project_domain_name': domain, 'project_name': project}
-        self.swift = swiftclient.Connection(session=sess, os_options=os_options)
+        self.swift = swiftclient.Connection(session=sess, os_options=os_options, cacert=cacert, insecure=insecure)
         self.conn = self.nova
         self.project = project
         self.external_network = external_network
