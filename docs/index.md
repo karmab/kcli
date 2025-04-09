@@ -501,6 +501,7 @@ myopenstack:
 The following parameters are specific to openstack:
 
 - `envrc` (Optional) Path to an envrc file
+- `auth_type` (Optional). Indicates the type of authentication to use. Will auto detect based on parameters when empty. Values: `token`, `password`, `v3applicationcredential`.
 - `auth_url`
 - `project`
 - `domain` Defaults to *Default*
