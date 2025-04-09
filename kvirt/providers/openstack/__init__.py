@@ -41,7 +41,10 @@ class Kopenstack(object):
             self.conn = None
             return
         if ca_file is not None:
-            sess = session.Session(auth=auth, verify=os.path.expanduser(ca_file))
+            if ca_file in ('False', 'false'):
+                sess = session.Session(auth=auth, verify=False)
+            else:
+                sess = session.Session(auth=auth, verify=os.path.expanduser(ca_file))
         else:
             sess = session.Session(auth=auth)
         self.nova = novaclient.Client(version, session=sess, region_name=region_name)
