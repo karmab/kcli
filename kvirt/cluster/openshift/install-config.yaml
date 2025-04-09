@@ -11,11 +11,7 @@
 {% set machine_cidr_ipv4 = [machine_cidr|default("10.0.0.0/16")] %}
 {% set machine_cidr_ipv6 = ["fc00::/48"] %}
 {% set machine_cidrs = machine_cidr_ipv4 + machine_cidr_ipv6 if dualstack|default(False) else machine_cidr_ipv6 if ipv6 else machine_cidr_ipv4 %}
-{% if sno_disk == None %}
-{% set sno_disk = '/dev/sda' %}
-{% elif '/dev/' not in sno_disk %}
-{% set sno_disk = '/dev/' + sno_disk|diskpath %}
-{% endif %}
+{% set sno_disk = {{ sno_disk|default('sda', true)|diskpath }} %}
 apiVersion: v1
 {% if fips %}
 fips: True

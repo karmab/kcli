@@ -15,7 +15,7 @@ def basename(path):
 
 
 def diskpath(path):
-    return os.path.relpath(path, "/dev")
+    return path if path.startswith('/dev') else f"/dev/{path}"
 
 
 def dirname(path):
