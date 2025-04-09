@@ -63,6 +63,8 @@ class Kopenstack(object):
         self.region_name = region_name
         self.glance_disk = glance_disk
 
+        self.ca_file = ca_file
+
 # should cleanly close your connection, if needed
     def close(self):
         print("not implemented")
@@ -1192,7 +1194,7 @@ class Kopenstack(object):
 
     def public_bucketfile_url(self, bucket, path):
         swift_url = self.swift.http_connection()[0].geturl()
-        return f"{swift_url}/{bucket}/{path}"
+        return (f"{swift_url}/{bucket}/{path}", self.ca_file)
 
     def reserve_dns(self, name, nets=[], domain=None, ip=None, alias=[], force=False, primary=False):
         print("not implemented")

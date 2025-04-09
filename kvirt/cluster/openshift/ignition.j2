@@ -9,6 +9,15 @@
 {% endif %}
 {
   "ignition": {
+{% if ca_file is defined and ca_file not in ('false', 'False') %}
+    "security": {
+      "tls": {
+        "certificateAuthorities": [{
+          "source": "data:text/plain;charset=utf-8;base64,{{ ca_file | real_path | read_file | base64 }}"
+        }]
+      }
+    },
+{% endif %}
     "config": {
       "merge": [
         {
