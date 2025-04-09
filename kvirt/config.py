@@ -272,6 +272,9 @@ class Kconfig(Kbaseconfig):
                 glance_disk = options.get('glance_disk', False)
                 auth_token = options.get('token') or os.environ.get("OS_TOKEN") or 'password'
                 default_auth_type = 'token' if auth_token is not None else 'password'
+                application_credential_id = None
+                application_credential_secret = None
+
                 auth_type = options.get('auth_type') or os.environ.get("OS_AUTH_TYPE") or default_auth_type
                 if auth_type == 'password' and password is None:
                     error("Missing password in the configuration. Leaving")
