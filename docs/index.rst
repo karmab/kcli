@@ -1,71 +1,87 @@
-|CI| |Pypi| |Copr| |Documentation Status|
-
 About
 =====
 
 This tool is meant to provide a unified user experience when interacting with the following virtualization providers:
 
--  Libvirt/Vsphere/Kubevirt/Aws/Azure/Gcp/Hcloud/Ibmcloud/oVirt/Openstack/Packet/Proxmox
+- Libvirt
+- Vsphere
+- Kubevirt
+- Aws
+- Azure
+- Gcp
+- Hcloud
+- Ibmcloud
+- oVirt
+- Openstack
+- Packet
+- Proxmox
 
 Beyond handling virtual machines, Kubernetes clusters can also be managed for the following types:
 
--  Kubeadm/Openshift/OKD/Hypershift/Microshift/K3s
+- Kubeadm
+- Openshift
+- OKD
+- Hypershift
+- Microshift
+- K3S
+- RKE2
+- AKS
+- EKS
+- GKE
 
-Installation
-============
-
-Libvirt Hypervisor Requisites
------------------------------
+Requisites
+==========
 
 If you don’t have Libvirt installed on the target hypervisor, you can use the following command:
 
-.. code:: bash
+::
 
    sudo yum -y install libvirt libvirt-daemon-driver-qemu qemu-kvm tar
    sudo usermod -aG qemu,libvirt $(id -un)
    sudo newgrp libvirt
    sudo systemctl enable --now libvirtd
 
-Supported installation methods
-------------------------------
+Installation
+============
 
-The following methods are supported for installation and are all updated automatically when new pushes to kcli are made.
-
--  rpm package
--  deb package
--  container image
--  pypi package
-
-Installing
-----------
+Automated install
+-----------------
 
 A generic script is provided for for installation:
 
-.. code:: shell
+::
 
    curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | sudo bash
 
 It does the following:
 
--  make a guess on which method to use for deployment based on your OS
--  If OS is rhel or debian based, set repo source and install from package
--  Pull and image and set a proper alias if container method is selected
--  set bash completion
+- make a guess on which method to use for deployment based on your OS
+- If OS is rhel or debian based, set repo source and install from package
+- Pull and image and set a proper alias if container method is selected
+- set bash completion
 
 Regarding of the method, you get latest version.
 
-Package install method
-----------------------
+The following methods are supported for installation and are all updated automatically when new pushes to kcli are made.
+
+- rpm package
+- deb package
+- container image
+- pypi package
+
+RPM/Deb install
+---------------
 
 For rhel based OS (*fedora*/*rhel or centos*), you can run this:
 
-.. code:: bash
+::
 
-   sudo dnf -y copr enable karmab/kcli ; sudo dnf -y install kcli
+   sudo dnf -y copr enable karmab/kcli
+   sudo dnf -y install kcli
 
 If using a debian based distribution, use this instead:
 
-.. code:: bash
+::
 
    curl -1sLf https://dl.cloudsmith.io/public/karmab/kcli/cfg/setup/bash.deb.sh | sudo -E bash
    sudo apt-get update
@@ -75,58 +91,55 @@ The package based version doesn’t bundle the dependencies for anything else th
 
 On Fedora, an additional metapackage named kcli-all (python3-kcli-all in the debian case) that contains dependencies for all the providers.
 
-Container install method
-------------------------
+Container install
+-----------------
 
 In the commands below, feel free to use docker instead
 
 Pull the latest image:
 
-.. code:: shell
+::
 
    podman pull quay.io/karmab/kcli
 
 To run it:
 
-.. code:: shell
+::
 
    podman run --rm karmab/kcli
 
-There are several recommended flags:
+There are several flags you can use for tweaking:
 
--  ``--net host`` for kcli ssh
--  ``-v /var/run/libvirt:/var/run/libvirt -v /var/lib/libvirt/images:/var/lib/libvirt/images`` if running against a local client.
--  ``-v  ~/.kcli:/root/.kcli`` to use your kcli configuration (and profiles) stored locally.
--  ``-v ~/.ssh:/root/.ssh`` to share your ssh keys. Alternatively, you can store your public and private key in the ~/.kcli directory.
--  ``--security-opt label=disable`` if running with selinux.
--  ``-v $PWD:/workdir`` to access plans below your current directory.
--  ``-v $HOME:/root`` to share your entire home directory, useful if you want to share secret files, ``~/register.sh`` for instance).
--  ``-e HTTP_PROXY=your_proxy -e HTTPS_PROXY=your_proxy``
--  ``-v ~/.kube:/root/.kube`` to share your kubeconfig.
--  ``-v /etc:/etcdir`` to share your /etc directory, which is needed for ``reservehost``.
+- ``--net host`` for kcli ssh
+- ``-v /var/run/libvirt:/var/run/libvirt -v /var/lib/libvirt/images:/var/lib/libvirt/images`` if running against a local client.
+- ``-v  ~/.kcli:/root/.kcli`` to use your kcli configuration (and profiles) stored locally.
+- ``-v ~/.ssh:/root/.ssh`` to share your ssh keys. Alternatively, you can store your public and private key in the ~/.kcli directory.
+- ``--security-opt label=disable`` if running with selinux.
+- ``-v $PWD:/workdir`` to access plans below your current directory.
+- ``-v $HOME:/root`` to share your entire home directory, useful if you want to share secret files, ``~/register.sh`` for instance).
+- ``-e HTTP_PROXY=your_proxy -e HTTPS_PROXY=your_proxy``
+- ``-v ~/.kube:/root/.kube`` to share your kubeconfig.
+- ``-v /etc:/etcdir`` to share your /etc directory, which is needed for ``reservehost``.
 
 For accessing kweb, change the entrypoint and map port 9000 with ``-p 9000:9000 --entrypoint=/usr/bin/kweb``.
 
 Here are typical aliases ready for use:
 
-.. code:: shell
+::
 
    alias kcli='podman run --net host -it --rm --security-opt label=disable -v $HOME/.ssh:/root/.ssh -v $HOME/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir quay.io/karmab/kcli'
    alias kclishell='podman run --net host -it --rm --security-opt label=disable -v $HOME/.ssh:/root/.ssh -v $HOME/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir --entrypoint=/bin/bash quay.io/karmab/kcli'
    alias kweb='podman run -p 9000:9000 --net host -it --rm --security-opt label=disable -v $HOME/.ssh:/root/.ssh -v $HOME/.kcli:/root/.kcli -v /var/lib/libvirt/images:/var/lib/libvirt/images -v /var/run/libvirt:/var/run/libvirt -v $PWD:/workdir --entrypoint=/usr/bin/kweb quay.io/karmab/kcli'
 
--  The container image contains dependencies for all the providers.
--  The console/serial console functionality works better with the package version. In container mode, the graphical console/serial console only outputs the command to launch manually to get to the console.
+- The container image contains dependencies for all the providers.
+- The console/serial console functionality works better with the package version. In container mode, the graphical console/serial console only outputs the command to launch manually to get to the console.
 
 Dev installation
 ----------------
 
-Generic platform
-~~~~~~~~~~~~~~~~
-
 If only Libvirt provider is to be used:
 
-.. code:: shell
+::
 
    pip3 install kcli
 
@@ -136,53 +149,37 @@ Or, for installing dependencies for all providers:
 
    pip3 install -e git+https://github.com/karmab/kcli.git#egg=kcli[all]
 
-Updating
-========
-
-You can update kcli using the same mechanism used for installation
-
-Package
--------
-
-For rhel based OS (*fedora*/*rhel or centos*), you can run this:
-
-.. code:: bash
-
-   sudo dnf -y install kcli
-
-If using a debian based distribution:
-
-.. code:: bash
-
-   sudo apt-get update
-   sudo apt-get -y install python3-kcli
-
-Container
----------
-
-.. code:: shell
-
-   podman pull quay.io/karmab/kcli
-
-.. _generic-platform-1:
-
-Generic platform
-----------------
-
-.. code:: shell
-
-   pip3 install -U kcli
-
 Configuration
 =============
 
+Libvirt additional configuration
+--------------------------------
+
 If you plan to use local Libvirt, *no additional configuration* is needed.
+
+On most distributions, default network and storage pool for Libvirt are already defined.
+
+If needed, you can create this default storage pool with:
+
+::
+
+   sudo kcli create pool -p /var/lib/libvirt/images default
+   sudo setfacl -m u:$(id -un):rwx /var/lib/libvirt/images
+
+And default network:
+
+::
+
+   kcli create network  -c 192.168.122.0/24 default
+
+Configuration file
+------------------
 
 Kcli configuration is done in ~/.kcli directory, that you need to manually create. It will contain:
 
--  config.yml generic configuration where you declare clients.
--  profiles.yml stores your profiles where you combine things like memory, numcpus and all supported parameters into named profiles to create vms from.
--  id_rsa/id_rsa.pub/id_dsa/id_dsa.pub/id_25519/id_25519.pub You can store your default public and private keys in *.kcli* directory which will be the first place to look for them when connecting to a remote kvm hypervisor, virtual machine or when injecting your public key.
+- config.yml generic configuration where you declare clients.
+- profiles.yml stores your profiles where you combine things like memory, numcpus and all supported parameters into named profiles to create vms from.
+- Optionally a valid ssh key pair. You can store your default public and private keys in *.kcli* directory which will be the first place to look for them when connecting to a remote kvm hypervisor, virtual machine or when injecting your public key.
 
 You can generate a default config file (with all parameters commented) pointing to your local host with:
 
@@ -196,24 +193,7 @@ Or indicate a different target host:
 
    kcli create host kvm -H 192.168.0.6 host1
 
-On most distributions, default network and storage pool for Libvirt are already defined.
-
-If needed, you can create this default storage pool with:
-
-.. code:: shell
-
-   sudo kcli create pool -p /var/lib/libvirt/images default
-   sudo setfacl -m u:$(id -un):rwx /var/lib/libvirt/images
-
-And default network:
-
-.. code:: shell
-
-   kcli create network  -c 192.168.122.0/24 default
-
-When using several hypervisors, you can use the command *kcli create host* or just edit your configuration file.
-
-For instance, here’s a sample ``~/.kcli/config.yml`` with two hypervisors:
+Here’s a sample ``~/.kcli/config.yml`` with two hypervisors:
 
 .. code:: yaml
 
@@ -240,67 +220,11 @@ Replace with your own client in default section and indicate the relevant parame
 
 Most of the parameters are actually optional, and can be overridden in the default, client or profile section (or in a plan file). You can find a fully detailed config.yml sample `here <https://github.com/karmab/kcli/tree/main/samples/config.yml>`__
 
-Storing credentials securely
-----------------------------
-
-You can hide your secrets in *~/.kcli/config.yml* by replacing any value by *?secret*. You can then place the real value in *~/.kcli/secrets.yml* by using the same yaml hierarchy.
-
-For instance, if you have the following in your config file:
-
-::
-
-   xxx:
-    password: ?secret
-
-You would then put the real password in your secrets file this way:
-
-::
-
-   xxx:
-    password: mypassword
-
-Auto Completion
-===============
-
-You can enable autocompletion if running kcli from package or pip. It’s enabled by default when running kclishell container alias
-
-Bash/Zsh
---------
-
-Add the following line in one of your shell files (.bashrc, .zshrc, …)
-
-::
-
-   eval "$(register-python-argcomplete kcli)"
-
-Fish
-----
-
-Add the following snippet in *.config/fish/config.fish*
-
-::
-
-   function __fish_kcli_complete
-       set -x _ARGCOMPLETE 1
-       set -x _ARGCOMPLETE_IFS \n
-       set -x _ARGCOMPLETE_SUPPRESS_SPACE 1
-       set -x _ARGCOMPLETE_SHELL fish
-       set -x COMP_LINE (commandline -p)
-       set -x COMP_POINT (string length (commandline -cp))
-       set -x COMP_TYPE
-       if set -q _ARC_DEBUG
-           kcli 8>&1 9>&2 1>/dev/null 2>&1
-       else
-           kcli 8>&1 9>&2 1>&9 2>&1
-       end
-   end
-   complete -c kcli -f -a '(__fish_kcli_complete)'
-
 Provider specifics
-==================
+------------------
 
-Aws
----
+Aws provider
+~~~~~~~~~~~~
 
 ::
 
@@ -313,12 +237,12 @@ Aws
 
 The following parameters are specific to aws:
 
--  ``access_key_id``
--  ``access_key_secret``
--  ``region``
--  ``zone`` (Optional)
--  ``keypair``
--  ``session_token``
+- ``access_key_id``
+- ``access_key_secret``
+- ``region``
+- ``zone`` (Optional)
+- ``keypair``
+- ``session_token``
 
 To use this provider with kcli rpm, you’ll need to install
 
@@ -328,8 +252,8 @@ To use this provider with kcli rpm, you’ll need to install
 
 see `AWS EKS workflow <https://github.com/karmab/kcli/blob/main/docs/EKS-kcli.md>`__ for an example process
 
-Azure
------
+Azure provider
+~~~~~~~~~~~~~~
 
 ::
 
@@ -343,23 +267,23 @@ Azure
 
 The following parameters are specific to azure:
 
--  ``subscription_id``
--  ``app_id``
--  ``tenant_id``
--  ``secret``
--  ``location``
--  ``admin_user``. Defaults to superadmin
--  ``admin_password``. If specified, it need to be compliant with azure policy. When missing, a random one is generated (and printed) for each vm
--  ``mail``. Optional, used only to access serial console of vms.
--  ``storage_account``. Optional, used for bucket related operations.
+- ``subscription_id``
+- ``app_id``
+- ``tenant_id``
+- ``secret``
+- ``location``
+- ``admin_user``. Defaults to superadmin
+- ``admin_password``. If specified, it need to be compliant with azure policy. When missing, a random one is generated (and printed) for each vm
+- ``mail``. Optional, used only to access serial console of vms.
+- ``storage_account``. Optional, used for bucket related operations.
 
 The policy for password states that a valid password needs to satisfy at least 3 of the following requirements:
 
--  contain an uppercase character.
--  contain a lowercase character.
--  contain a numeric digit.
--  contain a special character.
--  not contain control characters.
+- contain an uppercase character.
+- contain a lowercase character.
+- contain a numeric digit.
+- contain a special character.
+- not contain control characters.
 
 You can create a service principal using Azure UI and add Contributor (and Storage Blob Data Contributor) role from there, or using az command like this:
 
@@ -374,8 +298,8 @@ To use this provider, you’ll need to install (from pip):
 
    pip3 install azure-mgmt-compute azure-mgmt-network azure-mgmt-resource azure-mgmt-core azure-identity
 
-Gcp
----
+Gcp provider
+~~~~~~~~~~~~
 
 ::
 
@@ -387,26 +311,26 @@ Gcp
 
 The following parameters are specific to Gcp:
 
--  ``credentials`` (pointing to a json service account file). if not specified, the environment variable *GOOGLE_APPLICATION_CREDENTIALS* will be used
--  ``project``
--  ``region``
--  ``zone`` (Optional)
+- ``credentials`` (pointing to a json service account file). if not specified, the environment variable *GOOGLE_APPLICATION_CREDENTIALS* will be used
+- ``project``
+- ``region``
+- ``zone`` (Optional)
 
 also note that Gcp provider supports creation of dns records for an existing domain and that your home public key will be uploaded if needed
 
 To gather your service account file:
 
--  Select the “IAM” → “Service accounts” section within the Google Cloud Platform console.
--  Select “Create Service account”.
--  Select “Project” → “Editor” as service account Role.
--  Select “Furnish a new private key”.
--  Select “Save”.
+- Select the “IAM” → “Service accounts” section within the Google Cloud Platform console.
+- Select “Create Service account”.
+- Select “Project” → “Editor” as service account Role.
+- Select “Furnish a new private key”.
+- Select “Save”.
 
 To Create a dns zone:
 
--  Select the “Networking” → “Network Services” → “Cloud DNS”.
--  Select “Create Zone”.
--  Put the same name as your domain, but with ‘-’ instead.
+- Select the “Networking” → “Network Services” → “Cloud DNS”.
+- Select “Create Zone”.
+- Put the same name as your domain, but with ‘-’ instead.
 
 If accessing behind a proxy, be sure to set *HTTPS_PROXY* environment variable to ``http://your_proxy:your_port``
 
@@ -418,8 +342,8 @@ To use this provider, you’ll need to install (from pip):
 
 If you want to deploy GKE clusters, you will also need ``google-cloud-container`` library
 
-Hetzner Cloud
--------------
+Hetzner Cloud provider
+~~~~~~~~~~~~~~~~~~~~~~
 
 ::
 
@@ -430,8 +354,8 @@ Hetzner Cloud
 
 The following parameters are specific to hetzner cloud:
 
--  apikey.
--  location
+- apikey.
+- location
 
 To use this provider with kcli rpm, you’ll need to install the following packets (from pip):
 
@@ -439,8 +363,8 @@ To use this provider with kcli rpm, you’ll need to install the following packe
 
    pip3 install hcloud
 
-IBM Cloud
----------
+IBM Cloud provider
+~~~~~~~~~~~~~~~~~~
 
 ::
 
@@ -453,24 +377,22 @@ IBM Cloud
 
 The following parameters are specific to ibm cloud:
 
--  iam_api_key.
--  region
--  zone
--  vpc. Default vpc
--  cos_api_key. Optional Cloud object storage apikey
--  cos_resource_instance_id. Optional Cloud object storage resource_instance_id (something like “crn:v1:bluemix:public:cloud-object-storage:global:a/yyy:xxxx::”). Alternatively you can provide the resource name
--  cos_resource_instance_id. Optional Cis resource_instance_id used for DNS. Alternatively, you can provide the resource name
+- iam_api_key.
+- region
+- zone
+- vpc. Default vpc
+- cos_api_key. Optional Cloud object storage apikey
+- cos_resource_instance_id. Optional Cloud object storage resource_instance_id (something like “crn:v1:bluemix:public:cloud-object-storage:global:a/yyy:xxxx::”). Alternatively you can provide the resource name
+- cos_resource_instance_id. Optional Cis resource_instance_id used for DNS. Alternatively, you can provide the resource name
 
 To use this provider with kcli rpm, you’ll need to install the following packets (from pip):
 
 ::
 
-   pip3 install ibm_vpc ibm-cos-sdk ibm-platform-services ibm-cloud-networking-services
-   # optionally
-   pip install cos-aspera
+   pip3 install ibm_vpc ibm-cos-sdk ibm-platform-services ibm-cloud-networking-services cos-aspera
 
-KVM/Libvirt
------------
+KVM/Libvirt provider
+~~~~~~~~~~~~~~~~~~~~
 
 ::
 
@@ -490,12 +412,12 @@ You will also likely want to indicate default Libvirt pool to use (although, as 
 
 The following parameters are specific to Libvirt:
 
--  ``url`` custom qemu uri.
--  ``session`` Defaults to ``False`` If you want to use qemu:///session (locally or remotely). Not recommended as it complicates access to the vm and is said to have lower performance.
--  ``legacy`` Defaults to ``False``. Add extra socket information to libvirt uri as needed on some old hypervisors.
+- ``url`` custom qemu uri.
+- ``session`` Defaults to ``False`` If you want to use qemu:///session (locally or remotely). Not recommended as it complicates access to the vm and is said to have lower performance.
+- ``legacy`` Defaults to ``False``. Add extra socket information to libvirt uri as needed on some old hypervisors.
 
-Kubevirt
---------
+Kubevirt provider
+~~~~~~~~~~~~~~~~~
 
 For Kubevirt, you will need to define one (or several) sections with the type Kubevirt in your *~/.kcli/config.yml*
 
@@ -507,17 +429,17 @@ For Kubevirt, you will need to define one (or several) sections with the type Ku
 
 You can use additional parameters for the Kubevirt section:
 
--  ``kubeconfig`` kubeconfig file path
--  ``context`` the k8s context to use.
--  ``pool`` your default storageclass. can also be set as blank, if no storage class should try to bind pvcs.
--  ``namespace`` target namespace.
--  ``tags`` additional list of tags in a key=value format to put to all created vms in their *nodeSelector*. Can be further indicated at profile or plan level in which case values are combined. This provides an easy way to force vms to run on specific nodes, by matching labels.
--  ``access_mode`` Way to access vms other ssh. Defaults to NodePort,in which case a svc with a nodeport pointing to the ssh port of the vm will be created. Otherpossible values are LoadBalancer to create a svc of type loadbalancer to point to the vm or External to connect using the sdn ip of the vm. If tunnel options are set, they take precedence
--  ``volume_mode`` Volume Mode. Defaults to None
--  ``volume_access`` Volume access mode. Defaults to None
--  ``disk_hotplug`` Whether to allow to hotplug (and unplug) disks. Defaults to false. Note it also requires to enable The HotplugVolumes featureGate within Kubevirt
--  ``embed_userdata`` Whether to embed userdata directly in the vm spec. Defaults to false
--  ``registry`` Specific registry where to gather karmab/curl image used when pool/sc has a volume binding mode of WaitForFirstConsumer. Defaults to quay.io
+- ``kubeconfig`` kubeconfig file path
+- ``context`` the k8s context to use.
+- ``pool`` your default storageclass. can also be set as blank, if no storage class should try to bind pvcs.
+- ``namespace`` target namespace.
+- ``tags`` additional list of tags in a key=value format to put to all created vms in their *nodeSelector*. Can be further indicated at profile or plan level in which case values are combined. This provides an easy way to force vms to run on specific nodes, by matching labels.
+- ``access_mode`` Way to access vms other ssh. Defaults to NodePort,in which case a svc with a nodeport pointing to the ssh port of the vm will be created. Otherpossible values are LoadBalancer to create a svc of type loadbalancer to point to the vm or External to connect using the sdn ip of the vm. If tunnel options are set, they take precedence
+- ``volume_mode`` Volume Mode. Defaults to None
+- ``volume_access`` Volume access mode. Defaults to None
+- ``disk_hotplug`` Whether to allow to hotplug (and unplug) disks. Defaults to false. Note it also requires to enable The HotplugVolumes featureGate within Kubevirt
+- ``embed_userdata`` Whether to embed userdata directly in the vm spec. Defaults to false
+- ``registry`` Specific registry where to gather karmab/curl image used when pool/sc has a volume binding mode of WaitForFirstConsumer. Defaults to quay.io
 
 You can use the following indications to gather context, create a suitable service account and retrieve its associated token:
 
@@ -577,8 +499,8 @@ On OpenShift, you can simply use
 
 *kubectl* (or *oc*) is the only requirement
 
-Openstack
----------
+Openstack provider
+~~~~~~~~~~~~~~~~~~
 
 ::
 
@@ -593,15 +515,15 @@ Openstack
 
 The following parameters are specific to openstack:
 
--  ``envrc`` (Optional) Path to an envrc file
--  ``auth_url``
--  ``project``
--  ``domain`` Defaults to *Default*
--  ``ca_file`` (Optional)
--  ``external_network`` (Optional). Indicates which network use for floating ips (useful when you have several ones)
--  ``region_name`` (Optional). Used in OVH Openstack
--  ``glance_disk`` (Optional). Prevents creating a disk from glance image. Defaults to false
--  ``token`` (Optional). Keystone Token (That can be retrieved with ``openstack token issue -c id -f value``)
+- ``envrc`` (Optional) Path to an envrc file
+- ``auth_url``
+- ``project``
+- ``domain`` Defaults to *Default*
+- ``ca_file`` (Optional)
+- ``external_network`` (Optional). Indicates which network use for floating ips (useful when you have several ones)
+- ``region_name`` (Optional). Used in OVH Openstack
+- ``glance_disk`` (Optional). Prevents creating a disk from glance image. Defaults to false
+- ``token`` (Optional). Keystone Token (That can be retrieved with ``openstack token issue -c id -f value``)
 
 To use this provider with kcli rpm, you’ll need to install the following rpms
 
@@ -610,8 +532,8 @@ To use this provider with kcli rpm, you’ll need to install the following rpms
    grep -q 'Red Hat' /etc/redhat-release && subscription-manager repos --enable openstack-16-tools-for-rhel-8-x86_64-rpms
    dnf -y install python3-keystoneclient python3-glanceclient python3-cinderclient python3-neutronclient python3-novaclient python3-swiftclient
 
-oVirt
------
+oVirt provider
+~~~~~~~~~~~~~~
 
 ::
 
@@ -628,13 +550,13 @@ oVirt
 
 The following parameters are specific to oVirt:
 
--  ``org`` Organization
--  ``ca_file`` Points to a local path with the cert of the oVirt engine host. It can be retrieved with ``curl "http://$HOST/ovirt-engine/services/pki-resource?resource=ca-certificate&format=X509-PEM-CA" > ~/.kcli/ovirt.pem``
--  ``cluster`` Defaults to Default
--  ``datacenter`` Defaults to Default
--  ``filtervms`` Defaults to True. Only list vms created by kcli.
--  ``filteruser`` Defaults to False. Only list vms created by own user
--  ``filtertag`` Defaults to None. Only list vms created by kcli with the corresponding filter=filtertag in their description. Useful for environments when you share the same user
+- ``org`` Organization
+- ``ca_file`` Points to a local path with the cert of the oVirt engine host. It can be retrieved with ``curl "http://$HOST/ovirt-engine/services/pki-resource?resource=ca-certificate&format=X509-PEM-CA" > ~/.kcli/ovirt.pem``
+- ``cluster`` Defaults to Default
+- ``datacenter`` Defaults to Default
+- ``filtervms`` Defaults to True. Only list vms created by kcli.
+- ``filteruser`` Defaults to False. Only list vms created by own user
+- ``filtertag`` Defaults to None. Only list vms created by kcli with the corresponding filter=filtertag in their description. Useful for environments when you share the same user
 
 Note that pool in oVirt context refers to storage domain.
 
@@ -646,7 +568,7 @@ To use this provider with kcli rpm, you’ll need to install
    dnf -y install python3-ovirt-engine-sdk4
 
 Deploying oVirt dependencies with pip
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You will need to get *ovirt-engine-sdk-python* . On fedora, for instance, you would run:
 
@@ -665,8 +587,8 @@ If you install manually from pip, you might need to install pycurl manually with
 
    pip install --no-cache-dir --global-option=build_ext --global-option="-L/usr/local/opt/openssl/lib" --global-option="-I/usr/local/opt/openssl/include"  pycurl
 
-Packet
-------
+Packet provider
+~~~~~~~~~~~~~~~
 
 ::
 
@@ -679,11 +601,11 @@ Packet
 
 The following parameters are specific to packet:
 
--  auth_token.
--  project
--  facility. Can be omitted in which case you will have to specify on which facility to deploy vms.
--  tunnelhost. Optional. When creating vms using ignition, the generated ignition file will be copied to the tunnelhost so it can be served (typically via web)
--  tunneldir. Where to copy the ignition files when using a tunnelhost. Defaults to */var/www/html*
+- auth_token.
+- project
+- facility. Can be omitted in which case you will have to specify on which facility to deploy vms.
+- tunnelhost. Optional. When creating vms using ignition, the generated ignition file will be copied to the tunnelhost so it can be served (typically via web)
+- tunneldir. Where to copy the ignition files when using a tunnelhost. Defaults to */var/www/html*
 
 To use this provider with kcli rpm, you’ll need to install packet-python (from pip):
 
@@ -691,8 +613,8 @@ To use this provider with kcli rpm, you’ll need to install packet-python (from
 
    pip3 install packet-python
 
-Proxmox
--------
+Proxmox provider
+~~~~~~~~~~~~~~~~
 
 ::
 
@@ -705,11 +627,11 @@ Proxmox
 
 The following parameters are specific to proxmox:
 
--  ``auth_token_name`` and ``auth_token_secret`` (Optional). API Token used for authentification instead of password.
--  ``filtertag`` (Optional). Only manage VMs created by kcli with the corresponding tag.
--  ``node`` (Optional). Create VMs on specified PVE node in case of Proxmox cluster.
--  ``imagepool`` (Optional). Storage pool for images and ISOs.
--  ``verify_ssl`` (Optional). Enable/Disable SSL verification. Default to True.
+- ``auth_token_name`` and ``auth_token_secret`` (Optional). API Token used for authentification instead of password.
+- ``filtertag`` (Optional). Only manage VMs created by kcli with the corresponding tag.
+- ``node`` (Optional). Create VMs on specified PVE node in case of Proxmox cluster.
+- ``imagepool`` (Optional). Storage pool for images and ISOs.
+- ``verify_ssl`` (Optional). Enable/Disable SSL verification. Default to True.
 
 Note that uploading images and cloud-init/ignition files requires ssh access to the Proxmox host. It’s highly recommended to configure passwordless ssh authentification.
 
@@ -719,8 +641,8 @@ To use this provider with kcli rpm, you’ll need to install the following rpms
 
    pip3 install proxmoxer
 
-Vsphere
--------
+Vsphere provider
+~~~~~~~~~~~~~~~~
 
 ::
 
@@ -735,18 +657,18 @@ Vsphere
 
 The following parameters are specific to Vsphere:
 
--  ``cluster``
--  ``datacenter`` Defaults to Default
--  ``filtervms`` Defaults to False. Only list vms created by kcli. Useful for environments when you are superadmin and have a ton of vms!!!
--  ``category`` Defaults to kcli. Category where to create tags in order to apply them to vms. If tags are requested for a given vm, they will be created on the fly along with the category, if missing
--  ``basefolder`` Optional base folder where to create all vms
--  ``isofolder`` Optional folder where to keep ISOs
--  ``dvs`` Whether to gather DVS networks. Enabled by default, but can be set to False to speed up operations if you don’t have dvs networks
--  ``import_network`` Defaults to ‘VM Network’. Network to use as part of the template created when downloading image
--  ``timeout`` Defaults to 3600. Custom connectionPooltimeout
--  ``force_pool`` Defaults to False. Whether to check source pool of image and relocate when it doesn’t match specified pool
--  ``restricted`` Defaults to False. Prevents create folder operations
--  ``serial`` Defaults to False. Enables serial console for each vm using an aleatory port on the corresponding host (This requires to add the firewall rule set named *VM serial port connected over network*)
+- ``cluster``
+- ``datacenter`` Defaults to Default
+- ``filtervms`` Defaults to False. Only list vms created by kcli. Useful for environments when you are superadmin and have a ton of vms!!!
+- ``category`` Defaults to kcli. Category where to create tags in order to apply them to vms. If tags are requested for a given vm, they will be created on the fly along with the category, if missing
+- ``basefolder`` Optional base folder where to create all vms
+- ``isofolder`` Optional folder where to keep ISOs
+- ``dvs`` Whether to gather DVS networks. Enabled by default, but can be set to False to speed up operations if you don’t have dvs networks
+- ``import_network`` Defaults to ‘VM Network’. Network to use as part of the template created when downloading image
+- ``timeout`` Defaults to 3600. Custom connectionPooltimeout
+- ``force_pool`` Defaults to False. Whether to check source pool of image and relocate when it doesn’t match specified pool
+- ``restricted`` Defaults to False. Prevents create folder operations
+- ``serial`` Defaults to False. Enables serial console for each vm using an aleatory port on the corresponding host (This requires to add the firewall rule set named *VM serial port connected over network*)
 
 Note that pool in Vsphere context refers to datastore.
 
@@ -756,8 +678,8 @@ To use this provider with kcli rpm, you’ll need to install
 
    dnf -y install python3-pyvmomi python3-cryptography
 
-Using an standalone ESX
-~~~~~~~~~~~~~~~~~~~~~~~
+Using a standalone ESX
+^^^^^^^^^^^^^^^^^^^^^^
 
 For an esx, a couple of adjustments are needed. The cluster should point to the hostname of the esx and the keys datacenter, pools and user have fixed values.
 
@@ -773,27 +695,27 @@ For an esx, a couple of adjustments are needed. The cluster should point to the 
      cluster: superesx
 
 Using hostgroups and vm-host rules
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The requisite is to create the hostgroup by yourself so that you can associate your hosts to it.
 
 Then, when creating a vm, one can provide the following extra parameters:
 
--  vmgroup: if it doesn’t exist, the group will be created and in any case, the vm will get added to it.
+- vmgroup: if it doesn’t exist, the group will be created and in any case, the vm will get added to it.
 
--  hostgroup and hostrule: if both are provided and the hostrule doesnt exist, it will be created as affinity rule with the vmgroup and the hostgroup to it.
+- hostgroup and hostrule: if both are provided and the hostrule doesnt exist, it will be created as affinity rule with the vmgroup and the hostgroup to it.
 
 Note that when using this within a plan (or a cluster), it’s enough to provide hostgroup and hostrule for the first vm of the plan so that the hostrule gets created ( though a kcli vmrule for instance), and vmgroup for all of them, so that the group gets created with the first vm, and then the remaining vm only get added.
 
 Also note that vmgroups and hostrules dont get deleted along with vms (to ease recreation of the same assets).
 
 Using vm anti affinity rules
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Within a plan, you can set the keyword ``antipeers`` to a list of vms which should never land on the same ESX host. When the last vm from this list gets created, the corresponding anti affinity rule will be created (and Vsphere will relocate the other vms accordingly)
 
 Web
----
+~~~
 
 This provider allows you to interact with a kweb instance using kcli commands
 
@@ -806,16 +728,63 @@ This provider allows you to interact with a kweb instance using kcli commands
 
 The following parameters are specific to the web provider:
 
--  ``localkube``. Defaults to true. Use REST calls when handling kubes
+- ``localkube``. Defaults to true. Use REST calls when handling kubes
+
+Storing credentials securely
+----------------------------
+
+You can hide your secrets in *~/.kcli/config.yml* by replacing any value by *?secret*. You can then place the real value in *~/.kcli/secrets.yml* by using the same yaml hierarchy.
+
+For instance, if you have the following in your config file:
+
+::
+
+   xxx:
+    password: ?secret
+
+You would then put the real password in your secrets file this way:
+
+::
+
+   xxx:
+    password: mypassword
+
+Auto Completion
+---------------
+
+You can enable autocompletion if running kcli from package or pip.
+
+Add the following line in one of your shell files (.bashrc, .zshrc, …)
+
+::
+
+   eval "$(register-python-argcomplete kcli)"
+
+With fish, add the following snippet in *.config/fish/config.fish*
+
+::
+
+   function __fish_kcli_complete
+       set -x _ARGCOMPLETE 1
+       set -x _ARGCOMPLETE_IFS \n
+       set -x _ARGCOMPLETE_SUPPRESS_SPACE 1
+       set -x _ARGCOMPLETE_SHELL fish
+       set -x COMP_LINE (commandline -p)
+       set -x COMP_POINT (string length (commandline -cp))
+       set -x COMP_TYPE
+       if set -q _ARC_DEBUG
+           kcli 8>&1 9>&2 1>/dev/null 2>&1
+       else
+           kcli 8>&1 9>&2 1>&9 2>&1
+       end
+   end
+   complete -c kcli -f -a '(__fish_kcli_complete)'
 
 Usage
 =====
 
-Basic workflow
---------------
-
-Your first vm
-~~~~~~~~~~~~~
+Creating a vm
+-------------
 
 Cloud Images from common distros aim to be the primary source for your vms.
 
@@ -847,8 +816,8 @@ To guess it, kcli checks the image name. So for example, your centos image must 
 
 For out of band access to the vm, ``kcli console`` or ``kcli console --serial`` can be used
 
-Customizing the vm
-~~~~~~~~~~~~~~~~~~
+Customizing a vm
+----------------
 
 Using parameters, you can tweak the vm creation. A full list of keywords can be used.
 
@@ -867,7 +836,7 @@ When creating a vm, you can then combine any of those keywords
 Note that those parameters dont have to be only keyword. You can pass any key-value pair so that they are used when injecting files or commands.
 
 Cpus and Memory
-^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~
 
 Using such parameters, you can tweak the vm creation. For instance, the following customizes the number of cpus and memory of the vm.
 
@@ -876,7 +845,7 @@ Using such parameters, you can tweak the vm creation. For instance, the followin
    kcli create vm -i centos9stream -P memory=2048 -P numcpus=4 vm1
 
 Disks
-^^^^^
+~~~~~
 
 You can also pass ``disks``. For instance to create a vm with 2 disks
 
@@ -897,7 +866,7 @@ You can combine both syntaxes, as shown in the next example where we create a 2-
    kcli create vm -i centos9stream -P disks=['20,{"size": 10, "interface": "sata"}'] vm1
 
 Nets
-^^^^
+~~~~
 
 ``nets`` keyword allows you to create vms with several nics and using specific networks. For instance, we can create a vm with two nics connected to the default network
 
@@ -920,7 +889,7 @@ Or change the nic driver
 Again, both syntaxes can be combined
 
 Injecting files
-^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~
 
 You can inject a list of ``files`` in your vms. For instance, to inject a file named myfile.txt, use
 
@@ -958,8 +927,8 @@ We can also set a specific mode for the file
 
    kcli create vm -i centos9stream -P files=['{"path": "/etc/motd", "origin": "myfile.txt", "mode": "644}']
 
-Injecting cmds/scripts
-^^^^^^^^^^^^^^^^^^^^^^
+Injecting cmds and scripts
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can inject a list of ``cmds`` in your vms. For instance, to install a specific package use
 
@@ -977,8 +946,8 @@ This has the benefit that the scripts get rendered via jinja in the same way as 
 
 As always, both cmds and scripts can be specified, in which case cmds are run first.
 
-Empty vms
-~~~~~~~~~
+Creating empty vms
+~~~~~~~~~~~~~~~~~~
 
 So far, our examples have used a cloud image via the ``-i/--image`` flag but it’s not mandatory. For instance, we can create an empty vm with a complete spec
 
@@ -988,8 +957,8 @@ So far, our examples have used a cloud image via the ``-i/--image`` flag but it�
 
 Note that when not using a cloud image, cloudinit/ignition wont be used.
 
-Profiles configuration
-----------------------
+Using Profiles
+--------------
 
 Instead of providing parameters on the command line, you can use profiles.
 
@@ -1032,99 +1001,96 @@ For vms based on coreos, ignition is used instead of cloudinit although the synt
 
 To ease OpenShift deployment, when a node has a name in the $cluster-role-$num, where role can either be ctlplane, worker or bootstrap, additional paths are searched, namely:
 
--  $cluster-$role.ign
--  clusters/$cluster/$role.ign
--  $HOME/.kcli/clusters/$cluster/$role.ign
+- $cluster-$role.ign
+- clusters/$cluster/$role.ign
+- $HOME/.kcli/clusters/$cluster/$role.ign
 
 For ignition support on oVirt, you will need a version of ovirt >= 4.3.4
 
-Vm and Provider Handling
-------------------------
+Interacting with vms
+--------------------
 
 Although the primary goal of kcli is to ease creation of vms, the tool is meant to make it easy to interact with the provider beyond that.
 
-Handling vms
-~~~~~~~~~~~~
-
 The following commands are typically used when dealing with vms
 
--  List vms
+- List vms
 
-   -  ``kcli list vm``
+  - ``kcli list vm``
 
--  List install images
+- List install images
 
-   -  ``kcli list images``
+  - ``kcli list images``
 
--  Delete vm
+- Delete vm
 
-   -  ``kcli delete vm vm1``
+  - ``kcli delete vm vm1``
 
--  Get detailed info on a specific vm
+- Get detailed info on a specific vm
 
-   -  ``kcli info vm vm1``
+  - ``kcli info vm vm1``
 
--  Start vm
+- Start vm
 
-   -  ``kcli start vm vm1``
+  - ``kcli start vm vm1``
 
--  Stop vm
+- Stop vm
 
-   -  ``kcli stop vm vm1``
+  - ``kcli stop vm vm1``
 
--  Get remote-viewer console
+- Get remote-viewer console
 
-   -  ``kcli console vm vm1``
+  - ``kcli console vm vm1``
 
--  Get serial console (over TCP). Requires the vms to have been created with kcli and netcat client installed on hypervisor
+- Get serial console (over TCP). Requires the vms to have been created with kcli and netcat client installed on hypervisor
 
-   -  ``kcli console vm -s vm1``
+  - ``kcli console vm -s vm1``
 
--  Add 5GB disk to vm1, using pool named images
+- Add 5GB disk to vm1, using pool named images
 
-   -  ``kcli create vm-disk -s 5 -p images vm1``
+  - ``kcli create vm-disk -s 5 -p images vm1``
 
--  Delete disk named vm1_2.img from vm1
+- Delete disk named vm1_2.img from vm1
 
-   -  ``kcli delete disk --vm vm1 vm1_2.img``
+  - ``kcli delete disk --vm vm1 vm1_2.img``
 
--  Update memory in vm1 to 2GB memory
+- Update memory in vm1 to 2GB memory
 
-   -  ``kcli update vm -P memory=2048 vm1``
+  - ``kcli update vm -P memory=2048 vm1``
 
--  Clone vm1 to new vm2
+- Clone vm1 to new vm2
 
-   -  ``kcli clone -b vm1 vm2``
+  - ``kcli clone -b vm1 vm2``
 
--  Connect with ssh to vm vm1
+- Connect with ssh to vm vm1
 
-   -  ``kcli ssh vm1``
+  - ``kcli ssh vm1``
 
--  Add a new nic from network default to vm1
+- Add a new nic from network default to vm1
 
-   -  ``kcli create nic -n default vm1``
+  - ``kcli create nic -n default vm1``
 
--  Delete nic eth2 from vm
+- Delete nic eth2 from vm
 
-   -  ``kcli delete nic -i eth2 vm1``
+  - ``kcli delete nic -i eth2 vm1``
 
--  Create snapshot named snap1 for vm1:
+- Create snapshot named snap1 for vm1:
 
-   -  ``kcli create snapshot vm -n vm1 snap1``
+  - ``kcli create snapshot vm -n vm1 snap1``
 
--  Export vm:
+- Export vm:
 
-   -  ``kcli export vm vm1``
+  - ``kcli export vm vm1``
 
 We can interact using the same constructs with other objects, such as network or (storage) pool
 
--  Create a new network
+- Create a new network
 
-   -  ``kcli create network -c 192.168.7.0/24 mynet``
+  - ``kcli create network -c 192.168.7.0/24 mynet``
 
--  Create new pool
+- Create new pool
 
-   -  ``kcli create pool -p /home/images images``
+  - ``kcli create pool -p /home/images images``
 
 Omitting vm’s name
 ------------------
@@ -1135,43 +1101,37 @@ So for instance, you can simply use the following command to access your last vm
 
 ``kcli ssh``
 
-Multiple clients
-----------------
+Using multiple providers
+------------------------
 
-If you have multiple hypervisors/clients, you can generally use the flag *-C $CLIENT* to point to a specific one.
+If you have multiple providers, you can generally use the flag *-C $CLIENT* to point to a specific one
 
 You can also use the following to list the vms of all your hosts/clients:
 
 ``kcli -C all list vm``
 
-Networks
-========
-
-Storage
-=======
-
-Plans
-=====
+Using plans
+-----------
 
 a *plan* is a file in yaml with a list of profiles, vms, disks, and networks and vms to deploy.
 
 The following types can be used within a plan:
 
--  vm (this is the type used when none is specified)
--  image
--  network
--  disk
--  pool
--  profile
--  ansible
--  container
--  dns
--  plan (so you can compose plans from several urls)
--  kube
--  workflow
+- vm (this is the type used when none is specified)
+- image
+- network
+- disk
+- pool
+- profile
+- ansible
+- container
+- dns
+- plan (so you can compose plans from several urls)
+- kube
+- workflow
 
-Create and run your first plan
-------------------------------
+Create a plan
+~~~~~~~~~~~~~
 
 Here’s a basic plan to get a feel of plan’s logic
 
@@ -1200,11 +1160,11 @@ Additionally, your ssh public key gets automatically injected to the node, and t
 
 Although this is a simple plan, note that:
 
--  it’s expected to behave exactly the same regardless of your target virtualization platform
--  can be relaunched in an idempotent manner
+- it’s expected to behave exactly the same regardless of your target virtualization platform
+- can be relaunched in an idempotent manner
 
-Make it more powerful with variables
-------------------------------------
+Use variables with a plan
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Let’s modify our plan to make it more dynamic
 
@@ -1244,34 +1204,56 @@ For instance, we would run ``kcli create plan -f my_plan.yml -P numcpus=16 -P me
 Note that any jinja construct can be used within a plan (or through the files or the scripts referenced by said plan)
 
 plan types
-----------
+~~~~~~~~~~
 
-Here are some examples of each type (more examples can be found in this `samples repo <https://github.com/karmab/kcli-plan-samples>`__):
+Here are some examples of each type (more examples can be found in the `samples repo <https://github.com/karmab/kcli-plan-samples>`__):
 
-network
-~~~~~~~
-
-.. code:: yaml
-
-   mynet:
-    type: network
-    cidr: 192.168.95.0/24
-
-You can also use the boolean keyword *dhcp* (mostly to disable it) and isolated . When not specified, dhcp and nat will be enabled
-
-image
-~~~~~
+cluster
+^^^^^^^
 
 .. code:: yaml
 
-   centos7:
-    type: image
-    url: http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
+   mycluster:
+     type: cluster
+     kubetype: openshift
+     upstream: true
+     ctlplanes: 3
+     workers: 3
 
-If you point to an url not ending in qcow2/qc2 (or img), your browser will be opened for you to proceed. Also note that you can specify a command with the *cmd* key, so that virt-customize is used on the image once it’s downloaded.
+All possible ``kubetypes`` are: ``openshift``, ``generic``, ``microshift``, ``aks``, ``eks``, ``gke``, ``hypershift``, ``k3s``, ``openshift-sno``, ``rke2``.
+
+container
+^^^^^^^^^
+
+.. code:: yaml
+
+   centos:
+    type: container
+     image: centos
+     cmd: /bin/bash
+     ports:
+      - 5500
+     volumes:
+      - /root/coco
+
+The following keywords can be used:
+
+- *image* name of the image to pull.
+- *cmd* command to run within the container.
+- *ports* array of ports to map between host and container.
+- *volumes* array of volumes to map between host and container. You can alternatively use the keyword *disks*. You can also use more complex information provided as a hash
+
+Within a volumes section, you can use path, origin, destination and mode as keys. mode can either be rw o ro and when origin or destination are missing, path is used and the same path is used for origin and destination of the volume. You can also use this typical docker syntax:
+
+.. code:: yaml
+
+   volumes:
+    - /home/cocorico:/root/cocorico
+
+Also, note that basic commands ( start, stop, console, plan, list) accept a *–container* flag.
 
 disk
-~~~~
+^^^^
 
 .. code:: yaml
 
@@ -1283,10 +1265,54 @@ disk
      - centos1
      - centos2
 
-Here the disk is shared between two vms (that typically would be defined within the same plan):
+Here the disk is shared between two vms (that typically would be defined within the same plan)
+
+dns
+^^^
+
+.. code:: yaml
+
+   yyy:
+    type: dns
+    net: default
+    ip: 192.168.1.35
+
+image
+^^^^^
+
+.. code:: yaml
+
+   centos7:
+    type: image
+    url: http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
+
+If you point to an url not ending in qcow2/qc2 (or img), your browser will be opened for you to proceed. Also note that you can specify a command with the *cmd* key, so that virt-customize is used on the image once it’s downloaded.
+
+network
+^^^^^^^
+
+.. code:: yaml
+
+   mynet:
+    type: network
+    cidr: 192.168.95.0/24
+
+You can also use the boolean keyword *dhcp* (mostly to disable it) and isolated . When not specified, dhcp and nat will be enabled
+
+plan’s plan
+^^^^^^^^^^^
+
+.. code:: yaml
+
+   ovirt:
+     type: plan
+     url: github.com/karmab/kcli-plans/ovirt/upstream.yml
+     run: true
+
+You can alternatively provide a file attribute instead of url pointing to a local plan file:
 
 pool
-~~~~
+^^^^
 
 .. code:: yaml
 
@@ -1295,7 +1321,7 @@ pool
      path: /home/mypool
 
 profile
-~~~~~~~
+^^^^^^^
 
 .. code:: yaml
 
@@ -1311,62 +1337,39 @@ profile
       - default
      pool: default
 
-.. _container-1:
+vms
+^^^
 
-container
-~~~~~~~~~
-
-.. code:: yaml
-
-   centos:
-    type: container
-     image: centos
-     cmd: /bin/bash
-     ports:
-      - 5500
-     volumes:
-      - /root/coco
-
-Look at the container section for details on the parameters
-
-Kubernetes/OpenShift Clusters
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+You can point at an existing profile in your plans, define all parameters for the vms, or combine both approaches. You can even add your own profile definitions in the plan file and reference them within the same plan:
 
 .. code:: yaml
 
-   mycluster:
-     type: cluster
-     kubetype: openshift
-     upstream: true
-     ctlplanes: 3
-     workers: 3
+   big:
+     type: profile
+     image: centos9stream
+     memory: 6144
+     numcpus: 1
+     disks:
+      - size: 45
+     nets:
+      - default
+     pool: default
 
-All possible ``kubetypes`` are: ``openshift``, ``generic``, ``microshift``, ``aks``, ``eks``, ``gke``, ``hypershift``, ``k3s``, ``openshift-sno``, ``rke2``.
+   myvm:
+     profile: big
 
-plan’s plan ( Also known as inception style)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Specific scripts and IPS arrays can be used directly in the plan file (or in profiles one).
 
-.. code:: yaml
+The `kcli-plan-samples repo <https://github.com/karmab/kcli-plan-samples>`__ contains samples to get you started. You will also find under karmab user dedicated plan repos to deploy oVirt, Openstack, …
 
-   ovirt:
-     type: plan
-     url: github.com/karmab/kcli-plans/ovirt/upstream.yml
-     run: true
+When launching a plan, the plan name is optional. If none is provided, a random one will be used.
 
-You can alternatively provide a file attribute instead of url pointing to a local plan file:
+If no plan file is specified with the -f flag, the file ``kcli_plan.yml`` in the current directory will be used.
 
-dns
-~~~
-
-.. code:: yaml
-
-   yyy:
-    type: dns
-    net: default
-    ip: 192.168.1.35
+When deleting a plan, the network of the vms will also be deleted if no other vm are using them. You can prevent this by setting *keepnetworks* to ``true`` in your configuration.
 
 workflow
-~~~~~~~~
+^^^^^^^^
 
 Workflow allows you to launch scripts locally after they are rendered
 
@@ -1478,37 +1481,6 @@ We’ll end up with the following:
    ./outdir/arch/frout.j2
    ./outdir/arch/subdir/anotherfile.sh
 
-vms
-~~~
-
-You can point at an existing profile in your plans, define all parameters for the vms, or combine both approaches. You can even add your own profile definitions in the plan file and reference them within the same plan:
-
-.. code:: yaml
-
-   big:
-     type: profile
-     image: centos9stream
-     memory: 6144
-     numcpus: 1
-     disks:
-      - size: 45
-     nets:
-      - default
-     pool: default
-
-   myvm:
-     profile: big
-
-Specific scripts and IPS arrays can be used directly in the plan file (or in profiles one).
-
-The `kcli-plan-samples repo <https://github.com/karmab/kcli-plan-samples>`__ contains samples to get you started. You will also find under karmab user dedicated plan repos to deploy oVirt, Openstack, …
-
-When launching a plan, the plan name is optional. If none is provided, a random one will be used.
-
-If no plan file is specified with the -f flag, the file ``kcli_plan.yml`` in the current directory will be used.
-
-When deleting a plan, the network of the vms will also be deleted if no other vm are using them. You can prevent this by setting *keepnetworks* to ``true`` in your configuration.
-
 Remote plans
 ------------
 
@@ -1518,8 +1490,13 @@ You can use the following command to execute a plan from a remote url:
 
    kcli create plan --url https://raw.githubusercontent.com/karmab/kcli-plan-samples/main/simpleplan.yml
 
+Typical parameters
+------------------
+
+Disk and Network related parameters are detailed below as they are commonly used as part of profile or plans.
+
 Disk parameters
----------------
+~~~~~~~~~~~~~~~
 
 You can add disk this way in your profile or plan files:
 
@@ -1534,11 +1511,11 @@ You can add disk this way in your profile or plan files:
 
 Within a disk section, you can use the word size, thin and format as keys.
 
--  *thin* Value used when not specified in the disk entry. Defaults to true
--  *interface* Value used when not specified in the disk entry. Defaults to virtio. Could also be scsi, sata or ide, if vm lacks virtio drivers
+- *thin* Value used when not specified in the disk entry. Defaults to true
+- *interface* Value used when not specified in the disk entry. Defaults to virtio. Could also be scsi, sata or ide, if vm lacks virtio drivers
 
 Network parameters
-------------------
+~~~~~~~~~~~~~~~~~~
 
 You can mix simple strings pointing to the name of your network and more complex information provided as hash. For instance:
 
@@ -1565,7 +1542,7 @@ You can also provide network configuration on the command line when creating a s
    kcli create vm -i $img -P nets=['{"name":"default","ip":"192.168.122.250","netmask":"24","gateway":"192.168.122.1"}']
 
 ip, dns and host Reservations
------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you set *reserveip* to True, a reservation will be made if the corresponding network has dhcp and when the provided ip belongs to the network range. Note providing such ip is mandatory.
 
@@ -1580,43 +1557,10 @@ If you dont want to be asked for your sudo password each time, here are the comm
     - echo .... # KVIRT >> /etc/hosts
     - sed -i '/.... # KVIRT/d' /etc/hosts
 
-Podman/Docker support in plans
-------------------------------
-
-Podman/Docker support is mainly enabled as a commodity to launch some containers along vms in plan files. Of course, you will need podman or docker installed on the client. So the following can be used in a plan file to launch a container:
-
-.. code:: yaml
-
-   centos:
-    type: container
-     image: centos
-     cmd: /bin/bash
-     ports:
-      - 5500
-     volumes:
-      - /root/coco
-
-The following keywords can be used:
-
--  *image* name of the image to pull.
--  *cmd* command to run within the container.
--  *ports* array of ports to map between host and container.
--  *volumes* array of volumes to map between host and container. You can alternatively use the keyword *disks*. You can also use more complex information provided as a hash
-
-Within a volumes section, you can use path, origin, destination and mode as keys. mode can either be rw o ro and when origin or destination are missing, path is used and the same path is used for origin and destination of the volume. You can also use this typical docker syntax:
-
-.. code:: yaml
-
-   volumes:
-    - /home/cocorico:/root/cocorico
-
-Additionally, basic commands ( start, stop, console, plan, list) accept a *–container* flag.
+\`
 
 Exposing a plan
 ---------------
-
-Basic functionality
-~~~~~~~~~~~~~~~~~~~
 
 You can expose a given plan in a web fashion with ``kcli expose`` so that others can make use of some infrastructure you own without having to deal with kcli themseleves.
 
@@ -1632,8 +1576,8 @@ The indicated parameters are the ones from the plan that you want to expose to t
 
 When the user reprovisions, In addition to those parameters, he will be able to specify:
 
--  a list of mail addresses to notify upon completion of the lab provisioning. Note it requires to properly set notifications in your kcli config.
--  an optional owner which will be added as metadata to the vms, so that it’s easy to know who provisioned a given plan
+- a list of mail addresses to notify upon completion of the lab provisioning. Note it requires to properly set notifications in your kcli config.
+- an optional owner which will be added as metadata to the vms, so that it’s easy to know who provisioned a given plan
 
 Precreating a list of plans
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1661,13 +1605,9 @@ For instance, you could create the following kcli.conf in apache
            Order deny,allow
            Allow from all
        </Directory>
-   #    <Location />
-   #   AuthType Basic
-   #   AuthName "Authentication Required"
-   #   AuthUserFile "/var/www/kcli.htpasswd"
-   #   Require valid-user
-   #    </Location>
    </VirtualHost>
+
+the file kcli.wsgi would contain the following python code:
 
 ::
 
@@ -1686,30 +1626,26 @@ For instance, you could create the following kcli.conf in apache
    application = kexposer.app
    application.secret_key = 'XXX'
 
-Note that further configuration will tipically be needed for apache user so that kcli can be used with it.
-
-An alternative is to create different WSGI applications and tweak the *WSGIScriptAlias* to serve them from different paths.
-
 Calling expose endpoints through REST
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-you can check the `swagger spec <https://petstore.swagger.io/?url=https://raw.githubusercontent.com/karmab/kcli/main/kvirt/expose/swagger.yml>`__ to call the different endpoints using your language of choice.
+the `swagger spec <https://petstore.swagger.io/?url=https://raw.githubusercontent.com/karmab/kcli/main/kvirt/expose/swagger.yml>`__ indicates the available endpoints.
 
 Overriding parameters
-=====================
+---------------------
 
 You can override parameters in:
 
--  commands
--  scripts
--  files
--  plan files
--  profiles
+- commands
+- scripts
+- files
+- plan files
+- profiles
 
 For that, you can pass in kcli vm or kcli plan the following parameters:
 
--  -P x=1 -P y=2 and so on .
--  –paramfile - In this case, you provide a yaml file ( and as such can provide more complex structures ).
+- -P x=1 -P y=2 and so on .
+- –paramfile - In this case, you provide a yaml file ( and as such can provide more complex structures ).
 
 Note that parameters provided as uppercase are made environment variables within the target vm by creating ``/etc/profile.d/kcli.sh``
 
@@ -1762,8 +1698,10 @@ Also, you can reference a *baseplan* file in the *parameters* section, so that p
 Keyword Parameters
 ==================
 
-Specific parameters for a client
---------------------------------
+We provide a complete list of parameters
+
+Specific parameters for a provider
+----------------------------------
 
 =============== ============= ====================================================
 Parameter       Default Value Comments
@@ -1777,8 +1715,8 @@ Parameter       Default Value Comments
 *keep_networks* False         make kcli keeps networks when deleting plan
 =============== ============= ====================================================
 
-Available parameters for client/profile/plan files
---------------------------------------------------
+Available parameters for provider/profile/plan files
+----------------------------------------------------
 
 ================== ==================================== =====================================================================================================================================================================================================================================================================================================================
 Parameter          Default Value                        Comments
@@ -1797,6 +1735,7 @@ Parameter          Default Value                        Comments
 *guestid*          guestrhel764                         
 *pool*             default                              
 *image*            None                                 Should point to your base cloud image(optional). You can either specify short name or complete path. If you omit the full path and your image lives in several pools, the one from last (alphabetical) pool will be used\\
+*disksize*         10GB                                 
 *diskinterface*    virtio                               You can set it to ide, ssd or nvme instead
 *diskthin*         True                                 
 *disks*            []                                   Array of disks to define. For each of them, you can specify pool, size, thin (as boolean), interface (either ide or virtio) and a wwn.If you omit parameters, default values will be used from config or profile file (You can actually let the entire entry blank or just indicate a size number directly)
@@ -1864,40 +1803,35 @@ Deploying Kubernetes/OpenShift clusters
 
 You can deploy generic Kubernetes (based on Kubeadm), K3s, OpenShift/OKD, Hypershift, Microshift and GKE on any platform and on an arbitrary number of control plane nodes and workers.
 
-Benefits
---------
-
 The main benefit is to abstract deployment details to have an unified workflow
 
--  create a parameter file
--  launch the deployment oneliner
--  enjoy
+- create a parameter file
+- launch the deployment oneliner
+- enjoy
 
 Other benefits are:
 
--  easy tweaking of vms hardware
--  tuning the version to deploy
--  support for alternative CNIs
--  configuration of static networking for the nodes
--  installation of additional applications/operators
--  handling of lifecycle after installation:
+- easy tweaking of vms hardware
+- tuning the version to deploy
+- support for alternative CNIs
+- configuration of static networking for the nodes
+- installation of additional applications/operators
+- handling of lifecycle after installation:
 
-   -  scaling
-   -  autoscaling
+  - scaling
+  - autoscaling
 
--  support for deploying Baremetal workers in Openshift and Hypershift (optionally using Redfish)
--  support for deploying Openshift SNOs (optionally using Redfish)
+- support for deploying Baremetal workers in Openshift and Hypershift (optionally using Redfish)
+- support for deploying Openshift SNOs (optionally using Redfish)
 
-.. _workflow-1:
-
-Workflow
---------
+How to deploy a cluster
+-----------------------
 
 For all the platforms, the workflow is the following:
 
--  create a (yaml) parameter file to describe intented end result
--  launch the specific subcommand. For instance, to deploy a generic Kubernetes cluster, one would use ``kcli create cluster generic --pf my_parameters.yml  $cluster``. Parameter files can be repeated and combined with specific parameters on the command line, which always take precedence.
--  Once the installation finishes, set the following environment variable in order to interact with the csluter ``export KUBECONFIG=$HOME/.kcli/clusters/$cluster/auth/kubeconfig``
+- create a (yaml) parameter file to describe intented end result
+- launch the specific subcommand. For instance, to deploy a generic Kubernetes cluster, one would use ``kcli create cluster generic --pf my_parameters.yml  $cluster``. Parameter files can be repeated and combined with specific parameters on the command line, which always take precedence.
+- Once the installation finishes, set the following environment variable in order to interact with the csluter ``export KUBECONFIG=$HOME/.kcli/clusters/$cluster/auth/kubeconfig``
 
 see `AWS EKS workflow <https://github.com/karmab/kcli/blob/main/docs/EKS-kcli.md>`__ for an example EKS process
 
@@ -1924,40 +1858,37 @@ for OpenShift, the official installer binary is leveraged with kcli creating the
 
 The benefits of deploying OpenShift with this workflow are:
 
--  Auto download openshift-install specified version.
--  Easy vms tuning.
--  Single workflow regardless of the target platform.
--  Self contained dns. (For cloud platforms, cloud public dns is leveraged instead)
--  For Libvirt, no need to compile installer or tweak Libvirtd.
--  Vms can be connected to a physical bridge.
--  Multiple clusters can live on the same l2 network.
--  Support for disconnected registry and ipv6 networks.
--  Support for upstream OKD
+- Auto download openshift-install specified version.
+- Easy vms tuning.
+- Single workflow regardless of the target platform.
+- Self contained dns. (For cloud platforms, cloud public dns is leveraged instead)
+- For Libvirt, no need to compile installer or tweak Libvirtd.
+- Vms can be connected to a physical bridge.
+- Multiple clusters can live on the same l2 network.
+- Support for disconnected registry and ipv6 networks.
+- Support for upstream OKD
 
 Requirements
 ~~~~~~~~~~~~
 
--  Valid pull secret
--  Ssh public key.
--  Write access to /etc/hosts file to allow editing of this file.
--  An available ip in your vm’s network to use as *api_ip*. Make sure it is excluded from your dhcp server. An optional *ingress_ip* can be specified, otherwise api_ip will be used.
--  Direct access to the deployed vms. Use something like this otherwise ``sshuttle -r your_hypervisor 192.168.122.0/24 -v``).
--  Target platform needs:
+- Valid pull secret
+- Ssh public key.
+- Write access to /etc/hosts file to allow editing of this file.
+- An available ip in your vm’s network to use as *api_ip*. Make sure it is excluded from your dhcp server. An optional *ingress_ip* can be specified, otherwise api_ip will be used.
+- Direct access to the deployed vms. Use something like this otherwise ``sshuttle -r your_hypervisor 192.168.122.0/24 -v``).
+- Target platform needs:
 
-   -  Ignition support
-   -  On Openstack:
+  - Ignition support
+  - On Openstack:
 
-      -  swift available on the install.
-      -  a flavor. You can create a dedicated one with ``openstack flavor create --id 6 --ram 32768 --vcpus 16 --disk 30 m1.openshift``
-      -  a port on target network mapped to a floating ip. If not specified with api_ip and public_api_ip parameters, the second-to-last ip from the network will be used.
+    - swift available on the install.
+    - a flavor. You can create a dedicated one with ``openstack flavor create --id 6 --ram 32768 --vcpus 16 --disk 30 m1.openshift``
+    - a port on target network mapped to a floating ip. If not specified with api_ip and public_api_ip parameters, the second-to-last ip from the network will be used.
 
--  For ipv6, you need to run the following: ``sysctl -w net.ipv6.conf.all.accept_ra=2``
+- For ipv6, you need to run the following: ``sysctl -w net.ipv6.conf.all.accept_ra=2``
 
-How to Use
-~~~~~~~~~~
-
-Create a parameters.yml
-^^^^^^^^^^^^^^^^^^^^^^^
+Openshift cluster creation
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Prepare a parameter file with valid variables:
 
@@ -2018,8 +1949,7 @@ cloud_api_internal    False
 apps                  []                  Extra applications to deploy on the cluster
 ===================== =================== ===============================================================================================================================
 
-Deploying
-^^^^^^^^^
+We can then deploy it with
 
 ::
 
@@ -2061,16 +1991,16 @@ Providing custom machine configs
 
 If a ``manifests`` directory exists in the current directory, the \*yaml assets found there are copied to the directory generated by the install, prior to deployment.
 
-SNO (Single Node OpenShift) support
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+SNO support
+~~~~~~~~~~~
 
 You can deploy a single node setting ctlplanes to 1 and workers to 0 in your parameter file.
 
 Alternatively, bootstrap in place (bip) with rhcos live iso can be leveraged with the flag ``sno``, which allows to provision a baremetal node by creating a custom iso stored in one specified Libvirt pool. The following extra parameters are available with this workflow:
 
--  sno_disk: You can indicate which disk to use for installing Rhcos operating system in your node. If none is specified, the disk will be autodiscovered
--  extra_args: You can use this variable to specify as a string any extra args to add to the generated iso. A common use case for this is to set static networking for the node, for instanc with something like ``ip=192.168.1.200::192.168.1.1:255.255.255.0:mysupersno.dev.local:enp1s0:none nameserver=192.168.1.1``
--  api_ip: This is normally not needed but if DNS records already exist pointing to a given ip or when the ip of the node is unknown, a vip can be specified so that an extra keepalived static pod is injected.
+- sno_disk: You can indicate which disk to use for installing Rhcos operating system in your node. If none is specified, the disk will be autodiscovered
+- extra_args: You can use this variable to specify as a string any extra args to add to the generated iso. A common use case for this is to set static networking for the node, for instanc with something like ``ip=192.168.1.200::192.168.1.1:255.255.255.0:mysupersno.dev.local:enp1s0:none nameserver=192.168.1.1``
+- api_ip: This is normally not needed but if DNS records already exist pointing to a given ip or when the ip of the node is unknown, a vip can be specified so that an extra keepalived static pod is injected.
 
 In the baremetal context, the generated iso can be directly plugged to target nodes but the ``baremetal_hosts`` feature can also be used as described below, which required apache to be running on the hypervisor and to give write access to /var/www/html for the user launching the command, using something like:
 
@@ -2100,9 +2030,9 @@ Alternatively, you can use the array baremetal_hosts to plug the worker iso to a
 
 For each entry you would specify:
 
--  url or bmc_url. This is the redfish url to use, which is specific to the hardware. You can also just specify the ip and set the model if you dont know what the exact url is.
--  user or bmc_user. bmc_user can also be set outside the array if you use the same user for all of your baremetal workers
--  password or bmc_password. bmc_password can also be set outside the array if you use the same password for all of your baremetal workers
+- url or bmc_url. This is the redfish url to use, which is specific to the hardware. You can also just specify the ip and set the model if you dont know what the exact url is.
+- user or bmc_user. bmc_user can also be set outside the array if you use the same user for all of your baremetal workers
+- password or bmc_password. bmc_password can also be set outside the array if you use the same password for all of your baremetal workers
 
 As an example, the following array will boot 3 workers (based on kvm vms with ksushy)
 
@@ -2120,26 +2050,20 @@ Disconnected support
 
 To deploy with a disconnected registry, you can set the ``disconnected_vm`` boolean or specify a ``disconnected_url``
 
-disconnected_vm
-^^^^^^^^^^^^^^^
-
 In the first case, an helper vm will be deployed to host your disconnected registry and content will be synced for you
 
 You can fine tweak this registry with several parameters:
 
--  disconnected_disk_size
--  disconnected_user
--  disconnected_password
--  disconnected_operators
--  disconnected_vm_name
--  …
+- disconnected_disk_size
+- disconnected_user
+- disconnected_password
+- disconnected_operators
+- disconnected_vm_name
+- …
 
 Note that this disconnected registry can also be deployed on its own using ``kcli create openshift-registry`` subcommand
 
-disconnected_url
-^^^^^^^^^^^^^^^^
-
-In this case, you can specify the url of the registry where you have synced content by yourself. The ``disconnected_url`` typically is specified as ``$host:$port``
+Alternatively, you can specify the url of the registry where you have synced content by yourself. The ``disconnected_url`` typically is specified as ``$host:$port``
 
 You will also need to set disconnected_user and disconnected_password
 
@@ -2147,39 +2071,41 @@ You can specify disconnected_ca content, or let it undefined for the CA content 
 
 Note that you will also need to sync the following images on the registry:
 
--  quay.io/karmab/curl:multi
--  quay.io/karmab/origin-coredns:multi
--  quay.io/karmab/haproxy:multi
--  quay.io/karmab/origin-keepalived-ipfailover:multi
--  quay.io/karmab/mdns-publisher:multi
--  quay.io/karmab/kubectl:multi
--  quay.io/karmab/kcli:latest
+- quay.io/karmab/curl:multi
+- quay.io/karmab/origin-coredns:multi
+- quay.io/karmab/haproxy:multi
+- quay.io/karmab/origin-keepalived-ipfailover:multi
+- quay.io/karmab/mdns-publisher:multi
+- quay.io/karmab/kubectl:multi
+- quay.io/karmab/kcli:latest
 
 The flag ``disconnected_sync`` allows you to sync content when reusing a given registry
 
 OKD
-^^^
+~~~
 
 By setting ``upstream`` to true, you can deploy OKD (which will use a fake pull secret and fedora coreos as image)
 
-Interacting with your clusters
-------------------------------
+Interacting with clusters
+-------------------------
 
 All generated assets for a given cluster are stored in ``$HOME/.kcli/clusters/$cluster``.
 
-Scaling/Adding more workers
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In particular, a kubeconfig file is available there for accessing your cluster.
+
+Scaling with more workers
+-------------------------
 
 The procedure is the same independently of the type of cluster used.
 
 ::
 
-   kcli scale kube <generic|openshift|okd|k3s> -P workers=num_of_workers --paramfile parameters.yml $cluster
+   kcli scale kube <clustertype> -P workers=num_of_workers --paramfile parameters.yml $cluster
 
 ctlplane nodes can also be scaled the same way
 
-Cleaning up
-~~~~~~~~~~~
+Deleting clusters
+-----------------
 
 The procedure is the same independently of the type of cluster used.
 
@@ -2205,18 +2131,18 @@ Note that on those platforms, we rely more on default values provided by the Pla
 see `AWS EKS workflow <https://github.com/karmab/kcli/blob/main/docs/EKS-kcli.md>`__ for an example EKS process.
 
 Deploying applications on top of Kubernetes/OpenShift
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------------------------------
 
 You can use kcli to deploy applications on your Kubernetes/OpenShift (regardless of whether it was deployed with kcli)
 
 Applications currently supported include:
 
--  argocd
--  kubevirt
--  rook
--  istio
--  knative
--  tekton
+- argocd
+- kubevirt
+- rook
+- istio
+- knative
+- tekton
 
 To list applications available on your cluster, run:
 
@@ -2242,11 +2168,13 @@ Applications can be deleted the same way:
 
    kcli delete app $app_name
 
-Architecture
-~~~~~~~~~~~~
+Kubernetes Architecture
+-----------------------
 
-Generic
-^^^^^^^
+We provide details on the workflow used when deploying kubeadm or openshift clusters
+
+Kubeadm
+~~~~~~~
 
 The workflow leverages Kubeadm to create a cluster with the specified number of vms running either as ctlplanes or workers on any of the supported platforms.
 
@@ -2262,19 +2190,19 @@ For cloud providers (aws, gcp and ibmcloud), loadbalancer along with dns is used
 
 Available options in this workflow allow to:
 
--  customizing the hardware of the involved vms
--  using a different k8s version, cni or engine
--  deploying nfs, nginx ingress or metallb.
--  etc
+- customizing the hardware of the involved vms
+- using a different k8s version, cni or engine
+- deploying nfs, nginx ingress or metallb.
+- etc
 
 Openshift
 ~~~~~~~~~
 
 We deploy:
 
--  a bootstrap node removed at the end of the install.
--  an arbitrary number of ctlplanes.
--  an arbitrary number of workers.
+- a bootstrap node removed at the end of the install.
+- an arbitrary number of ctlplanes.
+- an arbitrary number of workers.
 
 When oc or openshift-install are missing, they are downloaded on the fly, using public mirrors or registry.ci.openshift.org if ci is specified (the provided pull secret needs an auth for this registry).
 
@@ -2302,26 +2230,145 @@ On cloud platforms, We rely on dns and load balancing services and as such dont 
 
 In the case of deploying a single ctlplane, the flag ``sno_cloud_remove_lb`` allows to get rid of the loadbalancer at the end of the install.
 
-Running kcli on Kubernetes/OpenShift
-====================================
+kcli-controller
+===============
 
-You can run the container on those platforms and either use the web interface or log in the pod to run ``kcli`` commandline
+There is a controller leveraging kcli and using vm, plan and clusters crds to create vms the corresponding objects, regardless of the infrastructure.
 
-On OpenShift, you’ll need to run first those extra commands:
+.. _requisites-1:
+
+Requisites
+----------
+
+- a running Kubernetes/OpenShift cluster and KUBECONFIG env variable pointing to it (or simply .kube/config)
+- some infrastructure supported by kcli running somewhere and the corresponding credentials.
+- storage to hold two pvcs (one from plan files data and the other for clusters data)
+
+Deploying
+---------
+
+If you’re running kcli locally, use the following to create the proper configmaps to share your credentials and ssh keys:
 
 ::
 
-   oc new-project kcli
-   oc adm policy add-scc-to-user anyuid system:serviceaccount:kcli:default
-   oc expose svc kcli
+   kcli sync kube
 
-Then:
+To do the same manually, run instead:
 
 ::
 
-   kubectl create configmap kcli-config --from-file=~/.kcli
-   kubectl create configmap ssh-config --from-file=~/.ssh
-   kubectl create -f https://raw.githubusercontent.com/karmab/kcli/main/extras/k8sdeploy.yml
+   kubectl create configmap kcli-config --from-file=$HOME/.kcli
+   kubectl create configmap ssh-config --from-file=$HOME/.ssh
+
+Then deploy the controller (along with its CRDS):
+
+::
+
+   kubectl create -f https://raw.githubusercontent.com/karmab/kcli/main/extras/controller/deploy.yml
+
+If you want to use a pvc named ``kcli-clusters`` for storing cluster data, add it:
+
+::
+
+   kubectl -n kcli-infra patch deploy kcli-controller --type json -p='[{"op": "add", "path": "/spec/template/spec/containers/0/volumeMounts/-", "value": {"mountPath": "/root/.kcli/clusters", "name": "kcli-clusters"}}, {"op": "add", "path": "/spec/template/spec/volumes/-", "value": {"persistentVolumeClaim": {"claimName" : "kcli-clusters"}, "name": "kcli-clusters"}}]'
+
+How to use the controller
+-------------------------
+
+The directory `extras/controller/examples <https://github.com/karmab/kcli/tree/main/extras/controller/examples>`__ contains different examples of vm, plan and cluster CRs.
+
+Here are some sample ones for each type to get you started
+
+with vms
+
+::
+
+   apiVersion: kcli.karmalabs.local/v1
+   kind: Vm
+   metadata:
+     name: cirros
+   spec:
+     image: cirros
+     memory: 512
+     numcpus: 2
+
+Note that when a vm is created, the controller waits before it gets an ip and populate it status with its complete information, which is then formatted when running ``kubectl get vms``
+
+with plans
+
+::
+
+   apiVersion: kcli.karmalabs.local/v1
+   kind: Plan
+   metadata:
+     name: simpleplan2
+   spec:
+     plan: |
+       vm11:
+         memory: 512
+         numcpus: 2
+         nets:
+          - default
+         image: cirros
+       vm22:
+         memory: 1024
+         numcpus: 4
+         nets:
+          - default
+         disks:
+          - 20
+         pool: default
+         image: cirros
+         cmds:
+          - echo this stuff works > /tmp/result.txt
+
+To run plans which contain scripts or files, you ll need to copy those assets in the /workdir of the kcli pod
+
+::
+
+   KCLIPOD=$(kubectl get pod -o name -n kcli | sed 's@pod/@@')
+   kubectl cp samplecrd/frout.txt $KCLIPOD:/workdir
+
+with clusters
+
+::
+
+   apiVersion: kcli.karmalabs.local/v1
+   kind: Cluster
+   metadata:
+     name: hendrix
+   spec:
+     ctlplanes: 1
+     api_ip: 192.168.122.252
+
+Once a cluster is deployed successfully, you can retrieve its kubeconfig from it status
+
+::
+
+   kubectl get cluster $CLUSTER -o jsonpath='{.status.create_cluster.kubeconfig}' | base64 -d
+
+Autoscaling
+~~~~~~~~~~~
+
+You can enable autoscaling for a given cluster by setting ``autoscale`` to any value in its spec.
+
+Scaling up
+~~~~~~~~~~
+
+When more than a given threshold of pods can’t be scheduled, one more worker will be added to the cluster and the autoscaling will pause until it appears as a new ready node.
+
+This threshold is configured as an env variable AUTOSCALE_MAXIMUM provided during the deployment of the controller, which defaults to 20
+
+Setting the threshold to any value higher than 9999 effectively disables the feature.
+
+Scaling down
+~~~~~~~~~~~~
+
+If the number of running pods for a given worker node goes below a minimum value, the cluster will be scaled down by one worker.
+
+The minimum is configured as an env variable AUTOSCALE_MINIMUM provided during the deployment of the controller, which defaults to 2
+
+Setting the minimum to any value below 1 effectively disables the feature.
 
 Configuration pools
 ===================
@@ -2330,15 +2377,15 @@ Configuration pools allow to store a list of ips, names or baremetal_hosts and m
 
 This provides the following features:
 
--  Provide static ip to vms from a self maintained list of ips
--  Provide vip to clusters in the same manner
--  Provide a list of baremetal_hosts to clusters.
--  Provide names to vms or clusters from a specific list
+- Provide static ip to vms from a self maintained list of ips
+- Provide vip to clusters in the same manner
+- Provide a list of baremetal_hosts to clusters.
+- Provide names to vms or clusters from a specific list
 
 Upon creation, the corresponding entry gets reserved to the vm or the cluster and released upon deletion.
 
-Handling confpools
-------------------
+Creating a confpool
+-------------------
 
 You can use ``kcli create confpool`` commands to create a configuration pool and then use list, update or delete calls.
 
@@ -2362,9 +2409,6 @@ Here’s a sample content of this file
      - http://192.168.122.1:9000/redfish/v1/Systems/local/vm1
      - http://192.168.122.1:9000/redfish/v1/Systems/local/vm2
 
-confpool with ips information
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 To create a confpool with 3 ips, use the following
 
 ::
@@ -2373,10 +2417,7 @@ To create a confpool with 3 ips, use the following
 
 For ips, note you can also provide a cidr such as 192.168.122.0/24
 
-the pool can also store any value, some of which will be evaluated (in particular any of the network keywords such as netmask,gateway as shown in the example)
-
-confpool with baremetal_hosts information
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+the pool can also store any value, some of which will be evaluated (in particular any of the network keywords such as netmask,gateway as shown in the example).
 
 To create a confpool with 2 baremetal hosts, use the following
 
@@ -2386,20 +2427,14 @@ To create a confpool with 2 baremetal hosts, use the following
 
 Note that in this case, we also provide bmc credentials, all the hosts in your pool should share the same credentials.
 
-confpool with names information
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 To create a confpool with some DBZ names, use the following
 
 ::
 
    kcli create dbzpool -P names=[gohan,goku,vegeta,picolo,raditz,tenchinhan]
 
-Using the confpool
-------------------
-
-In vms
-~~~~~~
+Using a confpool
+----------------
 
 For vms, the confpool is typically specified in a nets section to consume ips. For instance
 
@@ -2413,23 +2448,17 @@ You can also create a vm with a name from the previously created dbz name confpo
 
    kcli create vm -i centos9stream -P confpool=dbzpool
 
-In clusters
-~~~~~~~~~~~
-
 When creating the cluster, specify through a parameter which pool to use (``-P confpool=mypool``)
 
 ::
 
    kcli create cluster generic -P confpool=mypool
 
-Using several confpools at once
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 If you need to use several pools when creating a vm/cluster, you can be more specific by using the following aliases:
 
--  ippool
--  namepool
--  baremetalpool
+- ippool
+- namepool
+- baremetalpool
 
 For instance, you could do something like
 
@@ -2437,53 +2466,51 @@ For instance, you could do something like
 
    kcli create vm -i centos9stream -P ippool=ippool -P namepool=dbzpool
 
+kweb
+====
 
-   ## How to use the web version
+kweb provides a local web interface for interacting with your providers
 
-   Launch the following command and access your machine at port 8000:
+Launch the following command and access your machine at port 8000:
 
-   ```Shell
+.. code:: shell
+
    kweb
 
 The command supports a flag ``--readonly`` to make the web read only.
 
-Calling web endpoints through REST
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-you can check the `swagger spec <https://petstore.swagger.io/?url=https://raw.githubusercontent.com/karmab/kcli/main/kvirt/web/swagger.yml>`__ to call the different endpoints using your language of choice.
+You can check the `swagger spec <https://petstore.swagger.io/?url=https://raw.githubusercontent.com/karmab/kcli/main/kvirt/web/swagger.yml>`__ to call the different endpoints using your language of choice.
 
 ksushy
-------
+======
 
 ksushy provides a REST interface to interact with vms using Redfish. This provides a functionality similar to sushy-emulator but extending it to more providers (typically Vsphere, Kubevirt and oVirt) and through more friendly urls.
 
-.. _requirements-1:
-
-requirements
-~~~~~~~~~~~~
+ksushy requirements
+-------------------
 
 ksushy is bundled within kcli but ssl support requires installing manually cherrypy and pyopenssl package
 
 Deploy ksushy service
-~~~~~~~~~~~~~~~~~~~~~
+---------------------
 
 ksushy can be launched manually for testing purposes but the following command creates a systemd unit instead, listening on port 9000. The call parses the following environment variables:
 
--  KSUSHY_PORT: use a specific port
--  KSUSHY_IPV6: listen on ipv6
--  KSUSHY_SSL: enable ssl
--  KSUSHY_DEBUG: enable debug
--  KSUSHY_USER: username for authentication
--  KSUSHY_PASSWORD: password for authentication
--  KSUSHY_BOOTONCE: enable bootonce
--  KSUSHY_PLAN: specific plan to restrict actions when using bootonce
+- KSUSHY_PORT: use a specific port
+- KSUSHY_IPV6: listen on ipv6
+- KSUSHY_SSL: enable ssl
+- KSUSHY_DEBUG: enable debug
+- KSUSHY_USER: username for authentication
+- KSUSHY_PASSWORD: password for authentication
+- KSUSHY_BOOTONCE: enable bootonce
+- KSUSHY_PLAN: specific plan to restrict actions when using bootonce
 
 ::
 
    kcli create sushy-service
 
 Interacting with vms through redfish
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------------
 
 Once the service is deployed, one can query an existing vm running locally using the following
 
@@ -2501,15 +2528,30 @@ Typical redfish operations like start, stop, info, listing nics of a vm are supp
 
 For plugging an iso, only virtualization providers can be used.
 
-Restricting access
-~~~~~~~~~~~~~~~~~~
+Restricting ksushy access
+-------------------------
 
 When deploying the service, an username and password can be specified for securing access through basic authentication
 
-Bootonce
-~~~~~~~~
+Using Bootonce with ksushy
+--------------------------
 
 Since virtualization providers don’t provide a way to restart in a given iso only one time (and because in kcli design, we don’t want to mess with boot orders), the ``bootonce`` overcomes this by running a side process which monitors vms getting rebooted, and restart them instead after removing their iso to make sure they boot from OS.
+
+Using kcli as a library
+=======================
+
+You can use kvirt library directly, without the client or to embed it into your own application.
+
+Here’s a sample:
+
+::
+
+   from kvirt.config import Kconfig
+   config = Kconfig()
+   k = config.k
+
+You can then either use config for high level actions or the more low level *k* object.
 
 Ansible support
 ===============
@@ -2537,9 +2579,9 @@ If you’re using kcli as a container, you will have to create a script such as 
 
 Additionally, there are ansible kcli modules in `ansible-kcli-modules <https://github.com/karmab/ansible-kcli-modules>`__ repository, with sample playbooks:
 
--  kvirt_vm allows you to create/delete vm (based on an existing profile or image)
--  kvirt_plan allows you to create/delete a plan
--  kvirt_info allows you to retrieve a dict of values similar to ``kcli info`` output. You can select which fields to gather
+- kvirt_vm allows you to create/delete vm (based on an existing profile or image)
+- kvirt_plan allows you to create/delete a plan
+- kvirt_info allows you to retrieve a dict of values similar to ``kcli info`` output. You can select which fields to gather
 
 Those modules rely on python3 so you will need to pass ``-e 'ansible_python_interpreter=path_to_python3'`` to your ansible-playbook invocations ( or set it in your inventory) if your default ansible installation is based on python2.
 
@@ -2580,176 +2622,3 @@ You wont define variables in this case, as you can leverage host_vars and groups
 When leveraging ansible this way, an inventory file will be generated on the fly for you and let in */tmp/$PLAN.inv*.
 
 You can set the variable yamlinventory to True at default, host or profile level if you want the generated file to be yaml based. In this case, it will be named */tmp/$PLAN.inv.yaml*.
-
-kcli-controller
-===============
-
-There is a controller leveraging kcli and using vm, plan and clusters crds to create vms the corresponding objects, regardless of the infrastructure.
-
-Requisites
-----------
-
--  a running Kubernetes/OpenShift cluster and KUBECONFIG env variable pointing to it (or simply .kube/config)
--  some infrastructure supported by kcli running somewhere and the corresponding credentials.
--  storage to hold two pvcs (one from plan files data and the other for clusters data)
-
-.. _deploying-1:
-
-Deploying
----------
-
-If you’re running kcli locally, use the following to create the proper configmaps to share your credentials and ssh keys:
-
-::
-
-   kcli sync kube
-
-To do the same manually, run instead:
-
-::
-
-   kubectl create configmap kcli-config --from-file=$HOME/.kcli
-   kubectl create configmap ssh-config --from-file=$HOME/.ssh
-
-Then deploy the controller (along with its CRDS):
-
-::
-
-   kubectl create -f https://raw.githubusercontent.com/karmab/kcli/main/extras/controller/deploy.yml
-
-If you want to use a pvc named ``kcli-clusters`` for storing cluster data, add it:
-
-::
-
-   kubectl -n kcli-infra patch deploy kcli-controller --type json -p='[{"op": "add", "path": "/spec/template/spec/containers/0/volumeMounts/-", "value": {"mountPath": "/root/.kcli/clusters", "name": "kcli-clusters"}}, {"op": "add", "path": "/spec/template/spec/volumes/-", "value": {"persistentVolumeClaim": {"claimName" : "kcli-clusters"}, "name": "kcli-clusters"}}]'
-
-.. _how-to-use-1:
-
-How to use
-----------
-
-The directory `extras/controller/examples <https://github.com/karmab/kcli/tree/main/extras/controller/examples>`__ contains different examples of vm, plan and cluster CRs.
-
-Here are some sample ones for each type to get you started
-
-.. _vms-1:
-
-vms
-~~~
-
-::
-
-   apiVersion: kcli.karmalabs.local/v1
-   kind: Vm
-   metadata:
-     name: cirros
-   spec:
-     image: cirros
-     memory: 512
-     numcpus: 2
-
-Note that when a vm is created, the controller waits before it gets an ip and populate it status with its complete information, which is then formatted when running ``kubectl get vms``
-
-.. _plans-1:
-
-plans
-~~~~~
-
-::
-
-   apiVersion: kcli.karmalabs.local/v1
-   kind: Plan
-   metadata:
-     name: simpleplan2
-   spec:
-     plan: |
-       vm11:
-         memory: 512
-         numcpus: 2
-         nets:
-          - default
-         image: cirros
-       vm22:
-         memory: 1024
-         numcpus: 4
-         nets:
-          - default
-         disks:
-          - 20
-         pool: default
-         image: cirros
-         cmds:
-          - echo this stuff works > /tmp/result.txt
-
-To run plans which contain scripts or files, you ll need to copy those assets in the /workdir of the kcli pod
-
-::
-
-   KCLIPOD=$(kubectl get pod -o name -n kcli | sed 's@pod/@@')
-   kubectl cp samplecrd/frout.txt $KCLIPOD:/workdir
-
-clusters
-~~~~~~~~
-
-::
-
-   apiVersion: kcli.karmalabs.local/v1
-   kind: Cluster
-   metadata:
-     name: hendrix
-   spec:
-     ctlplanes: 1
-     api_ip: 192.168.122.252
-
-Once a cluster is deployed successfully, you can retrieve its kubeconfig from it status
-
-::
-
-   kubectl get cluster $CLUSTER -o jsonpath='{.status.create_cluster.kubeconfig}' | base64 -d
-
-autoscaling
-^^^^^^^^^^^
-
-You can enable autoscaling for a given cluster by setting ``autoscale`` to any value in its spec.
-
-Scaling up
-''''''''''
-
-When more than a given threshold of pods can’t be scheduled, one more worker will be added to the cluster and the autoscaling will pause until it appears as a new ready node.
-
-This threshold is configured as an env variable AUTOSCALE_MAXIMUM provided during the deployment of the controller, which defaults to 20
-
-Setting the threshold to any value higher than 9999 effectively disables the feature.
-
-Scaling down
-''''''''''''
-
-If the number of running pods for a given worker node goes below a minimum value, the cluster will be scaled down by one worker.
-
-The minimum is configured as an env variable AUTOSCALE_MINIMUM provided during the deployment of the controller, which defaults to 2
-
-Setting the minimum to any value below 1 effectively disables the feature.
-
-Api Usage
-=========
-
-You can use kvirt library directly, without the client or to embed it into your own application.
-
-Here’s a sample:
-
-::
-
-   from kvirt.config import Kconfig
-   config = Kconfig()
-   k = config.k
-
-You can then either use config for high level actions or the more low level *k* object.
-
-.. |CI| image:: https://github.com/karmab/kcli/actions/workflows/ci.yml/badge.svg
-   :target: https://github.com/karmab/kcli/actions/workflows/ci.yml
-.. |Pypi| image:: http://img.shields.io/pypi/v/kcli.svg
-   :target: https://pypi.python.org/pypi/kcli/
-.. |Copr| image:: https://copr.fedorainfracloud.org/coprs/karmab/kcli/package/kcli/status_image/last_build.png
-   :target: https://copr.fedorainfracloud.org/coprs/karmab/kcli/package/kcli
-.. |Documentation Status| image:: https://readthedocs.org/projects/kcli/badge/?version=latest
-   :target: https://kcli.readthedocs.io/en/latest/?badge=latest
