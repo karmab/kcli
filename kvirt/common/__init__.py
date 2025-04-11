@@ -2381,7 +2381,8 @@ def install_provider(provider, pip=False):
     elif provider == 'gcp':
         if not pip:
             warning("Using pip as this is the only way for this provider")
-        cmd = 'pip3 install google-api-python-client google-auth-httplib2 google-cloud-dns google-cloud-storage '
+        cmd = 'pip3 install google-api-python-client google-auth-httplib2 google-cloud-dns google-cloud-storage'
+        cmd += 'google-cloud-compute google-cloud-container'
     elif provider == 'ibm':
         if not pip:
             warning("Using pip as this is the only way for this provider")
