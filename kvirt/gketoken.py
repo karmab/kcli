@@ -21,8 +21,6 @@ def cli():
     auth_req = google.auth.transport.requests.Request()
     credentials.refresh(auth_req)
     token = credentials.token
-    # encoded = base64.urlsafe_b64encode(data.encode("utf-8"))
-    # token = encoded.decode("utf-8").rstrip("=")
     result = {'apiVersion': 'client.authentication.k8s.io/v1beta1', 'kind': 'ExecCredential', 'spec': {},
               'status': {'expirationTimestamp': '2030-10-01T15:05:17Z', 'token': token}}
     print(json.dumps(result))

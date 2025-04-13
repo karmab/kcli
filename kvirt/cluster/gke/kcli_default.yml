@@ -1,5 +1,5 @@
 info: |
-  Deploy kubernetes using gke on $nodes
+  Deploy kubernetes using gke on $workers nodes
 workers: 2
 version:
 worker_version:

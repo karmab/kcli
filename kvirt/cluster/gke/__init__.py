@@ -38,7 +38,8 @@ def get_kubeconfig(config, cluster, zonal=True):
         return
     ca_cert = response.master_auth.cluster_ca_certificate
     rendered = config.process_inputfile(cluster, f"{plandir}/kubeconfig.j2", overrides={'endpoint': endpoint,
-                                                                                        'ca_cert': ca_cert})
+                                                                                        'ca_cert': ca_cert,
+                                                                                        'client': config.client})
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     with open(f"{clusterdir}/auth/kubeconfig", 'w') as f:
         f.write(rendered)
@@ -58,8 +59,15 @@ def project_init(config):
     if project is None:
         error("Missing project in the configuration. Leaving")
         sys.exit(1)
-    zone = config.options.get('zone', 'europe-west1-b')
-    region = config.options.get('region', zone[:-2])
+    region = config.options.get('region')
+    zone = config.options.get('zone')
+    if region is None and zone is None:
+        error("Missing project in the configuration. Leaving")
+        sys.exit(1)
+    elif region is not None and zone is None:
+        zone = f'{region}-b'
+    elif region is None and zone is not None:
+        region = zone[:-2]
     return project, region, zone
 
 
@@ -112,36 +120,35 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     clusterspec = {'name': cluster, 'enable_kubernetes_alpha': data['alpha']}
     clusterspec['resource_labels'] = {'plan': cluster, 'kube': cluster, 'kubetype': 'gke'}
     network = data['network']
+    create_subnetwork = False
     networks = config.k.list_networks()
     if network != 'default':
+        subnets = config.k.list_subnets()
         if network in networks:
             clusterspec['network'] = network
             legacy = networks[network]['cidr'] != ''
-        elif network in config.k.list_subnets():
+        elif network in subnets:
+            subnet_data = config.k.info_subnet(network)
+            clusterspec['network'] = subnet_data['network']
             clusterspec['subnetwork'] = network
-            legacy = False
+            legacy = 'secondary_cidrs' not in subnet_data
         else:
-            msg = f'Invalid network {network}'
+            msg = f'Invalid subnet {network}'
             return {'result': 'failure', 'reason': msg}
     elif 'default' in networks:
+        clusterspec['network'] = network
         legacy = networks[network]['cidr'] != ''
     else:
         msg = f'Invalid network {network}'
         return {'result': 'failure', 'reason': msg}
     native = data['native']
-    cluster_network, service_network = data['cluster_network'], data['service_network']
     cluster_network_ipv4, service_network_ipv4 = data['cluster_network_ipv4'], data['service_network_ipv4']
     if native:
-        if cluster_network is None or service_network is None:
-            msg = "you need to define cluster_network and service_network in native mode"
-            return {'result': 'failure', 'reason': msg}
-        else:
-            ip_allocation_policy = {'use_ip_aliases': True,
-                                    'cluster_secondary_range_name': cluster_network,
-                                    'cluster_ipv4_cidr_block': cluster_network_ipv4,
-                                    'services_secondary_range_name': service_network,
-                                    'services_ipv4_cidr_block': service_network_ipv4}
-            clusterspec['ip_allocation_policy'] = ip_allocation_policy
+        ip_allocation_policy = {'use_ip_aliases': True,
+                                'create_subnetwork': create_subnetwork,
+                                'cluster_ipv4_cidr_block': cluster_network_ipv4,
+                                'services_ipv4_cidr_block': service_network_ipv4}
+        clusterspec['ip_allocation_policy'] = ip_allocation_policy
     elif legacy:
         clusterspec['ip_allocation_policy'] = {'use_ip_aliases': False}
     if 'version' in overrides:
@@ -183,6 +190,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     client = container_v1.ClusterManagerClient()
     parent = f'projects/{project}/locations/{zone if zonal else region}'
     request = container_v1.CreateClusterRequest(parent=parent, cluster=clusterspec)
+    if config.debug:
+        print(clusterspec)
     operation = client.create_cluster(request=request)
     if config.debug:
         print(operation)
