@@ -1447,6 +1447,7 @@ class Kvirt(object):
         root = ET.fromstring(xml)
         newxml = ET.tostring(root).decode("utf-8")
         newxml = newxml.replace('dev="hd"', 'dev="cdrom"')
+        newxml = newxml.replace('dev="network"', 'dev="hd"')
         for element in list(root.iter('disk')):
             if element.get('device') == 'cdrom':
                 iso_file = element.find('source').get('file') if element.find('source') is not None else None
