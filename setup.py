@@ -58,7 +58,6 @@ setup(
         kweb=kvirt.web.main:run
         klist.py=kvirt.klist:main
         ksushy=kvirt.ksushy.main:run
-        ksushy-isoremover=kvirt.ksushy.isoremover:run
         ignitionmerger=kvirt.ignitionmerger:cli
         ekstoken=kvirt.ekstoken:cli
         gketoken=kvirt.gketoken:cli

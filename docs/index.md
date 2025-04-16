@@ -2386,11 +2386,6 @@ For plugging an iso, only virtualization providers can be used.
 
 When deploying the service, an username and password can be specified for securing access through basic authentication
 
-## Using Bootonce with ksushy
-
-Since virtualization providers don't provide a way to restart in a given iso only one time (and because in kcli design, we don't want to mess with boot orders), the `bootonce` overcomes this by running a side process which monitors vms getting rebooted, and restart them instead after removing their iso to make sure they boot from OS.
-
-# Using kcli as a library
 
 You can use kvirt library directly, without the client or to embed it into your own application.
 

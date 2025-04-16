@@ -200,7 +200,10 @@ class Ksushy():
             if reset_type in ['On', 'ForceRestart']:
                 try:
                     pprint(f"Starting vm {name}")
-                    k.start_from_cd(name) if self.bootonce and config.type == 'kvm' else k.start(name)
+                    if config.type == 'kvm' and self.bootonce:
+                        pprint(f"Forcing boot from cdrom for vm {name}")
+                        k.force_cdrom(name)
+                    k.start(name)
                 except subprocess.CalledProcessError as e:
                     error(e)
                     response.status = 400

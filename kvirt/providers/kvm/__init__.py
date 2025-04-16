@@ -1439,29 +1439,29 @@ class Kvirt(object):
                     return {'result': 'failure', 'reason': e}
         return {'result': 'success'}
 
-    def start_from_cd(self, name):
+    def force_cdrom(self, name):
         self.stop(name)
         conn = self.conn
         vm = conn.lookupByName(name)
         xml = vm.XMLDesc(0)
         root = ET.fromstring(xml)
+        for _os in list(root.iter('os')):
+            if list(_os.iter('boot'))[0].get('dev') == 'cdrom':
+                return {'result': 'success'}
         newxml = ET.tostring(root).decode("utf-8")
+        newxml = newxml.replace('dev="cdrom"', 'dev="TEMP"')
         newxml = newxml.replace('dev="hd"', 'dev="cdrom"')
-        newxml = newxml.replace('dev="network"', 'dev="hd"')
+        newxml = newxml.replace('dev="TEMP"', 'dev="hd"')
         for element in list(root.iter('disk')):
             if element.get('device') == 'cdrom':
-                iso_file = element.find('source').get('file') if element.find('source') is not None else None
-                if iso_file is None or iso_file.endswith(f'{name}.ISO'):
-                    warning(f"No iso found in VM {name}, starting normally")
-                    return self.start(name)
-                boot = element.find('boot') or {}
-                cd_order = boot.get('order')
-                if cd_order is not None:
-                    newxml = newxml.replace("<boot order='1'/>", "<boot order='XX'/>")
-                    newxml = newxml.replace(f"<boot order='{cd_order}'/>", "<boot order='1'/>")
-                    newxml = newxml.replace("<boot order='XX'/>", f"<boot order='{cd_order}'/>")
+                boot = element.find('boot')
+                if boot is not None:
+                    cd_order = boot.get('order')
+                    newxml = newxml.replace('<boot order="1"/> ', '<boot order="TEMP" />')
+                    newxml = newxml.replace(f'<boot order="{cd_order}" />', '<boot order="1" />')
+                    newxml = newxml.replace('<boot order="TEMP"/> ', f'<boot order="{cd_order}" />')
                 break
-        conn.createXML(newxml)
+        conn.defineXML(newxml)
         return {'result': 'success'}
 
     def stop(self, name, soft=False):
