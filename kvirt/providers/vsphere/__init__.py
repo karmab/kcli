@@ -406,6 +406,8 @@ class Ksphere:
             diskspec = creatediskspec(unit_number, disksize, datastore, diskmode, diskthin, diskuuid)
             devconfspec.append(diskspec)
             unit_number += 1
+        for index, _ in enumerate(disks):
+            confspec.extraConfig.append(vim.option.OptionValue(key=f'scsi0:{index}.enableUUID', value='TRUE'))
         # NICSPEC
         if not self.networks:
             self.set_networks()
