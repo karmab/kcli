@@ -57,8 +57,6 @@ IMAGES = {'almalinux8': f'{ALMA}/8/cloud/x86_64/images/AlmaLinux-8-GenericCloud-
           'debian11': f'{DEBIAN}/cloud/bullseye/latest/debian-11-generic-amd64.qcow2',
           'debian12': f'{DEBIAN}/cloud/bookworm/latest/debian-12-generic-amd64.qcow2',
           'fcos': 'https://builds.coreos.fedoraproject.org/streams/stable.json',
-          'fedora37': f'{FEDORA}/37/Cloud/x86_64/images/Fedora-Cloud-Base-37-1.7.x86_64.qcow2',
-          'fedora38': f'{FEDORA}/38/Cloud/x86_64/images/Fedora-Cloud-Base-38-1.6.x86_64.qcow2',
           'fedora39': f'{FEDORA}/39/Cloud/x86_64/images/Fedora-Cloud-Base-39-1.5.x86_64.qcow2',
           'fedora40': f'{FEDORA}/40/Cloud/x86_64/images/Fedora-Cloud-Base-Generic.x86_64-40-1.14.qcow2',
           'fedora41': f'{FEDORA}/41/Cloud/x86_64/images/Fedora-Cloud-Base-Generic-41-1.4.x86_64.qcow2',
