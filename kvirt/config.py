@@ -1934,7 +1934,7 @@ class Kconfig(Kbaseconfig):
                         sys.exit(1)
                     rule = next(iter(entry))
                     if (re.match(rule, name) or fnmatch(name, rule)) and isinstance(entry[rule], dict):
-                        pprint("Found matching vmrule {rule} for {name}")
+                        pprint(f"Found matching vmrule {rule} for {name}")
                         rulefound = True
                         listkeys = ['cmds', 'files', 'scripts']
                         for rule in entry:
