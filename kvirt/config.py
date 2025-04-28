@@ -725,7 +725,7 @@ class Kconfig(Kbaseconfig):
                 elif image.startswith('rhel-server-7') or image == 'rhel7':
                     rhncommands.append('subscription-manager repos --enable=rhel-7-server-rpms')
             elif rhnuser is not None and rhnpassword is not None:
-                rhncommands.append('subscription-manager register --serverurl=%s --force --username=%s --password=%s'
+                rhncommands.append('subscription-manager register --serverurl=%s --force --username=%s --password=\'%s\''
                                    % (rhnserver, rhnuser, rhnpassword))
                 if rhnpool is not None:
                     rhncommands.append(f'subscription-manager attach --pool={rhnpool}')
