@@ -633,7 +633,7 @@ def create(config, plandir, cluster, overrides):
             coredns_conf_data = config.process_inputfile(cluster, f"{plandir}/Corefile", overrides=data)
             coredns_conf_data = b64encode(coredns_conf_data.encode()).decode("UTF-8")
             assisted_data['coredns_conf_data'] = coredns_conf_data
-            force_dns_data = config.process_inputfile(cluster, f"{plandir}/99-forcedns", overrides=data)
+            force_dns_data = config.process_inputfile(cluster, f"{plandir}/99-kcli-forcedns", overrides=data)
             force_dns_data = b64encode(force_dns_data.encode()).decode("UTF-8")
             assisted_data['force_dns_data'] = force_dns_data
         assisted_data['cluster'] = cluster

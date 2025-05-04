@@ -1358,10 +1358,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             warning("Injecting coredns static pod as some DNS records were missing")
             coredns_data = config.process_inputfile(cluster, f"{plandir}/staticpods/coredns.yml", overrides=data)
             corefile_data = config.process_inputfile(cluster, f"{plandir}/Corefile", overrides=data)
-            forcedns_data = config.process_inputfile(cluster, f"{plandir}/99-forcedns", overrides=data)
+            forcedns_data = config.process_inputfile(cluster, f"{plandir}/99-kcli-forcedns", overrides=data)
             sno_files.extend([{'path': "/etc/kubernetes/manifests/coredns.yml", 'data': coredns_data},
                               {'path': "/etc/kubernetes/Corefile.template", 'data': corefile_data},
-                              {"path": "/etc/NetworkManager/dispatcher.d/99-forcedns", "data": forcedns_data,
+                              {"path": "/etc/NetworkManager/dispatcher.d/99-kcli-forcedns", "data": forcedns_data,
                                "mode": int('755', 8)}])
         if api_ip is not None:
             data['virtual_router_id'] = data['virtual_router_id'] or hash(cluster) % 254 + 1

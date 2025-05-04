@@ -34,5 +34,5 @@ spec:
         - contents:
             source: data:text/plain;charset=utf-8;base64{{ force_dns_data }}
           mode: 420
-          path: /etc/NetworkManager/dispatcher.d/99-forcedns
+          path: /etc/NetworkManager/dispatcher.d/99-kcli-forcedns
 {% endif %}

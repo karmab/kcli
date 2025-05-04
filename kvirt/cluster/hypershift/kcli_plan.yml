@@ -24,7 +24,7 @@
 {% endif %}
 
 {% if not sslip and coredns %}
-{% set new_file = {'path': '/etc/NetworkManager/dispatcher.d/99-forcedns', 'origin': '99-forcedns', 'mode': 755} %}
+{% set new_file = {'path': '/etc/NetworkManager/dispatcher.d/99-kcli-forcedns', 'origin': '99-kcli-forcedns', 'mode': 755} %}
 {% do files.append(new_file) %}
 {% set new_file = {'path': '/etc/kubernetes/manifests/coredns.yml', 'origin': 'staticpods/coredns.yml'} %}
 {% do files.append(new_file) %}

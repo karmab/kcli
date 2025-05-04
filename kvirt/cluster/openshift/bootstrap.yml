@@ -24,8 +24,8 @@
  files:
 {% endif %}
 {% if coredns %}
- - path: /etc/NetworkManager/dispatcher.d/99-forcedns
-   origin: 99-forcedns
+ - path: /etc/NetworkManager/dispatcher.d/99-kcli-forcedns
+   origin: 99-kcli-forcedns
    mode: 755
  - path: /etc/kubernetes/manifests/coredns.yml
    origin: staticpods/coredns.yml

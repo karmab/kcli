@@ -18,8 +18,8 @@
  - name: {{ network }}
 {% if config_type == 'ibm' %}
  files:
- - path: /etc/NetworkManager/dispatcher.d/99-forcedns
-   origin: 99-forcedns-ibm
+ - path: /etc/NetworkManager/dispatcher.d/99-kcli-forcedns
+   origin: 99-kcli-forcedns-ibm
    mode: 755
 {% endif %}
  disks: {{ [disk_size] + extra_disks }}
