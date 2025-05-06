@@ -2020,27 +2020,26 @@ def olm_app(package, overrides={}):
     catalog = status['catalogSource']
     defaultchannel = status['defaultChannel']
     channels = []
-    own = True
     for channel in status['channels']:
         channels.append(channel['name'])
         if channel['name'] == defaultchannel:
             csv = channel['currentCSV']
             description = channel['currentCSVDesc']['description']
-            installmodes = channel['currentCSVDesc']['installModes']
-            for mode in installmodes:
-                if mode['type'] == 'OwnNamespace' and not mode['supported']:
-                    target_namespace = 'openshift-operators'
-                    own = False
-                    break
+            installmodes = {mode['type']: mode['supported'] for mode in channel['currentCSVDesc']['installModes']}
             csvdesc = channel['currentCSVDesc']
             csvdescannotations = csvdesc['annotations']
-            if own and 'operatorframework.io/suggested-namespace' in csvdescannotations:
+            if not installmodes['OwnNamespace']:
+                target_namespace = 'openshift-operators'
+            elif 'operatorframework.io/suggested-namespace' in csvdescannotations:
                 target_namespace = csvdescannotations['operatorframework.io/suggested-namespace']
+
+            installmode = 'all' if installmodes['AllNamespaces'] else 'namespaced'
+
             crds = []
             if 'customresourcedefinitions' in csvdesc and 'owned' in csvdesc['customresourcedefinitions']:
                 for crd in csvdesc['customresourcedefinitions']['owned']:
                     crds.append(crd['name'])
-    return name, catalog, defaultchannel, csv, description, target_namespace, channels, crds
+    return name, catalog, defaultchannel, csv, description, target_namespace, channels, crds, installmode
 
 
 def need_fake():
