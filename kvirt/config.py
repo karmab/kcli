@@ -266,7 +266,7 @@ class Kconfig(Kbaseconfig):
                 external_network = options.get('external_network')
                 if auth_url.endswith('v2.0'):
                     domain = None
-                if ca_file is not None and not os.path.exists(os.path.expanduser(ca_file)):
+                if ca_file not in (None, 'false', 'False') and not os.path.exists(os.path.expanduser(ca_file)):
                     error(f"Indicated ca_file {ca_file} not found. Leaving")
                     sys.exit(1)
                 glance_disk = options.get('glance_disk', False)
