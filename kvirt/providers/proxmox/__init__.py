@@ -1079,6 +1079,7 @@ class Kproxmox(Kbase):
         container = self._get_lxc(name)
         if container is None:
             return {"result": "failure", "reason": f"Container {name} not found."}
+        self._wait_for(container.status.stop.post())
         self._wait_for(container.delete())
         return {'result': 'success'}
 
