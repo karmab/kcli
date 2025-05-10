@@ -32,4 +32,4 @@ export IP={{ first_ip }}
 {% set first_ip = '{}-{}'.format(cluster, node_suffix) | kcli_info('ip', client) %}
 {% endif %}
 
-curl -sfL https://get.k3s.io | {{ install_k3s_args|default("") }} K3S_TOKEN={{ token }} sh -s - server --server https://{{ first_ip }}:6443 {{ extra_args|join(" ") }} --tls-san $IP
+curl -sfL https://get.k3s.io | {{ install_k3s_args|default("") }} K3S_TOKEN={{ token }} sh -s - --server https://{{ first_ip }}:6443 {{ extra_args|join(" ") }} --tls-san $IP
