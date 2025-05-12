@@ -222,6 +222,13 @@ class Redfish(object):
             newboot['BootSourceOverrideTarget'] = 'Cd'
         if 'BootSourceOverrideMode' not in currentboot:
             newboot['BootSourceOverrideMode'] = 'UEFI'
+
+        # No new boot params override required
+        if not newboot:
+            if self.debug:
+                pprint(f"No changes needed for {self.url}, skipping PATCH request.")
+            return None
+
         data = {"Boot": newboot}
         if self.debug:
             pprint(f"Sending PATCH to {self.url} with data {data}")
@@ -288,7 +295,7 @@ class Redfish(object):
         if current_iso == iso_url and inserted:
             pprint(f"Iso {iso_url} already set")
         else:
-            if current_iso != '':
+            if inserted:
                 try:
                     self.eject_iso()
                 except Exception as e:
