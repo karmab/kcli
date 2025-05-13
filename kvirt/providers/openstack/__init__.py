@@ -513,6 +513,15 @@ class Kopenstack(object):
                 if entry2['OS-EXT-IPS:type'] == 'floating':
                     vm_floating_ips.append(entry2['addr'])
         vm.delete()
+
+        # Wait until it's gone
+        while True:
+            try:
+                nova.servers.get(vm.id)
+                sleep(1)
+            except novaclient.exceptions.NotFound:
+                break
+
         for floating in vm_floating_ips:
             floatingid = floating_ips[floating]
             try:
