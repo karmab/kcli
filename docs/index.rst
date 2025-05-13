@@ -30,7 +30,7 @@ Beyond handling virtual machines, Kubernetes clusters can also be managed for th
 - GKE
 
 Prerequisites
-==========
+=============
 
 If you don’t have Libvirt installed on the target hypervisor, you can use the following command:
 
@@ -519,7 +519,7 @@ The following parameters are specific to openstack:
 - ``auth_url``
 - ``project``
 - ``domain`` Defaults to *Default*
-- ``ca_file`` (Optional)
+- ``ca_file`` (Optional). Certificate file
 - ``external_network`` (Optional). Indicates which network use for floating ips (useful when you have several ones)
 - ``region_name`` (Optional). Used in OVH Openstack
 - ``glance_disk`` (Optional). Prevents creating a disk from glance image. Defaults to false
@@ -2238,7 +2238,7 @@ There is a controller leveraging kcli and using vm, plan and clusters crds to cr
 .. _prerequisites-1:
 
 Prerequisites
-----------
+-------------
 
 - a running Kubernetes/OpenShift cluster and KUBECONFIG env variable pointing to it (or simply .kube/config)
 - some infrastructure supported by kcli running somewhere and the corresponding credentials.

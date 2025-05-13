@@ -504,7 +504,7 @@ The following parameters are specific to openstack:
 - `auth_url`
 - `project`
 - `domain` Defaults to *Default*
-- `ca_file` (Optional)
+- `ca_file` (Optional). Certificate file
 - `external_network` (Optional). Indicates which network use for floating ips (useful when you have several ones)
 - `region_name` (Optional). Used in OVH Openstack
 - `glance_disk` (Optional). Prevents creating a disk from glance image. Defaults to false

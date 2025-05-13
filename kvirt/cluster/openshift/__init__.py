@@ -144,6 +144,8 @@ def create_ignition_files(config, plandir, cluster, domain, api_ip=None, bucket_
     with open(f"{clusterdir}/worker.ign", 'w') as f:
         f.write(worker_ignition)
     if bucket_url is not None:
+        if config.type == 'openstack':
+            ignition_overrides['ca_file'] = config.k.ca_file
         ignition_overrides['bucket_url'] = bucket_url
         bootstrap_ignition = config.process_inputfile(cluster, f"{plandir}/ignition.j2", overrides=ignition_overrides)
         with open(f"{clusterdir}/bootstrap.ign", 'w') as f:

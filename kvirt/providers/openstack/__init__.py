@@ -41,22 +41,26 @@ class Kopenstack(object):
             self.conn = None
             return
         if ca_file is not None:
-            sess = session.Session(auth=auth, verify=os.path.expanduser(ca_file))
+            cacert = os.path.expanduser(ca_file)
+            sess_data = {'auth': auth, 'verify': cacert}
         else:
-            sess = session.Session(auth=auth)
+            cacert = None
+            sess_data = {'auth': auth, 'verify': False}
+        sess = session.Session(**sess_data)
         self.nova = novaclient.Client(version, session=sess, region_name=region_name)
         self.glance = glanceclient(version, session=sess, region_name=region_name)
         self.cinder = cinderclient.Client('3', session=sess, region_name=region_name)
         self.neutron = neutronclient(session=sess, region_name=region_name)
         os_options = {'user_domain_name': domain, 'project_domain_name': domain, 'project_name': project}
-        self.swift = swiftclient.Connection(session=sess, os_options=os_options)
+        self.swift = swiftclient.Connection(session=sess, os_options=os_options, cacert=cacert,
+                                            insecure=ca_file is not None)
         self.conn = self.nova
         self.project = project
         self.external_network = external_network
         self.region_name = region_name
         self.glance_disk = glance_disk
+        self.ca_file = ca_file
 
-# should cleanly close your connection, if needed
     def close(self):
         print("not implemented")
 
