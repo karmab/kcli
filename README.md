@@ -59,7 +59,7 @@ See [contributors on GitHub](https://github.com/karmab/kcli/graphs/contributors)
 
 ## Copyright
 
-Copyright 2017-2019 Karim Boumedhel
+Copyright 2017-2025 Karim Boumedhel
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

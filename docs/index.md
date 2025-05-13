@@ -28,7 +28,7 @@ Beyond handling virtual machines, Kubernetes clusters can also be managed for th
 - EKS
 - GKE
 
-# Requisites
+# Prerequisites
 
 If you don't have Libvirt installed on the target hypervisor, you can use the following command:
 
@@ -677,7 +677,7 @@ myesx:
 
 #### Using hostgroups and vm-host rules
 
-The requisite is to create the hostgroup by yourself so that you can associate your hosts to it.
+The prerequisite is to create the hostgroup by yourself so that you can associate your hosts to it.
 
 Then, when creating a vm, one can provide the following extra parameters:
 
@@ -2105,7 +2105,7 @@ In the case of deploying a single ctlplane, the flag `sno_cloud_remove_lb` allow
 
 There is a controller leveraging kcli and using vm, plan and clusters crds to create vms the corresponding objects, regardless of the infrastructure.
 
-## Requisites
+## Prerequisites
 
 - a running Kubernetes/OpenShift cluster and KUBECONFIG env variable pointing to it (or simply .kube/config)
 - some infrastructure supported by kcli running somewhere and the corresponding credentials.
