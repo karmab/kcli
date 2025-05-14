@@ -57,6 +57,7 @@ setup(
         kcli=kvirt.cli:cli
         kweb=kvirt.web.main:run
         klist.py=kvirt.klist:main
+        kmcp.py=kvirt.mcp:main
         ksushy=kvirt.ksushy.main:run
         ignitionmerger=kvirt.ignitionmerger:cli
         ekstoken=kvirt.ekstoken:cli
