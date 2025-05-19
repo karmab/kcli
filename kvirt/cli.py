@@ -790,7 +790,7 @@ def _parse_vms_list(_list, overrides={}):
     print(vmstable)
 
 
-def list_vm(args):
+def list_vms(args):
     output = args.global_output or args.output
     overrides = handle_parameters(args.param, args.paramfile)
     filter_keys = ['name', 'ip', 'status', 'image', 'network', 'plan', 'profile']
@@ -842,7 +842,7 @@ def list_vm(args):
         print(vmstable)
 
 
-def list_clusterprofile(args):
+def list_clusterprofiles(args):
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     clusterprofiles = baseconfig.list_clusterprofiles()
     output = args.global_output or args.output
@@ -855,7 +855,7 @@ def list_clusterprofile(args):
     print(clusterprofilestable)
 
 
-def list_confpool(args):
+def list_confpools(args):
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     confpools = baseconfig.list_confpools()
     output = args.global_output or args.output
@@ -868,7 +868,7 @@ def list_confpool(args):
     print(confpoolstable)
 
 
-def list_container(args):
+def list_containers(args):
     filters = args.filters
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     cont = Kcontainerconfig(config, client=args.containerclient).cont
@@ -888,7 +888,7 @@ def list_container(args):
     print(containerstable)
 
 
-def profilelist_container(args):
+def list_containerprofiles(args):
     short = args.short
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     profiles = baseconfig.list_containerprofiles()
@@ -908,7 +908,7 @@ def profilelist_container(args):
     print(profilestable)
 
 
-def list_containerimage(args):
+def list_containerimages(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.type not in ['kvm', 'proxmox']:
         error("Operation not supported on this kind of client.Leaving...")
@@ -925,7 +925,7 @@ def list_containerimage(args):
     print(imagestable)
 
 
-def list_client(args):
+def list_clients(args):
     clientstable = PrettyTable(["Client", "Type", "Enabled", "Current"])
     clientstable.align["Client"] = "l"
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
@@ -943,7 +943,7 @@ def list_client(args):
     print(clientstable)
 
 
-def list_kubeconfig(args):
+def list_kubeconfigs(args):
     homedir = os.path.expanduser("~")
     clustersdir = f"{homedir}/.kcli/clusters"
     kubeconfigstable = PrettyTable(["Kubeconfig", "Current"])
@@ -956,7 +956,7 @@ def list_kubeconfig(args):
     print(kubeconfigstable)
 
 
-def list_lb(args):
+def list_lbs(args):
     short = args.short
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     lbs = config.list_loadbalancers()
@@ -1013,7 +1013,7 @@ def info_profile(args):
         print(f"{key}: {profile[key]}")
 
 
-def list_profile(args):
+def list_profiles(args):
     short = args.short
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     profiles = baseconfig.list_profiles()
@@ -1131,7 +1131,7 @@ def list_available_images(args):
     print(imagestable)
 
 
-def list_image(args):
+def list_images(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.client != 'all':
         k = config.k
@@ -1146,7 +1146,7 @@ def list_image(args):
     print(imagestable)
 
 
-def list_iso(args):
+def list_isos(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.client != 'all':
         k = config.k
@@ -1191,7 +1191,7 @@ def list_networks(args):
     print(networkstable)
 
 
-def list_plan(args):
+def list_plans(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.extraclients:
         allclients = config.extraclients.copy()
@@ -1290,7 +1290,7 @@ def delete_app(args):
     overrides = handle_parameters(args.param, args.paramfile, cluster=True)
     kubectl = which('kubectl') or which('oc')
     if kubectl is None:
-        error("You need kubectl/oc to install apps")
+        error("You need kubectl/oc to delete apps")
         sys.exit(1)
     if 'KUBECONFIG' not in os.environ:
         warning("KUBECONFIG not set...Using .kube/config instead")
@@ -1323,7 +1323,7 @@ def list_apps(args):
     print(appstable)
 
 
-def list_cluster(args):
+def list_clusters(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.extraclients:
         kubestable = PrettyTable(["Cluster", "Type", "Plan", "Host", "Vms"])
@@ -1357,7 +1357,7 @@ def list_cluster(args):
     print(kubestable)
 
 
-def list_pool(args):
+def list_pools(args):
     short = args.short
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
@@ -1379,7 +1379,7 @@ def list_pool(args):
     print(poolstable)
 
 
-def list_vmdisk(args):
+def list_vmdisks(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
     pprint("Listing disks...")
@@ -3025,7 +3025,7 @@ def snapshotrevert_vm(args):
     sys.exit(code)
 
 
-def snapshotlist_vm(args):
+def list_vmsnapshots(args):
     name = args.name
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
@@ -3039,7 +3039,7 @@ def snapshotlist_vm(args):
             print(snapshot)
 
 
-def snapshotlist_plan(args):
+def list_plansnapshots(args):
     plan = args.name
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
@@ -3075,7 +3075,7 @@ def delete_bucket(args):
         k.delete_bucket(bucket)
 
 
-def list_bucket(args):
+def list_buckets(args):
     pprint("Listing buckets...")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
@@ -3202,7 +3202,7 @@ def switch_kubeconfig(args):
         warning("run the following command for this to apply\nunset KUBECONFIG")
 
 
-def list_keyword(args):
+def list_keywords(args):
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug)
     default = baseconfig.default
     keywordstable = PrettyTable(["Keyword", "Default Value", "Current Value"])
@@ -4644,7 +4644,7 @@ def cli():
     bucketlist_desc = 'List Buckets'
     bucketlist_parser = list_subparsers.add_parser('bucket', description=bucketlist_desc, help=bucketlist_desc,
                                                    aliases=['buckets'], parents=[output_parser])
-    bucketlist_parser.set_defaults(func=list_bucket)
+    bucketlist_parser.set_defaults(func=list_buckets)
 
     bucketfileslist_desc = 'List Bucket files'
     bucketfileslist_parser = list_subparsers.add_parser('bucket-file', description=bucketfileslist_desc,
@@ -4656,12 +4656,12 @@ def cli():
     clientlist_desc = 'List Clients'
     clientlist_parser = list_subparsers.add_parser('client', description=clientlist_desc, help=clientlist_desc,
                                                    aliases=['clients', 'host', 'hosts'], parents=[output_parser])
-    clientlist_parser.set_defaults(func=list_client)
+    clientlist_parser.set_defaults(func=list_clients)
 
     clusterlist_desc = 'List Clusters'
     clusterlist_parser = list_subparsers.add_parser('cluster', description=clusterlist_desc, help=clusterlist_desc,
                                                     aliases=['clusters', 'kube', 'kubes'], parents=[output_parser])
-    clusterlist_parser.set_defaults(func=list_cluster)
+    clusterlist_parser.set_defaults(func=list_clusters)
 
     clusterprofilelist_desc = 'List Clusterprofiles'
     clusterprofilelist_parser = list_subparsers.add_parser('clusterprofile', description=clusterprofilelist_desc,
@@ -4670,37 +4670,37 @@ def cli():
                                                                     'cluster-profiles', 'kube-profile', 'kube-profiles',
                                                                     'kubeprofile', 'kubeprofiles'],
                                                            parents=[output_parser])
-    clusterprofilelist_parser.set_defaults(func=list_clusterprofile)
+    clusterprofilelist_parser.set_defaults(func=list_clusterprofiles)
 
     confpoollist_desc = 'List Confpools'
     confpoollist_parser = list_subparsers.add_parser('confpool', description=confpoollist_desc, help=confpoollist_desc,
                                                      aliases=['confpools'], parents=[output_parser])
-    confpoollist_parser.set_defaults(func=list_confpool)
+    confpoollist_parser.set_defaults(func=list_confpools)
 
     containerimagelist_desc = 'List Container Images'
     containerimagelist_parser = list_subparsers.add_parser('container-image', description=containerimagelist_desc,
                                                            help=containerimagelist_desc,
                                                            aliases=['container-images'], parents=[output_parser])
-    containerimagelist_parser.set_defaults(func=list_containerimage)
+    containerimagelist_parser.set_defaults(func=list_containerimages)
 
     containerlist_desc = 'List Containers'
     containerlist_parser = list_subparsers.add_parser('container', description=containerlist_desc,
                                                       help=containerlist_desc, aliases=['containers'],
                                                       parents=[output_parser])
     containerlist_parser.add_argument('--filters', choices=('up', 'down'))
-    containerlist_parser.set_defaults(func=list_container)
+    containerlist_parser.set_defaults(func=list_containers)
 
     containerprofilelist_desc = 'List Container Profiles'
     containerprofilelist_parser = list_subparsers.add_parser('container-profile', description=containerprofilelist_desc,
                                                              help=containerprofilelist_desc,
                                                              aliases=['container-profiles'], parents=[output_parser])
     containerprofilelist_parser.add_argument('-s', '--short', action='store_true')
-    containerprofilelist_parser.set_defaults(func=profilelist_container)
+    containerprofilelist_parser.set_defaults(func=list_containerprofiles)
 
     vmdisklist_desc = 'List All Vm Disks'
     vmdisklist_parser = list_subparsers.add_parser('disk', parents=[output_parser], description=vmdisklist_desc,
                                                    help=vmdisklist_desc, aliases=['disks'])
-    vmdisklist_parser.set_defaults(func=list_vmdisk)
+    vmdisklist_parser.set_defaults(func=list_vmdisks)
 
     dnsentrylist_desc = 'List Dns Entries'
     dnsentrylist_parser = list_subparsers.add_parser('dns-entry', parents=[output_parser],
@@ -4726,30 +4726,30 @@ def cli():
     imagelist_desc = 'List Images'
     imagelist_parser = list_subparsers.add_parser('image', description=imagelist_desc, help=imagelist_desc,
                                                   aliases=['images', 'template', 'templates'], parents=[output_parser])
-    imagelist_parser.set_defaults(func=list_image)
+    imagelist_parser.set_defaults(func=list_images)
 
     isolist_desc = 'List Isos'
     isolist_parser = list_subparsers.add_parser('iso', description=isolist_desc, help=isolist_desc, aliases=['isos'],
                                                 parents=[output_parser])
-    isolist_parser.set_defaults(func=list_iso)
+    isolist_parser.set_defaults(func=list_isos)
 
     keywordlist_desc = 'List Keywords'
     keywordlist_parser = list_subparsers.add_parser('keyword', description=keywordlist_desc, help=keywordlist_desc,
                                                     aliases=['keywords', 'parameter', 'parameters'],
                                                     parents=[output_parser])
-    keywordlist_parser.set_defaults(func=list_keyword)
+    keywordlist_parser.set_defaults(func=list_keywords)
 
     kubeconfiglist_desc = 'List Kubeconfigs'
     kubeconfiglist_parser = list_subparsers.add_parser('kubeconfig', description=kubeconfiglist_desc,
                                                        help=kubeconfiglist_desc, aliases=['kubeconfigs'],
                                                        parents=[output_parser])
-    kubeconfiglist_parser.set_defaults(func=list_kubeconfig)
+    kubeconfiglist_parser.set_defaults(func=list_kubeconfigs)
 
     lblist_desc = 'List Load Balancers'
     lblist_parser = list_subparsers.add_parser('lb', description=lblist_desc, help=lblist_desc,
                                                aliases=['loadbalancers', 'lbs'], parents=[output_parser])
     lblist_parser.add_argument('-s', '--short', action='store_true')
-    lblist_parser.set_defaults(func=list_lb)
+    lblist_parser.set_defaults(func=list_lbs)
 
     networklist_desc = 'List Networks'
     networklist_parser = list_subparsers.add_parser('network', description=networklist_desc, help=networklist_desc,
@@ -4760,7 +4760,7 @@ def cli():
     planlist_desc = 'List Plans'
     planlist_parser = list_subparsers.add_parser('plan', description=planlist_desc, help=planlist_desc,
                                                  aliases=['plans'], parents=[output_parser])
-    planlist_parser.set_defaults(func=list_plan)
+    planlist_parser.set_defaults(func=list_plans)
 
     plantypeslist_desc = 'List Plan types'
     plantypeslist_parser = list_subparsers.add_parser('plan-type', description=plantypeslist_desc,
@@ -4772,13 +4772,13 @@ def cli():
     poollist_parser = list_subparsers.add_parser('pool', description=poollist_desc, help=poollist_desc,
                                                  aliases=['pools'], parents=[output_parser])
     poollist_parser.add_argument('-s', '--short', action='store_true')
-    poollist_parser.set_defaults(func=list_pool)
+    poollist_parser.set_defaults(func=list_pools)
 
     profilelist_desc = 'List Profiles'
     profilelist_parser = list_subparsers.add_parser('profile', description=profilelist_desc, help=profilelist_desc,
                                                     aliases=['profiles'], parents=[output_parser])
     profilelist_parser.add_argument('-s', '--short', action='store_true')
-    profilelist_parser.set_defaults(func=list_profile)
+    profilelist_parser.set_defaults(func=list_profiles)
 
     securitygrouplist_desc = 'List Security Groups'
     securitygrouplist_parser = list_subparsers.add_parser('security-group', description=securitygrouplist_desc,
@@ -4800,14 +4800,14 @@ def cli():
     vmlist_parser = list_subparsers.add_parser('vm', parents=[parent_parser, output_parser], description=vmlist_desc,
                                                help=vmlist_desc, aliases=['vms'], epilog=vmlist_epilog,
                                                formatter_class=rawhelp)
-    vmlist_parser.set_defaults(func=list_vm)
+    vmlist_parser.set_defaults(func=list_vms)
 
     plansnapshotlist_desc = 'List Snapshots Of a Plan'
     plansnapshotlist_parser = list_subparsers.add_parser('plan-snapshot', description=plansnapshotlist_desc,
                                                          help=plansnapshotlist_desc, aliases=['plan-snapshots'],
                                                          parents=[output_parser])
     plansnapshotlist_parser.add_argument('name', metavar='PLAN')
-    plansnapshotlist_parser.set_defaults(func=snapshotlist_plan)
+    plansnapshotlist_parser.set_defaults(func=list_plansnapshots)
 
     vmsnapshotlist_desc = 'List Snapshots Of a Vm'
     vmsnapshotlist_parser = list_subparsers.add_parser('snapshot', description=vmsnapshotlist_desc,
@@ -4815,7 +4815,7 @@ def cli():
                                                                                           'vm-snapshots'],
                                                        parents=[output_parser])
     vmsnapshotlist_parser.add_argument('name', metavar='VMNAME')
-    vmsnapshotlist_parser.set_defaults(func=snapshotlist_vm)
+    vmsnapshotlist_parser.set_defaults(func=list_vmsnapshots)
 
     render_desc = 'Render file'
     render_parser = subparsers.add_parser('render', description=render_desc, help=render_desc, parents=[parent_parser])
