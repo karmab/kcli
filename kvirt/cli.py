@@ -15,7 +15,7 @@ from kvirt import common
 from kvirt import examples
 from kvirt.nameutils import get_random_name
 from kvirt.baseconfig import Kbaseconfig
-from kvirt.common import error, pprint, success, warning, ssh, _ssh_credentials, container_mode
+from kvirt.common import error, pprint, success, warning, ssh, _ssh_credentials, container_mode, filter_info_plan
 from kvirt.common import get_git_version, compare_git_versions, interactive_kube, interactive_vm, convert_yaml_to_cmd
 from kvirt.config import Kconfig
 from kvirt.containerconfig import Kcontainerconfig
@@ -739,28 +739,6 @@ def _filter_list(_list, overrides={}):
                 break
         if match:
             new_list.append(vm)
-    return new_list
-
-
-def _filter_info_plan(_list, overrides={}):
-    new_list = []
-    name = overrides.get('name')
-    field = overrides.get('field')
-    value = overrides.get('value')
-    for entry in _list:
-        new_entry = entry
-        if field is not None:
-            if field not in entry:
-                continue
-            if value is not None and entry[field] != value:
-                continue
-            if name is not None:
-                if entry['name'] == name:
-                    return entry[field]
-                else:
-                    continue
-            new_entry = {entry['name']: entry[field]}
-        new_list.append(new_entry)
     return new_list
 
 
@@ -2228,7 +2206,7 @@ def info_plan(args):
                          namespace=args.namespace)
         _list = config.info_specific_plan(args.plan, quiet=quiet)
         if overrides:
-            _list = _filter_info_plan(_list, overrides)
+            _list = filter_info_plan(_list, overrides)
         if output is not None:
             _list_output(_list, output)
         else:

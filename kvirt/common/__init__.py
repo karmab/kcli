@@ -2630,3 +2630,25 @@ def process_postscripts(clusterdir, postscripts):
         script_path = os.path.expanduser(script) if script.startswith('/') else f'{currentdir}/{script}'
         pprint(f"Running script {os.path.basename(script)}")
         call(script_path, shell=True)
+
+
+def filter_info_plan(_list, overrides={}):
+    new_list = []
+    name = overrides.get('name')
+    field = overrides.get('field')
+    value = overrides.get('value')
+    for entry in _list:
+        new_entry = entry
+        if field is not None:
+            if field not in entry:
+                continue
+            if value is not None and entry[field] != value:
+                continue
+            if name is not None:
+                if entry['name'] == name:
+                    return entry[field]
+                else:
+                    continue
+            new_entry = {entry['name']: entry[field]}
+        new_list.append(new_entry)
+    return new_list
