@@ -88,6 +88,7 @@ IMAGES = {'almalinux8': f'{ALMA}/8/cloud/x86_64/images/AlmaLinux-8-GenericCloud-
           'rhel7': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7',
           'rhel8': 'https://access.redhat.com/downloads/content/479/ver=/rhel---8',
           'rhel9': 'https://access.redhat.com/downloads/content/479/ver=/rhel---9',
+          'rhel10': 'https://access.redhat.com/downloads/content/479/ver=/rhel---10',
           'ubuntu1804': f'{UBUNTU}/18.04/release/ubuntu-18.04-server-cloudimg-amd64.img',
           'ubuntu2004': f'{UBUNTU}/20.04/release/ubuntu-20.04-server-cloudimg-amd64.img',
           'ubuntu2204': f'{UBUNTU}/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img',
