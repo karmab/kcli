@@ -33,7 +33,7 @@ def _parse_vms_list(_list, overrides={}):
     return vmstable
 
 
-mcp = FastMCP("kcli")
+mcp = FastMCP("kcli-core")
 
 
 @mcp.prompt()
