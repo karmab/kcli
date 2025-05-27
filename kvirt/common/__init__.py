@@ -1673,7 +1673,9 @@ def get_oc(version='stable', tag=OPENSHIFT_TAG, macosx=False, debug=False):
         tag = '4.15.0'
     if str(tag).count('.') == 1:
         tag = f'latest-{tag}'
-    occmd += f"https://mirror.openshift.com/pub/openshift-v4/{arch}/clients/ocp/{tag}/openshift-client-{SYSTEM}.tar.gz"
+    repo = 'ocp-dev-preview' if version == 'candidate' else 'ocp'
+    baseurl = "https://mirror.openshift.com/pub/openshift-v4"
+    occmd += f"{baseurl}/{arch}/clients/{repo}/{tag}/openshift-client-{SYSTEM}.tar.gz"
     occmd += "| tar zxf - oc"
     occmd += "; chmod 700 oc"
     if debug:
@@ -1681,7 +1683,7 @@ def get_oc(version='stable', tag=OPENSHIFT_TAG, macosx=False, debug=False):
     call(occmd, shell=True)
     if container_mode():
         if macosx:
-            occmd += f"https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/{tag}/"
+            occmd += f"https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/{repo}/{tag}/"
             occmd += f"openshift-client-{SYSTEM}.tar.gz"
             occmd += "| tar zxf -C /workdir - oc"
             occmd += "; chmod 700 /workdir/oc"
