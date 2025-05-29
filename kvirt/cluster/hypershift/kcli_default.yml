@@ -11,8 +11,7 @@ info: |
     For deploying with baremetal workers, a baremetal_hosts array needs to be configured
     Although the default platform uses the none workflow, you can set it to assisted or kubevirt
     With platform kubevirt, the vms will be created directly via kubevirt hypershift integration in the hosted cluster namespace
-    With platform assisted, you will need to provision vms via a preliminary step (or use baremetal nodes) and still define baremetal_hosts array
-    or you can use the assisted_vms flags to have vms provision for you
+    With platform assisted, you will need to define baremetal_hosts array or vms will be used otherwise.
 version: latest
 tag: '4.18'
 platform:
