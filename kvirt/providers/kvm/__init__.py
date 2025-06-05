@@ -353,7 +353,6 @@ class Kvirt(object):
         boot_order = overrides.get('boot_order', False)
         bootxml = "<boot dev='hd'/><boot dev='cdrom'/><boot dev='network'/>" if not boot_order else ''
         firstdisk = None
-        ssddisks = []
         nvmedisks = []
         for index, disk in enumerate(disks):
             disksize = default_disksize
@@ -368,6 +367,7 @@ class Kvirt(object):
             diskimage = None
             diskmacosx = False
             nvme = False
+            ssd = False
             dextra = ''
             diskserial = None
             if isinstance(disk, int):
@@ -389,7 +389,7 @@ class Kvirt(object):
                         nvme = True
                 if diskinterface == 'ssd':
                     diskinterface = 'sata'
-                    ssddisks.append(index)
+                    ssd = True
                 diskpool = disk.get('pool', default_pool)
                 diskwwn = disk.get('wwn')
                 diskserial = disk.get('serial')
@@ -525,6 +525,7 @@ class Kvirt(object):
             if not nvme:
                 bootdevxml = f'<boot order="{bootdev}"/>' if boot_order else ''
                 bootdev += 1
+                ssdxml = "rotation_state='1'" if ssd else ''
                 if diskinterface in ['scsi', 'sata']:
                     addressxml = f"<address type='drive' controller='0' bus='0' target='0' unit='{scsi_index}'/>"
                 else:
@@ -533,13 +534,13 @@ class Kvirt(object):
 <driver name='qemu' type='%s' %s/>
 <source %s='%s'/>
 %s
-<target dev='%s' bus='%s'/>
+<target dev='%s' bus='%s' %s/>
 %s
 %s
 %s
 %s
-</disk>""" % (disksxml, dtype, diskformat, dextra, dsource, diskpath, backingxml, diskdev, diskbus, diskwwn, diskserial,
-                    bootdevxml, addressxml)
+</disk>""" % (disksxml, dtype, diskformat, dextra, dsource, diskpath, backingxml, diskdev, diskbus, ssdxml, diskwwn,
+                    diskserial, bootdevxml, addressxml)
             else:
                 nvmedisks.append(diskpath)
         if iso is not None:
@@ -1095,7 +1096,7 @@ class Kvirt(object):
             vcpuxml = f"<vcpu>{numcpus}</vcpu>"
         clockxml = "<clock offset='utc'/>"
         qemuextraxml = ''
-        if ignition or usermode or macosx or tpm or qemuextra is not None or nvmedisks or ssddisks:
+        if ignition or usermode or macosx or tpm or qemuextra is not None or nvmedisks:
             namespace = "xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'"
             ignitionxml = ""
             if ignition:
@@ -1144,20 +1145,14 @@ class Kvirt(object):
 <qemu:arg value='file={diskpath},format=qcow2,if=none,id=NVME{index}'/>
 <qemu:arg value='-device'/>
 <qemu:arg value='nvme,drive=NVME{index},serial=nvme-{index}'/>""".format(index=index, diskpath=diskpath)
-            ssdxml = ""
-            if ssddisks:
-                for index in range(len(ssddisks)):
-                    ssdxml += """<qemu:arg value='-set'/>
-<qemu:arg value='device.sata0-0-{index}.rotation_rate=1'/>""".format(index=index)
             qemuextraxml = """<qemu:commandline>
 {ignitionxml}
 {usermodexml}
 {macosxml}
 {freeformxml}
 {nvmexml}
-{ssdxml}
 </qemu:commandline>""".format(ignitionxml=ignitionxml, usermodexml=usermodexml, macosxml=macosxml,
-                              freeformxml=freeformxml, nvmexml=nvmexml, ssdxml=ssdxml)
+                              freeformxml=freeformxml, nvmexml=nvmexml)
         sharedxml = ""
         if sharedfolders:
             for folder in sharedfolders:
