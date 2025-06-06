@@ -1120,6 +1120,8 @@ def list_images(args):
     imagestable = PrettyTable(["Images"])
     imagestable.align["Images"] = "l"
     for image in images:
+        if isinstance(image, dict):
+            image = image.get('name')
         imagestable.add_row([image])
     print(imagestable)
 
