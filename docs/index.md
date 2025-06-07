@@ -1141,7 +1141,7 @@ Here are some examples of each type (more examples can be found in the [samples 
 mycluster:
   type: cluster
   kubetype: openshift
-  upstream: true
+  okd: true
   ctlplanes: 3
   workers: 3
 ```

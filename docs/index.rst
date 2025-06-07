@@ -1217,7 +1217,7 @@ cluster
    mycluster:
      type: cluster
      kubetype: openshift
-     upstream: true
+     okd: true
      ctlplanes: 3
      workers: 3
 
