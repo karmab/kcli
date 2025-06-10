@@ -525,7 +525,7 @@ class Kvirt(object):
             if not nvme:
                 bootdevxml = f'<boot order="{bootdev}"/>' if boot_order else ''
                 bootdev += 1
-                ssdxml = "rotation_state='1'" if ssd else ''
+                ssdxml = "rotation_rate='1'" if ssd else ''
                 if diskinterface in ['scsi', 'sata']:
                     addressxml = f"<address type='drive' controller='0' bus='0' target='0' unit='{scsi_index}'/>"
                 else:
