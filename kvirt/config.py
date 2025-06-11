@@ -568,7 +568,7 @@ class Kconfig(Kbaseconfig):
         memory = profile.get('memory', self.memory)
         if isinstance(memory, str) and (memory.lower().endswith('gb') or memory.lower().endswith('g')):
             try:
-                memory = int(memory.lower('gb', '').replace('g', '')) * 1024
+                memory = int(memory.lower().replace('gb', '').replace('g', '')) * 1024
             except Exception as e:
                 error(f"Couldnt convert memory. Hit {e}")
         pool = profile.get('pool', self.pool)
