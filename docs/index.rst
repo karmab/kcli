@@ -1764,7 +1764,8 @@ Parameter          Default Value                        Comments
 *base*             None                                 Allows you to point to a parent profile so that values are taken from parent when not found in the current profile. Scripts and commands are rather concatenated between default, father and children
 *tags*             []                                   Array of tags to apply to gcp instances (usefull when matched in a firewall rule). In the case of Kubevirt, it s rather a dict of key=value used as node selector (allowing to force vms to be scheduled on a matching node)
 *networkwait*      0                                    Delay in seconds before attempting to run further commands, to be used in environments where networking takes more time to come up
-*rhnregister*      None                                 Auto registers vms whose image starts with rhel Defaults to false. Requires to either rhnuser and rhnpassword, or rhnactivationkey and rhnorg, and an optional rhnpool
+*rhnregister*      None                                 Auto registers vms whose image starts with rhel. Defaults to false. Requires to set either rhnuser and rhnpassword, or rhnactivationkey and rhnorg, and an optional rhnpool
+*rhnunregister*    None                                 Auto unregisters vms whose image starts with rhel prior to deletion. Defaults to false. Requires to set either rhnuser and rhnpassword, or rhnactivationkey and rhnorg, and an optional rhnpool
 *rhnserver*        https://subscription.rhsm.redhat.com Red Hat Network server (for registering to a Satellite server)
 *rhnuser*          None                                 Red Hat Network user
 *rhnpassword*      None                                 Red Hat Network password
@@ -2615,3 +2616,12 @@ You wont define variables in this case, as you can leverage host_vars and groups
 When leveraging ansible this way, an inventory file will be generated on the fly for you and let in */tmp/$PLAN.inv*.
 
 You can set the variable yamlinventory to True at default, host or profile level if you want the generated file to be yaml based. In this case, it will be named */tmp/$PLAN.inv.yaml*.
+
+AI support
+==========
+
+3 mcp servers are available to be used with chat apps such as ChatGpt, Claude Desktop and so on
+
+- mcpcore.py provides core tools to start, stop,create, delete and list pool, networks, vms and clusters
+- mcpcloud.py provides additional cloud tools to create, delete and list buckets, bucketfiles, dns entries, load balancers and securitygroups/firewalls
+- mcpbm.py provides baremetal tools that allow to get info, start, stop, reset and update a Baremetal Host via redfish
