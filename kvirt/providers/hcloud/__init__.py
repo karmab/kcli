@@ -302,7 +302,8 @@ class Khcloud():
         if vm.labels:
             for key, value in vm.labels.items():
                 if key in METADATA_FIELDS:
-                    yamlinfo[key] = value
+                    if yamlinfo.get(key) is None:
+                        yamlinfo[key] = value
         if debug:
             yamlinfo['debug'] = vm
         return yamlinfo
