@@ -448,7 +448,7 @@ class Khcloud():
         for image in images:
             results.append({
                 'name': image.name or str(image.id),
-                'id': image.id_or_name,
+                'id': str(image.id_or_name),
                 'description': image.description,
                 'type': image.type,
                 'architecture': image.architecture
