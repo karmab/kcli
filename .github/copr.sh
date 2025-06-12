@@ -8,7 +8,7 @@ export GIT_CUSTOM_VERSION=0.0.git.$(date "+%Y%m%d%H%M").$(git rev-parse --short 
 export GIT_DIR_VCS=git+https://github.com/karmab/kcli#$(git rev-parse HEAD):
 echo Using GIT_CUSTOM_VERSION $GIT_CUSTOM_VERSION
 envsubst < kcli.spec > $HOME/rpmbuild/SOURCES/kcli.spec
-git log -n 30 --format='* %ad %an <%ae> %n- %s' --date=format:"%a %b %d %Y" >> $HOME/rpmbuild/SOURCES/kcli.spec
+git --no-pager log -n 30 --format="* %ad %an <%ae> %n- %s" --date=format:"%a %b %d %Y" >> $HOME/rpmbuild/SOURCES/kcli.spec
 
 rpmbuild -bs $HOME/rpmbuild/SOURCES/kcli.spec
 copr-cli build --nowait kcli $HOME/rpmbuild/SRPMS/*src.rpm
