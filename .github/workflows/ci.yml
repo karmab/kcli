@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 30
       - name: Install Dependencies
         run: sudo .github/prep.sh
         shell: bash
