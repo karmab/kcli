@@ -447,13 +447,13 @@ class Khcloud():
         results = []
         for image in images:
             results.append({
-                'name': image.name or image.id,
+                'name': image.name or str(image.id),
                 'id': image.id_or_name,
                 'description': image.description,
                 'type': image.type,
                 'architecture': image.architecture
             })
-        return sorted([i['name'] for i in results])
+        return sorted(results, key=lambda x: x['name'])
 
     def add_image(self, url, pool, cmd=None, name=None, size=None, convert=False):
         os.system("curl -Lk %s > %s" % (url, os.path.basename(url)))

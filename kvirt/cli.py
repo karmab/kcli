@@ -1120,7 +1120,7 @@ def list_images(args):
     imagestable = PrettyTable(["Images"])
     imagestable.align["Images"] = "l"
     for image in images:
-        imagestable.add_row([image])
+        imagestable.add_row([image["name"]])
     print(imagestable)
 
 
@@ -1135,7 +1135,7 @@ def list_isos(args):
     isostable = PrettyTable(["Iso"])
     isostable.align["Iso"] = "l"
     for iso in isos:
-        isostable.add_row([iso])
+        isostable.add_row([iso["name"]])
     print(isostable)
 
 

@@ -121,7 +121,7 @@ class Kazure(object):
         elif ':' in image and image.count(':') == 2:
             publisher, offer, sku = image.split(':')
             version = 'latest'
-        elif image in self.volumes():
+        elif image in [i["name"] for i in self.volumes()]:
             publisher, offer, sku, version = None, None, None, None
         else:
             return {'result': 'failure', 'reason': f'Invalid image {image}'}
@@ -552,13 +552,15 @@ class Kazure(object):
         images = []
         if iso:
             return []
-        images.extend([image.name for image in self.compute_client.images.list()])
+        images.extend([{ "name": image.name } for image in self.compute_client.images.list()])
         for publisher in publishers:
             for o in self.compute_client.virtual_machine_images.list_offers(self.location, publisher):
                 offer = o.name
                 for s in self.compute_client.virtual_machine_images.list_skus(self.location, publisher, offer):
-                    images.append(f"{publisher}:{offer}:{s.name}")
-        return sorted(images)
+                    images.append({
+                        "name": f"{publisher}:{offer}:{s.name}"
+                    })
+        return sorted(images, key=lambda x: x['name'])
 
     def delete(self, name, snapshots=False):
         compute_client = self.compute_client

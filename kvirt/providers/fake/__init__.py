@@ -7,7 +7,11 @@ class Kfake():
         self.conn = 'fake'
 
     def volumes(self, iso=True):
-        return glob.glob('*.iso')
+        images = []
+        isos = glob.glob('*.iso')
+        for iso in isos:
+            images.append({'name': iso})
+        return images
 
     def add_image(self, url, pool, cmds=[], name=None, size=None, convert=False):
         os.system("curl -Lk %s > %s" % (url, os.path.basename(url)))

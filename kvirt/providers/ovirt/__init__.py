@@ -697,12 +697,12 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                 if str(pool.type) == 'iso':
                     file_service = sd_service.files_service()
                     for isofile in file_service.list():
-                        isos.append(isofile._name)
+                        isos.append({ "name": isofile._name })
                 else:
                     disks_service = sd_service.disks_service()
                     for disk in disks_service.list():
                         if disk.name.endswith('.iso'):
-                            isos.append(disk.name)
+                            isos.append({ "name": disk.name })
             return isos
         else:
             images = []
@@ -710,7 +710,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
             templateslist = templates_service.list()
             for template in templateslist:
                 if template.name != 'Blank':
-                    images.append(template.name)
+                    images.append({ "name": template.name })
             return images
 
     def delete(self, name, snapshots=False):
@@ -1000,7 +1000,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         downloaded = False
         shortimage = os.path.basename(url).split('?')[0]
         iso = True if shortimage.endswith('.iso') or name.endswith('.iso') else False
-        if shortimage in self.volumes(iso=iso):
+        if shortimage in [i["name"] for i in self.volumes(iso=iso)]:
             pprint(f"Template {shortimage} already there")
             return {'result': 'success'}
         system_service = self.conn.system_service()

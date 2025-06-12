@@ -496,7 +496,7 @@ class Kconfig(Kbaseconfig):
         tunnel = self.tunnel
         esx = self.type == 'vsphere' and self.k.esx
         profile = profile or overrides.get('image') or 'kvirt'
-        full_volumes = self.k.volumes()
+        full_volumes = [i["name"] for i in self.k.volumes()]
         volumes = [os.path.basename(v) for v in full_volumes]
         vmprofiles = self.list_profiles()
         if customprofile:
@@ -1780,7 +1780,7 @@ class Kconfig(Kbaseconfig):
                     k.create_pool(pool, poolpath)
         if imageentries and not onlyassets:
             pprint("Deploying Images...")
-            images = [os.path.basename(t) for t in k.volumes()]
+            images = [os.path.basename(t["name"]) for t in k.volumes()]
             for entry in imageentries:
                 image = next(iter(entry))
                 imageprofile = entry[image]

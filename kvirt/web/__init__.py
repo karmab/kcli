@@ -67,7 +67,7 @@ class Kweb():
         def vmcreateform():
             config = Kconfig()
             profiles = list(config.profiles.keys())
-            profiles.extend([os.path.basename(v) for v in config.k.volumes()])
+            profiles.extend([os.path.basename(v["name"]) for v in config.k.volumes()])
             disks = []
             for disk in config.disks:
                 if isinstance(disk, int):
@@ -1115,7 +1115,7 @@ class Kweb():
         def imagestable():
             config = Kconfig()
             k = config.k
-            images = k.volumes()
+            images = [i["name"] for i in k.volumes()]
             return {'images': images, 'readonly': readonly}
 
         @app.route('/imagesindex')
@@ -1188,7 +1188,7 @@ class Kweb():
         def isostable():
             config = Kconfig()
             k = config.k
-            isos = k.volumes(iso=True)
+            isos = [i["name"] for i in k.volumes(iso=True)]
             return {'isos': isos, 'readonly': readonly}
 
         @app.route('/isosindex')

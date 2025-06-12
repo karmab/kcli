@@ -425,7 +425,7 @@ class Kpacket(object):
         return None
 
     def volumes(self, iso=False):
-        return [image.slug for image in self.conn.list_operating_systems()]
+        return [{ "name": image.slug } for image in self.conn.list_operating_systems()]
 
     def delete(self, name, snapshots=False):
         devices = [d for d in self.conn.list_devices(self.project) if d.hostname == name]

@@ -2104,16 +2104,16 @@ class Kvirt(object):
                 thinpool = list(root.iter('product'))[0].get('name')
                 for volume in self.thinimages(poolpath, thinpool):
                     if volume.endswith('qcow2') or volume.endswith('qc2') or '.' not in volume:
-                        images.extend(f"{poolpath}/{volume}")
+                        images.append({ "name": f"{poolpath}/{volume}" })
             for volume in pool.listVolumes():
                 if volume.endswith('iso') or volume.endswith('fd'):
-                    isos.append(f"{poolpath}/{volume}")
+                    isos.append({ "name": f"{poolpath}/{volume}" })
                 elif volume.endswith('qcow2') or volume.endswith('qc2') or '.' not in volume:
-                    images.append(f"{poolpath}/{volume}")
+                    images.append({ "name": f"{poolpath}/{volume}" })
         if iso:
-            return sorted(isos, key=lambda s: s.lower())
+            return sorted(isos, key=lambda s: s["name"].lower())
         else:
-            return sorted(images, key=lambda s: s.lower())
+            return sorted(images, key=lambda s: s["name"].lower())
 
     def dnsinfo(self, name):
         conn = self.conn
@@ -2769,7 +2769,7 @@ class Kvirt(object):
                 iso = os.path.abspath(iso)
             else:
                 source = None
-                isos = self.volumes(iso=True)
+                isos = [i["name"] for i in self.volumes(iso=True)]
                 isofound = False
                 for i in isos:
                     if i == iso:

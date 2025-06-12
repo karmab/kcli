@@ -1942,7 +1942,7 @@ def generate_rhcos_iso(k, cluster, pool, version='latest', installer=False, arch
     vsphere = 'vsphere' in str(type(k))
     proxmox = 'proxmox' in str(type(k))
     name = f'{cluster}-iso' if kubevirt else f'{cluster}.iso'
-    pool_isos_names = [os.path.basename(iso) for iso in k.volumes(iso=True)]
+    pool_isos_names = [os.path.basename(iso["name"]) for iso in k.volumes(iso=True)]
     if name in pool_isos_names:
         warning(f"Deleting old iso {name}")
         k.delete_image(name)

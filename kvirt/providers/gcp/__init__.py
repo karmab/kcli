@@ -736,12 +736,12 @@ class Kgcp(object):
             image_items = results.get('items', [])
             for image in image_items:
                 if project == self.project:
-                    images.append(image['name'])
+                    images.append({ "name": image['name'] })
                 elif 'family' not in image:
                     continue
                 elif image['family'] not in images:
-                    images.append(image['family'])
-        return sorted(images)
+                    images.append({ "name": image['family'] })
+        return sorted(images, key=lambda x: x['name'])
 
     def delete(self, name, snapshots=False):
         conn = self.conn

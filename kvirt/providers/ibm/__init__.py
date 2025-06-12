@@ -537,11 +537,11 @@ class Kibm(object):
                 if image['status'] not in ['available', 'deprecated'] or \
                         image['operating_system']['name'].startswith('windows'):
                     continue
-                image_list.append(image['name'])
+                image_list.append({ "name": image['name'] })
         except ApiException as e:
             error(f"Unable to retrieve volume information. Hit {e}")
             return image_list
-        return sorted(image_list, key=str.lower)
+        return sorted(image_list, key= lambda x: x['name'].lower())
 
     def delete(self, name, snapshots=False):
         conn = self.conn
@@ -776,7 +776,7 @@ class Kibm(object):
             return {'result': 'failure', 'reason': f"Bucket {pool} doesn't exist"}
         shortimage = os.path.basename(url).split('?')[0]
         shortimage_unzipped = shortimage.replace('.gz', '')
-        if shortimage_unzipped in self.volumes():
+        if shortimage_unzipped in [i["name"] for i in self.volumes()]:
             return {'result': 'success'}
         delete_cos_image = False
         if shortimage_unzipped not in self.list_bucketfiles(pool):

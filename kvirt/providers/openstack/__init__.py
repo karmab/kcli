@@ -485,13 +485,13 @@ class Kopenstack(object):
         for img in glance.images.list():
             imagename = img.name
             if imagename.endswith('.iso'):
-                isos.append(imagename)
+                isos.append({ "name": imagename })
             else:
-                images.append(imagename)
+                images.append({ "name": imagename })
         if iso:
-            return sorted(isos)
+            return sorted(isos, key=lambda x: x['name'])
         else:
-            return sorted(images)
+            return sorted(images, key=lambda x: x['name'])
 
     def delete(self, name, snapshots=False):
         cinder = self.cinder

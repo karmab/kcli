@@ -122,7 +122,7 @@ class Kubevirt():
             elif ':' not in image:
                 warning("Adding :latest to image")
                 image += ':latest'
-            if image not in self.volumes():
+            if image not in [i["name"] for i in self.volumes()]:
                 if image in ['alpine', 'cirros', 'fedora-cloud']:
                     image = f"kubevirt/{image}-container-disk-demo"
                     pprint(f"Using container disk {image} as image")
@@ -404,7 +404,7 @@ class Kubevirt():
             pvcs.append(pvc)
             sizes.append(disksize)
         if iso is not None:
-            if iso not in self.volumes(iso=True):
+            if iso not in [i["name"] for i in self.volumes(iso=True)]:
                 return {'result': 'failure', 'reason': f"You don't have iso {iso}"}
             diskname = f'{name}-iso'
             iso_boot_order = len(disks) + 1 if boot_order else 2
@@ -930,7 +930,6 @@ class Kubevirt():
         namespace = self.namespace
         isos = []
         allimages = []
-        allimages = []
         harvester = self.harvester
         if harvester:
             items = _get_all_resources(kubectl, 'virtualmachineimage', namespace, debug=self.debug)
@@ -943,11 +942,12 @@ class Kubevirt():
                          'cdi.kubevirt.io/storage.condition.running.reason' in p['metadata']['annotations'] and
                          p['metadata']['annotations']['cdi.kubevirt.io/storage.condition.running.reason'] == completed]
         if iso:
-            isos = [i for i in allimages if i.endswith('iso')]
+            isos = [{ "name": i } for i in allimages if i.endswith('iso')]
             return isos
         else:
-            images = [common.filter_compression_extension(i) for i in allimages if not i.endswith('iso')]
-            return sorted(images + CONTAINERDISKS)
+            images = [{ "name": common.filter_compression_extension(i) } for i in allimages if not i.endswith('iso')]
+            images = images + [{ "name": i } for i in CONTAINERDISKS]
+            return sorted(images, key=lambda x: x['name'])
 
     def delete(self, name, snapshots=False):
         kubectl = self.kubectl
@@ -1042,7 +1042,7 @@ class Kubevirt():
             error(f"VM {name} not found")
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         if iso is not None:
-            if iso not in self.volumes(iso=True):
+            if iso not in [i["name"] for i in self.volumes(iso=True)]:
                 return {'result': 'failure', 'reason': f"you don't have iso {iso}"}
             good_iso = iso.replace('_', '-').replace('.', '-').lower()
         found = False

@@ -788,8 +788,10 @@ class Kaws(object):
             if 'beta' in name.lower():
                 continue
             else:
-                images.append(f"{name} - {_id}")
-        return sorted(images, key=str.lower)
+                images.append({
+                    "name": f"{name} - {_id}"
+                })
+        return sorted(images, key=lambda x: x['name'].lower())
 
     def delete(self, name, snapshots=False):
         conn = self.conn
