@@ -2,7 +2,6 @@
 
 import base64
 from getpass import getuser
-import glob
 import hashlib
 from hcloud import Client, APIException
 from hcloud.servers import ServerCreatePublicNetwork
@@ -443,8 +442,18 @@ class Khcloud():
 
         return info["ip"]
 
-    def volumes(self, iso=True):
-        return glob.glob('*.iso')
+    def volumes(self, iso=False):
+        images = self.conn.images.get_all()
+        results = []
+        for image in images:
+            results.append({
+                'name': image.name or image.id,
+                'id': image.id_or_name,
+                'description': image.description,
+                'type': image.type,
+                'architecture': image.architecture
+            })
+        return [i['name'] for i in sorted(results)]
 
     def add_image(self, url, pool, cmd=None, name=None, size=None, convert=False):
         os.system("curl -Lk %s > %s" % (url, os.path.basename(url)))
