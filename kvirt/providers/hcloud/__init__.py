@@ -256,7 +256,7 @@ class Khcloud():
         yamlinfo['flavor'] = vm.server_type.name
         flavor_info = self.info_flavor(yamlinfo['flavor'], vm.server_type)
         yamlinfo['numcpus'], yamlinfo['memory'] = flavor_info['cpus'], flavor_info['memory']
-        yamlinfo['image'] = vm.image.id_or_name
+        yamlinfo['image'] = str(vm.image.id_or_name)
         yamlinfo['user'] = common.get_user(vm.image.name or vm.image.description)
         yamlinfo['creationdate'] = vm.created.strftime("%d-%m-%Y %H:%M")
         nets = []
@@ -453,7 +453,7 @@ class Khcloud():
                 'type': image.type,
                 'architecture': image.architecture
             })
-        return sorted([i['name'] for i in results])
+        return sorted(results, key=lambda x: x['name'])
 
     def add_image(self, url, pool, cmd=None, name=None, size=None, convert=False):
         os.system("curl -Lk %s > %s" % (url, os.path.basename(url)))

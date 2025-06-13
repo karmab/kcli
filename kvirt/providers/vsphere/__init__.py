@@ -984,7 +984,7 @@ class Ksphere:
 
     def volumes(self, iso=False):
         if iso:
-            return self._getisos()
+            return [{ "name": i } for i in self._getisos()]
         results = []
         si = self.si
         rootFolder = self.rootFolder
@@ -998,8 +998,8 @@ class Ksphere:
             for number, dev in enumerate(devices):
                 if type(dev).__name__ == 'vim.vm.device.VirtualDisk':
                     prefix = '' if self.restricted else f'{dev.backing.datastore.name}/'
-                    results.append(f'{prefix}{v.name}')
-        return sorted(results)
+                    results.append({ "name": f'{prefix}{v.name}' })
+        return sorted(results, key=lambda x: x['name'])
 
     def update_metadata(self, name, metatype, metavalue, append=False):
         si = self.si
@@ -1367,7 +1367,7 @@ class Ksphere:
             msg = "qemu-img is required for conversion"
             error(msg)
             return {'result': 'failure', 'reason': msg}
-        if shortimage in [os.path.basename(v) for v in self.volumes()]:
+        if shortimage in [os.path.basename(v["name"]) for v in self.volumes()]:
             pprint(f"Template {shortimage} already there")
             return {'result': 'success'}
         if not find(si, rootFolder, vim.Datastore, pool):

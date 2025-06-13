@@ -813,7 +813,7 @@ def create(config, plandir, cluster, overrides):
                 image = os.path.basename(os.path.splitext(image_url)[0])
                 if provider == 'ibm':
                     image = image.replace('.', '-').replace('_', '-').lower()
-                images = [v for v in k.volumes() if image in v]
+                images = [v["name"] for v in k.volumes() if image in v["name"]]
                 if not images:
                     result = config.download_image(pool=config.pool, image=image, url=image_url,
                                                    size=data.get('kubevirt_disk_size'))
@@ -825,7 +825,7 @@ def create(config, plandir, cluster, overrides):
             warning(f"Assuming image {image} is available")
         else:
             pprint(f"Checking if image {image} is available")
-            images = [v for v in k.volumes() if image in v]
+            images = [v["name"] for v in k.volumes() if image in v["name"]]
             if not images:
                 msg = f"Missing {image}. Indicate correct image in your parameters file..."
                 return {'result': 'failure', 'reason': msg}

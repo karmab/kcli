@@ -993,7 +993,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 image = image.replace('.', '-').replace('_', '-').lower()
             if provider == 'vsphere':
                 image = image.replace(f'.{arch}', '')
-            images = [v for v in k.volumes() if image in v]
+            images = [v["name"] for v in k.volumes() if image in v["name"]]
             if not images:
                 result = config.download_image(pool=config.pool, image=image, url=image_url,
                                                size=data['kubevirt_disk_size'])
@@ -1004,7 +1004,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         warning(f"Assuming image {image} is available")
     else:
         pprint(f"Checking if image {image} is available")
-        images = [v for v in k.volumes() if image in v]
+        images = [v["name"] for v in k.volumes() if image in v["name"]]
         if not images:
             msg = f"Missing {image}. Indicate correct image in your parameters file..."
             return {'result': 'failure', 'reason': msg}

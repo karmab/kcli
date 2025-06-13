@@ -280,7 +280,7 @@ class Ksushy():
                     token_iso = os.path.basename(image).split('?')[0]
                     if token_iso != iso:
                         iso = f"boot-{token_iso}.iso"
-                isos = [os.path.basename(i) for i in config.k.volumes(iso=True)]
+                isos = [os.path.basename(i["name"]) for i in config.k.volumes(iso=True)]
                 if iso not in isos:
                     result = config.download_image(pool=config.pool, image=iso, url=image)
                     if result['result'] != 'success':

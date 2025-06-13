@@ -117,8 +117,9 @@ class Kbase(object):
     def ip(self, name):
         print("not implemented")
 
-# should return a list of available images, or isos ( if iso is set to True
-    def volumes(self, iso=False):
+# should return a list of available images, or isos ( if iso is set to True )
+# The type should be a list of dicts with a atleast a "name" key
+    def volumes(self, iso=False) -> list[dict]:
         print("not implemented")
         return []
 
