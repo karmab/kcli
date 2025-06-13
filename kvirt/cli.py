@@ -2621,7 +2621,7 @@ def ssh_vm(args):
             user = config.vmuser if config.vmuser is not None else u
         if vmport is None and config.vmport is not None:
             vmport = config.vmport
-        if config.type in ['kvm', 'packet'] and '.' not in ip and ':' not in ip:
+        if config.type == 'kvm' and '.' not in ip and ':' not in ip:
             vmport = ip
             ip = config.host
         sshcommand = common.ssh(name, ip=ip, user=user, local=local, remote=remote, tunnel=tunnel,
@@ -2682,7 +2682,7 @@ def scp_vm(args):
             user = config.vmuser if config.vmuser is not None else u
         if vmport is None and config.vmport is not None:
             vmport = config.vmport
-        if config.type in ['kvm', 'packet'] and '.' not in ip and ':' not in ip:
+        if config.type == 'kvm' and '.' not in ip and ':' not in ip:
             vmport = ip
             ip = '127.0.0.1'
         scpcommand = common.scp(name, ip=ip, user=user, source=source, destination=destination, recursive=recursive,
@@ -3890,12 +3890,6 @@ def cli():
                                                                       description=ovirtprovidercreate_desc)
     ovirtprovidercreate_parser.add_argument('-p', '--pip', action='store_true', help='Force pip installation')
     ovirtprovidercreate_parser.set_defaults(func=install_provider)
-
-    packetprovidercreate_desc = 'Install Packet Provider'
-    packetprovidercreate_parser = providercreate_subparsers.add_parser('packet', help=packetprovidercreate_desc,
-                                                                       description=packetprovidercreate_desc)
-    packetprovidercreate_parser.add_argument('-p', '--pip', action='store_true', help='Force pip installation')
-    packetprovidercreate_parser.set_defaults(func=install_provider)
 
     proxmoxprovidercreate_desc = 'Install Proxmox Provider'
     proxmoxprovidercreate_parser = providercreate_subparsers.add_parser('proxmox', help=proxmoxprovidercreate_desc,

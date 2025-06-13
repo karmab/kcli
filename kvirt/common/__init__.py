@@ -2398,10 +2398,6 @@ def install_provider(provider, pip=False):
             cmd += 'python3-neutronclient python3-novaclient python3-swiftclient'
     elif provider == 'ovirt':
         cmd = 'pip3 install ovirt-engine-sdk-python' if pip else f'{pkgmgr} -y install python3-ovirt-engine-sdk4'
-    elif provider == 'packet':
-        if not pip:
-            warning("Using pip as this is the only way for this provider")
-        cmd = 'pip3 install packet-python'
     elif provider == 'proxmox':
         if not pip:
             warning("Using pip as this is the only way for this provider")

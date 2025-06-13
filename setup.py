@@ -13,12 +13,11 @@ GCP = ['google-api-python-client', 'google-auth-httplib2', 'google-cloud-dns', '
 OPENSTACK = ['python-cinderclient', 'python-neutronclient', 'python-glanceclient', 'python-keystoneclient',
              'python-novaclient', 'python-swiftclient']
 OVIRT = ['ovirt-engine-sdk-python']
-PACKET = ['packet-python']
 PROXMOX = ['proxmoxer']
 VSPHERE = ['pyvmomi', 'cryptography']
 IBMCLOUD = ['google-crc32c==1.1.2', 'ibm_vpc', 'ibm-cos-sdk', 'ibm-platform-services', 'ibm-cloud-networking-services']
 EXTRAS = ['pyghmi', 'podman', 'websockify']
-ALL = EXTRAS + AWS + GCP + OPENSTACK + OVIRT + PACKET + VSPHERE + IBMCLOUD + AZURE + HCLOUD + PROXMOX
+ALL = EXTRAS + AWS + GCP + OPENSTACK + OVIRT + VSPHERE + IBMCLOUD + AZURE + HCLOUD + PROXMOX
 
 description = 'Provisioner/Manager for Libvirt/Vsphere/Aws/Gcp/Hcloud/Kubevirt/Ovirt/Openstack/IBM Cloud and containers'
 long_description = description
@@ -48,7 +47,6 @@ setup(
         'ibm': IBMCLOUD,
         'openstack': OPENSTACK,
         'ovirt': OVIRT,
-        'packet': PACKET,
         'proxmox': PROXMOX,
         'vsphere': VSPHERE
     },

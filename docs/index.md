@@ -12,7 +12,6 @@ This tool is meant to provide a unified user experience when interacting with th
 - Ibmcloud
 - oVirt
 - Openstack
-- Packet
 - Proxmox
 
 Beyond handling virtual machines, Kubernetes clusters can also be managed for the following types:
@@ -570,31 +569,6 @@ If you install manually from pip, you might need to install pycurl manually with
 
 ```
 pip install --no-cache-dir --global-option=build_ext --global-option="-L/usr/local/opt/openssl/lib" --global-option="-I/usr/local/opt/openssl/include"  pycurl
-```
-
-### Packet provider
-
-```
-myvpacket:
-  type: packet
-  auth_token: xxxx
-  project: kcli
-  facility: ams1
-  tunnelhost: wilibonka.mooo.com
-```
-
-The following parameters are specific to packet:
-
-- auth_token.
-- project
-- facility. Can be omitted in which case you will have to specify on which facility to deploy vms.
-- tunnelhost. Optional. When creating vms using ignition, the generated ignition file will be copied to the tunnelhost so it can be served (typically via web)
-- tunneldir. Where to copy the ignition files when using a tunnelhost. Defaults to */var/www/html*
-
-To use this provider with kcli rpm, you'll need to install packet-python (from pip):
-
-```
-pip3 install packet-python
 ```
 
 ### Proxmox provider
@@ -1631,7 +1605,7 @@ We provide a complete list of parameters
 |*cpupinning*|[]|cpupinning conf to apply|
 |*memory*|512M||
 |*memoryhotplug*|False||
-|*flavor*|| Specific to gcp, aws, openstack and packet|
+|*flavor*|| Specific to gcp, aws and openstack|
 |*guestid*|guestrhel764||
 |*pool*|default||
 |*image*|None|Should point to your base cloud image(optional). You can either specify short name or complete path. If you omit the full path and your image lives in several pools, the one from last (alphabetical) pool will be used\

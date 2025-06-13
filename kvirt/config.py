@@ -40,7 +40,7 @@ from time import sleep
 import webbrowser
 import yaml
 
-cloudplatforms = ['aws', 'azure', 'gcp', 'packet', 'ibmcloud', 'hcloud']
+cloudplatforms = ['aws', 'azure', 'gcp', 'ibmcloud', 'hcloud']
 
 
 def dependency_error(provider, exception=None):
@@ -343,24 +343,6 @@ class Kconfig(Kbaseconfig):
                             filtervms=filtervms, filteruser=filteruser, filtertag=filtertag, category=category,
                             basefolder=basefolder, dvs=dvs, import_network=import_network, timeout=timeout,
                             force_pool=force_pool, restricted=restricted, serial=serial)
-            elif self.type == 'packet':
-                auth_token = options.get('auth_token')
-                if auth_token is None:
-                    error("Missing auth_token in the configuration. Leaving")
-                    sys.exit(1)
-                project = options.get('project')
-                if project is None:
-                    error("Missing project in the configuration. Leaving")
-                    sys.exit(1)
-                facility = options.get('facility')
-                try:
-                    from kvirt.providers.packet import Kpacket
-                except Exception as e:
-                    exception = e if debug else None
-                    dependency_error('packet', exception)
-                k = Kpacket(auth_token, project, facility=facility, debug=debug,
-                            tunnelhost=self.tunnelhost, tunneluser=self.tunneluser, tunnelport=self.tunnelport,
-                            tunneldir=self.tunneldir)
             elif self.type == 'proxmox':
                 user = options.get('user')
                 if user is None:
@@ -2487,32 +2469,28 @@ class Kconfig(Kbaseconfig):
         timeout = 0
         while ip is None:
             info = k.info(name)
-            if config.type == 'packet' and info.get('status') != 'active':
-                warning("Waiting for node to be active")
-                ip = None
-            else:
-                user, ip = config.vmuser or info.get('user'), info.get('ip')
-                if config.type == 'kubevirt':
-                    if k.access_mode == 'NodePort':
-                        vmport = info.get('nodeport')
-                        if hostip is None:
-                            hostip = k.node_host(name=info.get('host'))
-                        ip = hostip
-                    elif k.access_mode == 'LoadBalancer':
-                        ip = info.get('loadbalancerip')
-                if user is not None and ip is not None:
-                    if config.type == 'openstack' and info.get('privateip') == ip and k.external_network is not None\
-                            and info.get('nets')[0]['net'] != k.external_network:
-                        warning("Waiting for floating ip instead of a private ip...")
+            user, ip = config.vmuser or info.get('user'), info.get('ip')
+            if config.type == 'kubevirt':
+                if k.access_mode == 'NodePort':
+                    vmport = info.get('nodeport')
+                    if hostip is None:
+                        hostip = k.node_host(name=info.get('host'))
+                    ip = hostip
+                elif k.access_mode == 'LoadBalancer':
+                    ip = info.get('loadbalancerip')
+            if user is not None and ip is not None:
+                if config.type == 'openstack' and info.get('privateip') == ip and k.external_network is not None\
+                        and info.get('nets')[0]['net'] != k.external_network:
+                    warning("Waiting for floating ip instead of a private ip...")
+                    ip = None
+                else:
+                    testcmd = common.ssh(name, user=user, ip=ip, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
+                                         tunnelport=config.tunnelport, tunneluser=config.tunneluser,
+                                         insecure=config.insecure, cmd='id -un', vmport=vmport,
+                                         identityfile=identityfile, password=False)
+                    if os.popen(testcmd).read().strip() != user:
+                        warning("Gathered ip not functional yet...")
                         ip = None
-                    else:
-                        testcmd = common.ssh(name, user=user, ip=ip, tunnel=config.tunnel, tunnelhost=config.tunnelhost,
-                                             tunnelport=config.tunnelport, tunneluser=config.tunneluser,
-                                             insecure=config.insecure, cmd='id -un', vmport=vmport,
-                                             identityfile=identityfile, password=False)
-                        if os.popen(testcmd).read().strip() != user:
-                            warning("Gathered ip not functional yet...")
-                            ip = None
             pprint("Waiting for vm to be accessible...")
             sleep(5)
             timeout += 5
