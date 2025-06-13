@@ -713,7 +713,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                     images.append(template.name)
             return images
 
-    def delete(self, name, snapshots=False, keep_disks=False):
+    def delete(self, name, snapshots=False):
         vmsearch = self.vms_service.list(search=f'name={name}')
         if not vmsearch:
             error(f"VM {name} not found")
@@ -927,6 +927,26 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                 path = disk._alias
                 volumes[diskname] = {'pool': pool, 'path': path}
         return volumes
+
+    def detach_disks(self, name):
+        pprint(f"Detaching non primary disks from {name}")
+        vmsearch = self.vms_service.list(search=f'name={name}')
+        if not vmsearch:
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
+        vm = self.vms_service.vm_service(vmsearch[0].id)
+        disk_attachments_service = vm.disk_attachments_service()
+        all_disks = disk_attachments_service.list()
+        vm_disks = all_disks[1:] if len(all_disks) > 1 else []
+        for disk in vm_disks:
+            disk_attachment_service = disk_attachments_service.attachment_service(disk.id)
+            disk_attachment_service.update(types.DiskAttachment(active=False))
+            while True:
+                sleep(5)
+                disk_attachment = disk_attachment_service.get()
+                if not disk_attachment.active:
+                    break
+        return {'result': 'success'}
 
     def add_nic(self, name, network, model='virtio'):
         vmsearch = self.vms_service.list(search=f'name={name}')

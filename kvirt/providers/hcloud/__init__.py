@@ -9,7 +9,7 @@ from hcloud.load_balancers import LoadBalancerAlgorithm, LoadBalancerService, Lo
 from hcloud.load_balancers import LoadBalancerTarget
 import json
 from kvirt import common
-from kvirt.common import error, warning, get_ssh_pub_key
+from kvirt.common import error, pprint, warning, get_ssh_pub_key
 from kvirt.defaults import METADATA_FIELDS
 import os
 
@@ -171,7 +171,7 @@ class Khcloud():
 
         return {'result': 'success'}
 
-    def delete(self, name, snapshots=False, keep_disks=False):
+    def delete(self, name, snapshots=False):
         server = self.conn.servers.get_by_name(name)
         if server is None:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
@@ -508,6 +508,19 @@ class Khcloud():
                 if not success:
                     return {'result': 'failure', 'reason': f"failed to delete volume {diskname}"}
                 break
+        return {'result': 'success'}
+
+    def detach_disks(self, name):
+        pprint(f"Detaching non primary disks from {name}")
+        server = self.conn.servers.get_by_name(name)
+        if server is None:
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
+        volumes = server.volumes[1:] if len(server.volumes) > 1 else []
+        for volume in volumes:
+            response = volume.detach()
+            response.wait_until_finished(300)
+            if response.error:
+                return {'result': 'failure', 'reason': json.dumps(response.error)}
         return {'result': 'success'}
 
     def list_disks(self):

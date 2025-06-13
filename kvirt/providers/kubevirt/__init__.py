@@ -949,7 +949,7 @@ class Kubevirt():
             images = [common.filter_compression_extension(i) for i in allimages if not i.endswith('iso')]
             return sorted(images + CONTAINERDISKS)
 
-    def delete(self, name, snapshots=False, keep_disks=False):
+    def delete(self, name, snapshots=False):
         kubectl = self.kubectl
         namespace = self.namespace
         vm = _get_resource(kubectl, 'vm', name, namespace, debug=self.debug)
@@ -1850,3 +1850,7 @@ class Kubevirt():
     def list_dns_zones(self):
         print("not implemented")
         return []
+
+    def detach_disks(self, name):
+        print("not implemented")
+        return {'result': 'success'}

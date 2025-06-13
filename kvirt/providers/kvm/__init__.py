@@ -2133,7 +2133,7 @@ class Kvirt(object):
                 domain = e.text
         return dnsclient, domain
 
-    def delete(self, name, snapshots=False, keep_disks=False):
+    def delete(self, name, snapshots=False):
         bridged = False
         ignition = False
         conn = self.conn
@@ -2175,11 +2175,7 @@ class Kvirt(object):
                 imagefiles = [element.find('source').get('file'), element.find('source').get('dev'),
                               element.find('source').get('volume')]
                 imagefile = next(item for item in imagefiles if item is not None)
-                if f"{name}_" in imagefile:
-                    disk_index = int(os.path.basename(imagefile).replace(f'{name}_', '').replace('.img', ''))
-                    if disk_index == 0 or not keep_disks:
-                        disks.append(imagefile)
-                elif imagefile.endswith(f"{name}.ISO") or f"{name}.img" in imagefile:
+                if imagefile.endswith(f"{name}.ISO") or f"{name}.img" in imagefile or f"{name}_" in imagefile:
                     disks.append(imagefile)
                 elif imagefile == name:
                     disks.append(imagefile)
@@ -2196,7 +2192,6 @@ class Kvirt(object):
                 nvram = True
                 break
         if nvram:
-            # vm.undefineFlags(flags=VIR_DOMAIN_UNDEFINE_NVRAM)
             vm.undefineFlags(flags=VIR_DOMAIN_UNDEFINE_KEEP_NVRAM)
         else:
             vm.undefine()
@@ -3074,6 +3069,35 @@ class Kvirt(object):
         if not found:
             error(f"Disk {diskname} not found in {name}")
             return {'result': 'failure', 'reason': f"Disk {diskname} not found in {name}"}
+        return {'result': 'success'}
+
+    def detach_disks(self, name):
+        pprint(f"Detaching non primary disks from {name}")
+        conn = self.conn
+        try:
+            vm = conn.lookupByName(name)
+        except:
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
+        vmxml = vm.XMLDesc(0)
+        root = ET.fromstring(vmxml)
+        all_disks = list(root.iter('disk'))
+        vm_disks = all_disks[1:] if len(all_disks) > 1 else []
+        for element in vm_disks:
+            disktype = element.get('device')
+            if disktype == 'cdrom':
+                continue
+            diskdev = element.find('target').get('dev')
+            diskbus = element.find('target').get('bus')
+            diskformat = element.find('driver').get('type')
+            imagefiles = [element.find('source').get('file'), element.find('source').get('dev'),
+                          element.find('source').get('volume')]
+            diskpath = next(item for item in imagefiles if item is not None)
+            diskxml = self._xmldisk(diskpath=diskpath, diskdev=diskdev, diskbus=diskbus, diskformat=diskformat)
+            if vm.isActive() == 1:
+                vm.detachDeviceFlags(diskxml, VIR_DOMAIN_AFFECT_LIVE | VIR_DOMAIN_AFFECT_CONFIG)
+            else:
+                vm.detachDeviceFlags(diskxml, VIR_DOMAIN_AFFECT_CONFIG)
         return {'result': 'success'}
 
     def list_disks(self):

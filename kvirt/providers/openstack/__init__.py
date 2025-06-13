@@ -493,7 +493,7 @@ class Kopenstack(object):
         else:
             return sorted(images)
 
-    def delete(self, name, snapshots=False, keep_disks=False):
+    def delete(self, name, snapshots=False):
         cinder = self.cinder
         nova = self.nova
         try:
@@ -1316,3 +1316,20 @@ class Kopenstack(object):
     def list_dns_zones(self):
         print("not implemented")
         return []
+
+    def detach_disks(self, name):
+        nova = self.nova
+        cinder = self.cinder
+        try:
+            vm = nova.servers.find(name=name)
+        except:
+            error(f"VM {name} not found")
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
+        all_disks = vm._info['os-extended-volumes:volumes_attached']
+        vm_disks = all_disks[1:] if len(all_disks) > 1 else []
+        for disk in vm_disks:
+            volume = cinder.volumes.get(disk['id'])
+            for attachment in volume.attachments:
+                if attachment['server_id'] == vm.id:
+                    cinder.volumes.detach(volume, attachment['attachment_id'])
+        return {'result': 'success'}

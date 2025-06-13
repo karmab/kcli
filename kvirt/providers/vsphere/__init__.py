@@ -636,7 +636,7 @@ class Ksphere:
         runtime = info['runtime']
         return runtime.powerState if vm is not None else ''
 
-    def delete(self, name, snapshots=False, keep_disks=False):
+    def delete(self, name, snapshots=False):
         si = self.si
         dc = self.dc
         vmFolder = self.basefolder
@@ -1215,6 +1215,28 @@ class Ksphere:
         msg = f"Disk {diskname} not found in {name}"
         error(msg)
         return {'result': 'failure', 'reason': error}
+
+    def detach_disks(self, name):
+        pprint(f"Detaching non primary disks from {name}")
+        si = self.si
+        vmFolder = self.basefolder
+        vm, info = findvm2(si, vmFolder, name)
+        if vm is None:
+            msg = f"VM {name} not found"
+            error(msg)
+            return {'result': 'failure', 'reason': msg}
+        config = info['config']
+        for index, dev in enumerate(config.hardware.device):
+            if index > 0 and isinstance(dev, vim.vm.device.VirtualDisk):
+                devspec = vim.vm.device.VirtualDeviceSpec()
+                devspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.remove
+                devspec.device = dev
+                devspec.fileOperation = None
+                spec = vim.vm.ConfigSpec()
+                spec.deviceChange = [devspec]
+                t = vm.ReconfigVM_Task(spec=spec)
+                waitForMe(t)
+        return {'result': 'success'}
 
     def add_nic(self, name, network, model='virtio'):
         if network == 'default':

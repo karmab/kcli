@@ -742,7 +742,7 @@ class Kproxmox(Kbase):
             yamlinfo['debug'] = vm_config
         return yamlinfo
 
-    def delete(self, name, snapshots=False, keep_disks=False):
+    def delete(self, name, snapshots=False):
         vm_info = self._get_vm_info(name)
         if not vm_info:
             return {"result": "failure", "reason": f"VM {name} not found."}
@@ -1158,3 +1158,7 @@ class Kproxmox(Kbase):
             if 'image' in description:
                 yamlinfo['image'] = description['image']
         return yamlinfo
+
+    def detach_disks(self, name):
+        print("not implemented")
+        return {'result': 'success'}

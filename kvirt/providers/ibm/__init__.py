@@ -543,7 +543,7 @@ class Kibm(object):
             return image_list
         return sorted(image_list, key=str.lower)
 
-    def delete(self, name, snapshots=False, keep_disks=False):
+    def delete(self, name, snapshots=False):
         conn = self.conn
         try:
             vm = self._get_vm(name)
@@ -1465,3 +1465,7 @@ class Kibm(object):
 
     def list_dns_zones(self):
         return [d['name'] for d in self.dns.list_zones().get_result()['result']]
+
+    def detach_disks(self, name):
+        print("not implemented")
+        return {'result': 'success'}

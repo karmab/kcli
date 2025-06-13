@@ -791,7 +791,7 @@ class Kaws(object):
                 images.append(f"{name} - {_id}")
         return sorted(images, key=str.lower)
 
-    def delete(self, name, snapshots=False, keep_disks=False):
+    def delete(self, name, snapshots=False):
         conn = self.conn
         dnsclient, domain = None, None
         df = {'InstanceIds': [name]} if name.startswith('i-') else {'Filters': [{'Name': "tag:Name", 'Values': [name]}]}
@@ -2184,3 +2184,7 @@ class Kaws(object):
             self.conn.modify_network_interface_attribute(NetworkInterfaceId=nic_id, Groups=sg_ids)
         clean_name = lb.replace('.', '-')
         self.elb.register_instances_with_load_balancer(LoadBalancerName=clean_name, Instances=Instances)
+
+    def detach_disks(self, name):
+        print("not implemented")
+        return {'result': 'success'}

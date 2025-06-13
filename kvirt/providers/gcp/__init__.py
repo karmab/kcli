@@ -1058,6 +1058,23 @@ class Kgcp(object):
             disks[diskname] = {'pool': pool, 'path': zone}
         return disks
 
+    def detach_disks(self, name):
+        pprint(f"Detaching non primary disks from {name}")
+        conn = self.conn
+        project = self.project
+        zone = self.zone
+        try:
+            vm = conn.instances().get(zone=zone, project=project, instance=name).execute()
+        except:
+            return {'result': 'failure', 'reason': f"VM {name} not found"}
+        vm_disks = vm['disks'][1:] if len(vm['disks']) > 1 else []
+        for disk in vm_disks:
+            devname = disk['deviceName']
+            operation = conn.instances().detachDisk(project=project, zone=zone, instance=name,
+                                                    deviceName=devname).execute()
+            self._wait_for_operation(operation)
+        return {'result': 'success'}
+
     def add_nic(self, name, network, model='virtio'):
         print("not implemented")
         return

@@ -427,7 +427,7 @@ class Kpacket(object):
     def volumes(self, iso=False):
         return [image.slug for image in self.conn.list_operating_systems()]
 
-    def delete(self, name, snapshots=False, keep_disks=False):
+    def delete(self, name, snapshots=False):
         devices = [d for d in self.conn.list_devices(self.project) if d.hostname == name]
         if devices:
             device = devices[0]
@@ -751,3 +751,7 @@ boot || reboot""" % (kernel, ipxeparameters, metal, ignition_url, initrd)
     def list_dns_zones(self):
         print("not implemented")
         return []
+
+    def detach_disks(self, name):
+        print("not implemented")
+        return {'result': 'success'}

@@ -347,8 +347,6 @@ def delete_vm(args):
     keep_disks = args.keep
     count = args.count
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
-    if keep_disks and config.type not in ['kvm']:
-        warning(f"Ignoring keep_disks flag as it's not supported on {config.type}")
     if config.extraclients:
         allclients = config.extraclients.copy()
         allclients.update({config.client: config.k})
@@ -421,7 +419,9 @@ def delete_vm(args):
                 if name in name_reservations:
                     name_reservations.remove(name)
                     config.update_confpool(confpool, {'name_reservations': name_reservations})
-            result = k.delete(name, snapshots=snapshots, keep_disks=keep_disks)
+            if keep_disks:
+                k.deach_disks(name)
+            result = k.delete(name, snapshots=snapshots)
             if result['result'] == 'success':
                 success(f"{name} deleted")
                 codes.append(0)
@@ -1439,8 +1439,6 @@ def create_vm(args):
     zone = overrides.get('zone', args.zone)
     confpool = overrides.get('namepool') or overrides.get('confpool')
     config = Kconfig(client=client, debug=args.debug, region=region, zone=zone, namespace=args.namespace)
-    if keep_disks and config.type not in ['kvm']:
-        warning(f"Ignoring keep_disks flag as it's not supported on {config.type}")
     for key in overrides:
         if key in vars(config) and vars(config)[key] is not None and type(overrides[key]) != type(vars(config)[key]):
             key_type = str(type(vars(config)[key]))
@@ -1481,7 +1479,9 @@ def create_vm(args):
     elif force:
         try:
             pprint(f"Deleting {name} on {config.client}")
-            config.k.delete(name, keep_disks=keep_disks)
+            if keep_disks:
+                config.k.detach_disks(name)
+            config.k.delete(name)
         except:
             pass
     if image is not None:
