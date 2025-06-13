@@ -920,7 +920,7 @@ def create(config, plandir, cluster, overrides):
     async_tempdir.cleanup()
     if ignore_hosts:
         warning("Not updating /etc/hosts as per your request")
-    else:
+    elif ingress_ip is not None:
         update_hypershift_etc_hosts(cluster, domain, ingress_ip)
     if provider in cloud_providers:
         result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_apps.yml', overrides=data)

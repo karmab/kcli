@@ -543,7 +543,7 @@ class Kibm(object):
             return image_list
         return sorted(image_list, key=str.lower)
 
-    def delete(self, name, snapshots=False):
+    def delete(self, name, snapshots=False, keep_disks=False):
         conn = self.conn
         try:
             vm = self._get_vm(name)

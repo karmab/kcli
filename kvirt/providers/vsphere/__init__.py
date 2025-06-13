@@ -636,7 +636,7 @@ class Ksphere:
         runtime = info['runtime']
         return runtime.powerState if vm is not None else ''
 
-    def delete(self, name, snapshots=False):
+    def delete(self, name, snapshots=False, keep_disks=False):
         si = self.si
         dc = self.dc
         vmFolder = self.basefolder

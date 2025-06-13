@@ -493,7 +493,7 @@ class Kopenstack(object):
         else:
             return sorted(images)
 
-    def delete(self, name, snapshots=False):
+    def delete(self, name, snapshots=False, keep_disks=False):
         cinder = self.cinder
         nova = self.nova
         try:

@@ -344,8 +344,11 @@ def delete_vm(args):
     yes = args.yes
     yes_top = args.yes_top
     snapshots = args.force
+    keep_disks = args.keep
     count = args.count
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    if keep_disks and config.type not in ['kvm']:
+        warning(f"Ignoring keep_disks flag as it's not supported on {config.type}")
     if config.extraclients:
         allclients = config.extraclients.copy()
         allclients.update({config.client: config.k})
@@ -418,7 +421,7 @@ def delete_vm(args):
                 if name in name_reservations:
                     name_reservations.remove(name)
                     config.update_confpool(confpool, {'name_reservations': name_reservations})
-            result = k.delete(name, snapshots=snapshots)
+            result = k.delete(name, snapshots=snapshots, keep_disks=keep_disks)
             if result['result'] == 'success':
                 success(f"{name} deleted")
                 codes.append(0)
@@ -1417,6 +1420,7 @@ def create_vm(args):
     count = args.count
     overrides = handle_parameters(args.param, args.paramfile)
     force = overrides.get('force', False) or args.force
+    keep_disks = overrides.get('keep_disks', False) or args.keep
     profile = overrides.get('profile') or args.profile
     if name is None and image is None and profile is None and not overrides:
         pprint("Launching vm interactive mode")
@@ -1435,6 +1439,8 @@ def create_vm(args):
     zone = overrides.get('zone', args.zone)
     confpool = overrides.get('namepool') or overrides.get('confpool')
     config = Kconfig(client=client, debug=args.debug, region=region, zone=zone, namespace=args.namespace)
+    if keep_disks and config.type not in ['kvm']:
+        warning(f"Ignoring keep_disks flag as it's not supported on {config.type}")
     for key in overrides:
         if key in vars(config) and vars(config)[key] is not None and type(overrides[key]) != type(vars(config)[key]):
             key_type = str(type(vars(config)[key]))
@@ -1475,7 +1481,7 @@ def create_vm(args):
     elif force:
         try:
             pprint(f"Deleting {name} on {config.client}")
-            config.k.delete(name)
+            config.k.delete(name, keep_disks=keep_disks)
         except:
             pass
     if image is not None:
@@ -3974,6 +3980,7 @@ def cli():
     vmcreate_parser.add_argument('-c', '--count', help='How many vms to create', type=int, default=0, metavar='COUNT')
     vmcreate_parser.add_argument('--force', action='store_true', help='Delete existing vm first')
     vmcreate_parser.add_argument('-i', '--image', help='Image to use', metavar='IMAGE')
+    vmcreate_parser.add_argument('-k', '--keep', action='store_true', help='Keep non primary disks')
     vmcreate_parser.add_argument('-p', '--profile', help='Profile to use', metavar='PROFILE')
     vmcreate_parser.add_argument('--profilefile', help='File to load profiles from', metavar='PROFILEFILE')
     vmcreate_parser.add_argument('-s', '--serial', help='Directly switch to serial console after creation',
@@ -4221,6 +4228,7 @@ def cli():
     vmdelete_parser.add_argument('-a', '--all', action='store_true', help='Delete all vms')
     vmdelete_parser.add_argument('-c', '--count', help='How many vms to delete', type=int, default=0, metavar='COUNT')
     vmdelete_parser.add_argument('-f', '--force', action='store_true', help='Remove snapshots if needed')
+    vmdelete_parser.add_argument('-k', '--keep', action='store_true', help='Keep non primary disks')
     vmdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     vmdelete_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     vmdelete_parser.set_defaults(func=delete_vm)

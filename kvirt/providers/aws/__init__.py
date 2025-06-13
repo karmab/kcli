@@ -791,7 +791,7 @@ class Kaws(object):
                 images.append(f"{name} - {_id}")
         return sorted(images, key=str.lower)
 
-    def delete(self, name, snapshots=False):
+    def delete(self, name, snapshots=False, keep_disks=False):
         conn = self.conn
         dnsclient, domain = None, None
         df = {'InstanceIds': [name]} if name.startswith('i-') else {'Filters': [{'Name': "tag:Name", 'Values': [name]}]}

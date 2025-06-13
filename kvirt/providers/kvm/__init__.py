@@ -2133,7 +2133,7 @@ class Kvirt(object):
                 domain = e.text
         return dnsclient, domain
 
-    def delete(self, name, snapshots=False):
+    def delete(self, name, snapshots=False, keep_disks=False):
         bridged = False
         ignition = False
         conn = self.conn
@@ -2175,7 +2175,11 @@ class Kvirt(object):
                 imagefiles = [element.find('source').get('file'), element.find('source').get('dev'),
                               element.find('source').get('volume')]
                 imagefile = next(item for item in imagefiles if item is not None)
-                if imagefile.endswith(f"{name}.ISO") or f"{name}_" in imagefile or f"{name}.img" in imagefile:
+                if f"{name}_" in imagefile:
+                    disk_index = int(os.path.basename(imagefile).replace(f'{name}_', '').replace('.img', ''))
+                    if disk_index == 0 or not keep_disks:
+                        disks.append(imagefile)
+                elif imagefile.endswith(f"{name}.ISO") or f"{name}.img" in imagefile:
                     disks.append(imagefile)
                 elif imagefile == name:
                     disks.append(imagefile)

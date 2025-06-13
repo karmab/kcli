@@ -122,7 +122,7 @@ class Kbase(object):
         print("not implemented")
         return []
 
-    def delete(self, name, snapshots=False):
+    def delete(self, name, snapshots=False, keep_disks=False):
         print("not implemented")
         return {'result': 'success'}
 

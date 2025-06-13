@@ -560,7 +560,7 @@ class Kazure(object):
                     images.append(f"{publisher}:{offer}:{s.name}")
         return sorted(images)
 
-    def delete(self, name, snapshots=False):
+    def delete(self, name, snapshots=False, keep_disks=False):
         compute_client = self.compute_client
         network_client = self.network_client
         try:

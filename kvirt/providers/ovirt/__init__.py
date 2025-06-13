@@ -713,7 +713,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
                     images.append(template.name)
             return images
 
-    def delete(self, name, snapshots=False):
+    def delete(self, name, snapshots=False, keep_disks=False):
         vmsearch = self.vms_service.list(search=f'name={name}')
         if not vmsearch:
             error(f"VM {name} not found")

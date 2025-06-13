@@ -743,7 +743,7 @@ class Kgcp(object):
                     images.append(image['family'])
         return sorted(images)
 
-    def delete(self, name, snapshots=False):
+    def delete(self, name, snapshots=False, keep_disks=False):
         conn = self.conn
         project = self.project
         zone = self.zone

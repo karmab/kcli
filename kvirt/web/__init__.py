@@ -418,8 +418,9 @@ class Kweb():
             config = Kconfig()
             k = config.k
             data = request.json or request.forms
-            snapshots = True if data is not None and 'snapshots' in data and bool(data['snapshots']) else False
-            result = k.delete(name, snapshots=snapshots)
+            snapshots = data is not None and 'snapshots' in data and bool(data['snapshots'])
+            keep_disks = data is not None and 'keep_disks' in data and bool(data['keep_disks'])
+            result = k.delete(name, snapshots=snapshots, keep_disks=keep_disks)
             delete_lastvm(name, config.client)
             response.status = 200
             return result

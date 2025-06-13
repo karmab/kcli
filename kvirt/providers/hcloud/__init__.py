@@ -171,7 +171,7 @@ class Khcloud():
 
         return {'result': 'success'}
 
-    def delete(self, name, snapshots=False):
+    def delete(self, name, snapshots=False, keep_disks=False):
         server = self.conn.servers.get_by_name(name)
         if server is None:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
