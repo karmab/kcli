@@ -420,7 +420,7 @@ def delete_vm(args):
                     name_reservations.remove(name)
                     config.update_confpool(confpool, {'name_reservations': name_reservations})
             if keep_disks:
-                k.deach_disks(name)
+                k.detach_disks(name)
             result = k.delete(name, snapshots=snapshots)
             if result['result'] == 'success':
                 success(f"{name} deleted")
