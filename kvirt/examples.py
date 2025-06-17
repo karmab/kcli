@@ -358,24 +358,24 @@ kubeadmregistrycreate = """# Generate a kubeadm/generic registry vm for latest k
 $ kcli create registry kubeadm
 """
 
-openshiftregistrycreate = """# Generate an openshift registry vm for 4.18
-$ kcli create registry openshift -P version=stable -P tag='4.18'
+openshiftregistrycreate = """# Generate an openshift registry vm for 4.19
+$ kcli create registry openshift -P version=stable -P tag='4.19'
 
 # Do the same over an ipv4 network
-$ kcli create registry openshift -P version=nightly -P tag='4.18' -P disconnected_ipv6_network=false
+$ kcli create registry openshift -P version=nightly -P tag='4.19' -P disconnected_ipv6_network=false
 
 # Use specific version and add extra operators (from 4.18)
-$ kcli create registry openshift -P version=nightly -P tag='4.18' -P disconnected_operators=[sriov-network-operator]
+$ kcli create registry openshift -P version=nightly -P tag='4.19' -P disconnected_operators=[sriov-network-operator]
 
 # Deploy registry without content
 $ kcli create registry openshift -P disconnected_sync=false
 """
 
-openshiftregistryupdate = """# Update openshift registry for 4.18
-$ kcli update openshift-registry -P version=stable -P tag='4.18' -P disconnected_url=192.168.122.200.sslip.io:5000 myreg
+openshiftregistryupdate = """# Update openshift registry for 4.19
+$ kcli update openshift-registry -P version=stable -P tag='4.19' -P disconnected_url=192.168.122.200.sslip.io:5000 myreg
 
 # Update openshift registry taking parameter from existing cluster install named myopenshift
-$ kcli update openshift-registry -P tag='4.18.0' myopenshift
+$ kcli update openshift-registry -P tag='4.19.0' myopenshift
 """
 
 
@@ -614,27 +614,27 @@ $ kcli update baremetal-host -P user=admin -P password=admin 10.10.10.10 -P secu
 $ kcli update baremetal-host -u admin -p admin 10.10.10.10 -P secureboot=true
 """
 
-ocdownload = """# Download 4.18 stable
-$ kcli download oc -P version=stable -P tag=4.18
+ocdownload = """# Download 4.19 stable
+$ kcli download oc -P version=stable -P tag=4.19
 
 # Download specific tag
 $ kcli download oc -P version=tag -P tag=4.16.4
 
 # Download nightly
-$ kcli download oc -P version=nightly -P tag=4.18
+$ kcli download oc -P version=nightly -P tag=4.19
 
 # Download older version from CI
 $ kcli download oc -P version=ci -P tag=4.14
 """
 
-ocmirrordownload = """# Download 4.18 stable
-$ kcli download oc-mirror -P version=stable -P tag=4.18
+ocmirrordownload = """# Download 4.19 stable
+$ kcli download oc-mirror -P version=stable -P tag=4.19
 
 # Download specific tag
 $ kcli download oc-mirror -P version=tag -P tag=4.16.4
 
 # Download nightly
-$ kcli download oc-mirror -P version=nightly -P tag=4.18
+$ kcli download oc-mirror -P version=nightly -P tag=4.20
 
 """
 
@@ -651,7 +651,7 @@ $ kcli download openshift-install -P version=stable -P tag=4.16.4
 $ kcli download openshift-install -P version=nightly -P tag=4.16
 
 # Download candidate version
-$ kcli download openshift-install -P tag=4.18.0-rc.5
+$ kcli download openshift-install -P tag=4.20.0-rc.1
 
 # Download older version from CI
 $ kcli download openshift-install -P version=ci -P tag=4.14
