@@ -63,14 +63,18 @@ def get_info(url, headers, context):
         model = 'hp'
     elif 'supermicro' in manufacturer:
         model = 'supermicro'
+    elif 'senao corporation' in manufacturer:
+        model = 'senao'
     else:
-        error(f"Failed to detect model from url '{url}'")
+        error(f"Failed to detect model from url '{url}' with manufacturer '{manufacturer}'")
         sys.exit(1)
     if '://' not in url:
         if model in ['hp', 'supermicro', 'lenovo']:
             url = f"https://{url}/redfish/v1/Systems/1"
         elif model == 'dell':
             url = f"https://{url}/redfish/v1/Systems/System.Embedded.1"
+        elif model == 'senao':
+            url = f"https://{url}/redfish/v1/Systems/system"
     return model, url
 
 
@@ -198,7 +202,12 @@ class Redfish(object):
             request = Request(cd_url, data=data, headers=self.headers, method='PATCH')
             urlopen(request, context=self.context)
             headers['Content-Length'] = 0
-        data = {"Image": iso_url, "Inserted": True}
+        if self.model == 'senao':
+            iso_url = iso_url.replace(":", "")
+            nfs_iso_url = f"nfs://{iso_url}"
+            data = {"Image": nfs_iso_url, "TransferProtocolType": "NFS"}
+        else:
+            data = {"Image": iso_url, "Inserted": True}
         insert_url = self.get_iso_insert_url()
         data = json.dumps(data).encode('utf-8')
         if self.model == 'lenovo':
@@ -220,7 +229,7 @@ class Redfish(object):
             newboot['BootSourceOverrideEnabled'] = 'Once'
         if currentboot['BootSourceOverrideTarget'] != 'Cd':
             newboot['BootSourceOverrideTarget'] = 'Cd'
-        if 'BootSourceOverrideMode' not in currentboot:
+        if self.model == 'senao' or ('BootSourceOverrideMode' not in currentboot):
             newboot['BootSourceOverrideMode'] = 'UEFI'
 
         # No new boot params override required
@@ -239,7 +248,12 @@ class Redfish(object):
     def restart(self):
         request = Request(self.url, headers=self.headers)
         response = json.loads(urlopen(request, context=self.context).read())
-        reset_type = 'On' if response['PowerState'] == 'Off' else 'ForceRestart'
+        if response['PowerState'] == 'Off':
+            reset_type = 'On'
+        elif self.model == 'senao':
+            reset_type = 'GracefulRestart'
+        else:
+            reset_type = 'ForceRestart'
         data = {"ResetType": reset_type}
         reset_url = f"{self.url}/Actions/ComputerSystem.Reset"
         if self.debug:
