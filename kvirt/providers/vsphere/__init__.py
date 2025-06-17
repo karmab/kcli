@@ -646,7 +646,7 @@ class Ksphere:
         summary = info['summary']
         config = info['config']
         runtime = info['runtime']
-        plan, image, kube = 'kvirt', None, None
+        plan, image, kube, keep = 'kvirt', None, None, None
         vmpath = summary.config.vmPathName.replace(f'/{name}.vmx', '')
         if config is not None:
             for entry in config.extraConfig:
@@ -656,13 +656,15 @@ class Ksphere:
                     plan = entry.value
                 if entry.key == 'kube':
                     kube = entry.value
+                if entry.key == 'keep':
+                    keep = entry.value
         if runtime.powerState == "poweredOn":
             t = vm.PowerOffVM_Task()
             waitForMe(t)
         t = vm.Destroy_Task()
         waitForMe(t)
         if image is not None and 'coreos' not in image and 'rhcos' not in image and\
-                'fcos' not in image and vmpath.endswith(name):
+                'fcos' not in image and vmpath.endswith(name) and keep is None:
             isopath = f"{self.isofolder}/{name}.ISO" if self.isofolder is not None else vmpath
             try:
                 deletedirectory(si, dc, isopath)
@@ -1226,16 +1228,17 @@ class Ksphere:
             error(msg)
             return {'result': 'failure', 'reason': msg}
         config = info['config']
-        for index, dev in enumerate(config.hardware.device):
-            if index > 0 and isinstance(dev, vim.vm.device.VirtualDisk):
+        disks = [dev for dev in config.hardware.device if isinstance(dev, vim.vm.device.VirtualDisk)]
+        if len(disks) > 1:
+            for disk in disks[1:]:
                 devspec = vim.vm.device.VirtualDeviceSpec()
                 devspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.remove
-                devspec.device = dev
-                devspec.fileOperation = None
+                devspec.device = disk
                 spec = vim.vm.ConfigSpec()
                 spec.deviceChange = [devspec]
                 t = vm.ReconfigVM_Task(spec=spec)
                 waitForMe(t)
+            self.update_metadata(name, 'keep', 'True')
         return {'result': 'success'}
 
     def add_nic(self, name, network, model='virtio'):

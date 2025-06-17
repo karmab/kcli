@@ -236,12 +236,11 @@ def creatediskspec(unit_number, disksize, ds, diskmode, thin=False, uuid=None):
     diskfilebacking.diskMode = diskmode
     diskfilebacking.thinProvisioned = True if thin else False
     if uuid is not None:
-        if uuid is not None:
-            try:
-                UUID(uuid)
-                diskfilebacking.uuid = uuid
-            except:
-                warning(f"{uuid} it not a valid disk uuid")
+        try:
+            UUID(uuid)
+            diskfilebacking.uuid = uuid
+        except:
+            warning(f"{uuid} it not a valid disk uuid")
     vd.backing = diskfilebacking
     return diskspec
 
