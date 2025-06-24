@@ -4147,7 +4147,7 @@ def cli():
     imagedelete_parser.add_argument('images', help=imagedelete_help, metavar='IMAGES', nargs='*')
     imagedelete_parser.set_defaults(func=delete_image)
     delete_subparsers.add_parser('image', parents=[imagedelete_parser], description=imagedelete_desc,
-                                 help=imagedelete_desc)
+                                 help=imagedelete_desc, aliases=['images', 'template', 'templates'])
     delete_subparsers.add_parser('iso', parents=[imagedelete_parser], description=imagedelete_desc,
                                  help=imagedelete_desc)
 
@@ -4301,7 +4301,8 @@ def cli():
     imagedownload_parser.add_argument('image', help=imagedownload_help, metavar='IMAGE', nargs='?')
     imagedownload_parser.set_defaults(func=download_image)
     download_subparsers.add_parser('image', parents=[imagedownload_parser], description=imagedownload_desc,
-                                   help=imagedownload_desc, epilog=imagedownload_epilog, formatter_class=rawhelp)
+                                   help=imagedownload_desc, epilog=imagedownload_epilog, formatter_class=rawhelp,
+                                   aliases=['template'])
 
     helmdownload_desc = 'Download Helm'
     helmdownload_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
