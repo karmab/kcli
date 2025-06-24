@@ -1120,7 +1120,7 @@ mycluster:
   workers: 3
 ```
 
-All possible `kubetypes` are: `openshift`, `generic`, `microshift`, `aks`, `eks`, `gke`, `hypershift`, `k3s`, `openshift-sno`, `rke2`.
+Possible `kubetypes` are `openshift`, `generic`, `microshift`, `aks`, `eks`, `gke`, `hypershift`, `k3s` and `rke2`.
 
 
 #### container
