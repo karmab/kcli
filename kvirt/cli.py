@@ -2351,14 +2351,17 @@ def info_rke2_kube(args):
 
 
 def info_network(args):
+    output = args.global_output or args.output
     name = args.name
-    pprint(f"Providing information about network {name}...")
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     networkinfo = config.k.info_network(name)
     if networkinfo:
-        common.pretty_print(networkinfo)
-    else:
-        sys.exit(1)
+        if output is not None:
+            _list_output(networkinfo, output)
+        else:
+            pprint(f"Providing information about network {name}...")
+            common.pretty_print(networkinfo)
+    sys.exit(1 if not networkinfo else 0)
 
 
 def info_keyword(args):
@@ -4548,7 +4551,7 @@ def cli():
 
     networkinfo_desc = 'Info Network'
     networkinfo_parser = info_subparsers.add_parser('network', description=networkinfo_desc, help=networkinfo_desc,
-                                                    aliases=['net'])
+                                                    aliases=['net'], parents=[output_parser])
     networkinfo_parser.add_argument('name', metavar='NETWORK')
     networkinfo_parser.set_defaults(func=info_network)
 
