@@ -70,6 +70,7 @@ extra_networks: []
 extra_ctlplane_networks: []
 extra_worker_networks: []
 disconnected_url:
+disconnected_channel:
 disconnected: false
 disconnected_vm: false
 disconnected_update: false

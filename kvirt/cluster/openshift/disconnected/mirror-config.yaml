@@ -14,7 +14,7 @@ mirror:
     release: registry.ci.openshift.org/{{ release }}
 {% else %}
     channels:
-    - name: {{ 'candidate' if 'rc' in tag else version }}-{{ release }}
+    - name: {{ disconnected_channel or ('candidate' if 'rc' in tag else 'stable') }}-{{ release }}
 {% if tag|count('.') > 1 %}
       minVersion: {{ (disconnected_extra_release or tag)|min_ocp_version(tag) }}
       maxVersion: {{ (disconnected_extra_release or tag)|max_ocp_version(tag) }}
