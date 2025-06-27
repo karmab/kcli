@@ -3806,7 +3806,7 @@ def cli():
     plansnapshotcreate_parser = create_subparsers.add_parser('plan-snapshot', description=plansnapshotcreate_desc,
                                                              help=plansnapshotcreate_desc)
 
-    plansnapshotcreate_parser.add_argument('-p', '--plan', help='plan name', required=True, metavar='PLAN')
+    plansnapshotcreate_parser.add_argument('plan', metavar='PLAN')
     plansnapshotcreate_parser.add_argument('snapshot', metavar='SNAPSHOT')
     plansnapshotcreate_parser.set_defaults(func=create_snapshot_plan)
 
@@ -4188,8 +4188,8 @@ def cli():
     plansnapshotdelete_desc = 'Delete Plan Snapshot'
     plansnapshotdelete_parser = delete_subparsers.add_parser('plan-snapshot', description=plansnapshotdelete_desc,
                                                              help=plansnapshotdelete_desc)
-    plansnapshotdelete_parser.add_argument('-p', '--plan', help='plan name', required=True, metavar='PLAN')
     plansnapshotdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
+    plansnapshotdelete_parser.add_argument('plan', metavar='PLAN')
     plansnapshotdelete_parser.add_argument('snapshot', metavar='SNAPSHOT')
     plansnapshotdelete_parser.set_defaults(func=delete_snapshot_plan)
 
@@ -4852,7 +4852,7 @@ def cli():
     planrevert_desc = 'Revert Snapshot Of Plan'
     planrevert_parser = revert_subparsers.add_parser('plan-snapshot', description=planrevert_desc, help=planrevert_desc,
                                                      aliases=['plan'])
-    planrevert_parser.add_argument('-p', '--plan', help='Plan name', required=True, metavar='PLANNAME')
+    planrevert_parser.add_argument('plan', metavar='PLAN')
     planrevert_parser.add_argument('snapshot', metavar='SNAPSHOT')
     planrevert_parser.set_defaults(func=revert_snapshot_plan)
 
