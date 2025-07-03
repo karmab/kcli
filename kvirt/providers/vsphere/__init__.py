@@ -10,11 +10,12 @@ from kvirt.defaults import UBUNTUS, METADATA_FIELDS
 from kvirt.providers.vsphere.helpers import find, collectproperties, findvm, createfolder, changecd, convert, waitForMe
 from kvirt.providers.vsphere.helpers import createscsispec, creatediskspec, createdvsnicspec, createclonespec
 from kvirt.providers.vsphere.helpers import createnicspec, createisospec, createcdspec, deletedirectory
-from kvirt.providers.vsphere.helpers import dssize, keep_lease_alive
+from kvirt.providers.vsphere.helpers import dssize, keep_lease_alive, folder_exists
 from kvirt.providers.vsphere.helpers import create_filter_spec, get_all_obj, convert_properties, findvm2, findvmdc
 import os
 from pyVmomi import vim, vmodl
 from pyVim import connect
+from pyVim.task import WaitForTask
 import random
 import re
 import ssl
@@ -179,21 +180,21 @@ class Ksphere:
             image = os.path.basename(image)
             clonespec = createclonespec(resourcepool)
             rootFolder = self.rootFolder
-            imageobj, imagedc = findvmdc(si, rootFolder, image, self.dc)
+            imageobj, imagedc = findvmdc(si, rootFolder, image, dc)
             if self.esx:
                 imagepool = pool
-                imagedc = self.dc.name
+                imagedc = dc.name
             elif imageobj is None:
                 return {'result': 'failure', 'reason': f"Image {image} not found"}
             datastores = self._datastores_datacenters()
-            if os.path.basename(datastores[pool]) != self.dc.name:
-                return {'result': 'failure', 'reason': f"Pool {pool} doesn't belong to Datacenter {self.dc.name}"}
+            if os.path.basename(datastores[pool]) != dc.name:
+                return {'result': 'failure', 'reason': f"Pool {pool} doesn't belong to Datacenter {dc.name}"}
             if imagepool is None:
                 devices = imageobj.config.hardware.device
                 for number, dev in enumerate(devices):
                     if type(dev).__name__ == 'vim.vm.device.VirtualDisk':
                         imagepool = dev.backing.datastore.name
-            if imagedc != self.dc.name or (overrides.get('force_pool', self.force_pool) and imagepool != pool):
+            if imagedc != dc.name or (overrides.get('force_pool', self.force_pool) and imagepool != pool):
                 warning(f"Vm {name} will be relocated from pool {imagepool} to {pool}")
                 relospec = vim.vm.RelocateSpec()
                 relospec.datastore = find(si, rootFolder, vim.Datastore, pool)
@@ -398,12 +399,33 @@ class Ksphere:
                     return {'result': 'failure', 'reason': f"Pool {diskpool} not found"}
                 else:
                     datastores[diskpool] = datastore
+            kept_disks = folder_exists(datastores[diskpool], f'{name}_keep')
             if index == 0:
                 scsispec = createscsispec()
                 devconfspec.append(scsispec)
+            elif kept_disks:
+                pprint("Using existing data disks")
+                path = f"[{diskpool}] {name}"
+                keep_path = f"[{diskpool}] {name}_keep"
+                browser = datastore.browser
+                task = browser.SearchDatastore_Task(datastorePath=keep_path, searchSpec=None)
+                fileManager = self.si.content.fileManager
+                WaitForTask(task)
+                result = task.info.result
+                files = result.file if hasattr(result, 'file') else []
+                for file in files:
+                    t = fileManager.MoveDatastoreFile_Task(sourceName=f"{keep_path}/{file.path}",
+                                                           sourceDatacenter=dc,
+                                                           destinationName=f"{path}/{file.path}",
+                                                           destinationDatacenter=dc,
+                                                           force=True)
+                    WaitForTask(t)
+                task = fileManager.DeleteDatastoreFile_Task(name=keep_path, datacenter=dc)
+                WaitForTask(task)
             if unit_number == 7:
                 unit_number = 8
-            diskspec = creatediskspec(unit_number, disksize, datastore, diskmode, diskthin, diskuuid)
+            diskpath = f'{name}/{name}_{index}.vmdk' if kept_disks else None
+            diskspec = creatediskspec(unit_number, disksize, datastore, diskmode, diskthin, diskuuid, diskpath)
             devconfspec.append(diskspec)
             unit_number += 1
         for index, _ in enumerate(disks):
@@ -646,7 +668,7 @@ class Ksphere:
         summary = info['summary']
         config = info['config']
         runtime = info['runtime']
-        plan, image, kube, keep = 'kvirt', None, None, None
+        plan, image, kube = 'kvirt', None, None
         vmpath = summary.config.vmPathName.replace(f'/{name}.vmx', '')
         if config is not None:
             for entry in config.extraConfig:
@@ -656,15 +678,13 @@ class Ksphere:
                     plan = entry.value
                 if entry.key == 'kube':
                     kube = entry.value
-                if entry.key == 'keep':
-                    keep = entry.value
         if runtime.powerState == "poweredOn":
             t = vm.PowerOffVM_Task()
             waitForMe(t)
         t = vm.Destroy_Task()
         waitForMe(t)
         if image is not None and 'coreos' not in image and 'rhcos' not in image and\
-                'fcos' not in image and vmpath.endswith(name) and keep is None:
+                'fcos' not in image and vmpath.endswith(name):
             isopath = f"{self.isofolder}/{name}.ISO" if self.isofolder is not None else vmpath
             try:
                 deletedirectory(si, dc, isopath)
@@ -925,7 +945,6 @@ class Ksphere:
         pools = []
         rootFolder = self.rootFolder
         si = self.si
-        # dc = self.dc
         clu = find(si, rootFolder, vim.ComputeResource, self.clu)
         for dts in clu.datastore:
             pools.append(dts.name)
@@ -1127,6 +1146,7 @@ class Ksphere:
 
     def _uploadimage(self, pool, origin, directory, isofolder=None):
         si = self.si
+        dc = self.dc
         rootFolder = self.rootFolder
         datastore = find(si, rootFolder, vim.Datastore, pool)
         if not datastore:
@@ -1136,7 +1156,7 @@ class Ksphere:
         destination = os.path.basename(origin)
         if isofolder is not None:
             directory = isofolder
-        url = f"https://{self.vcip}:443/folder/{directory}/{destination}?dcPath={self.dc.name}&dsName={pool}"
+        url = f"https://{self.vcip}:443/folder/{directory}/{destination}?dcPath={dc.name}&dsName={pool}"
         client_cookie = si._stub.cookie
         cookie_name = client_cookie.split("=", 1)[0]
         cookie_value = client_cookie.split("=", 1)[1].split(";", 1)[0]
@@ -1219,8 +1239,9 @@ class Ksphere:
         return {'result': 'failure', 'reason': error}
 
     def detach_disks(self, name):
-        pprint(f"Detaching non primary disks from {name}")
+        pprint(f"Detaching data disks from {name}")
         si = self.si
+        dc = self.dc
         vmFolder = self.basefolder
         vm, info = findvm2(si, vmFolder, name)
         if vm is None:
@@ -1230,7 +1251,7 @@ class Ksphere:
         config = info['config']
         disks = [dev for dev in config.hardware.device if isinstance(dev, vim.vm.device.VirtualDisk)]
         if len(disks) > 1:
-            for disk in disks[1:]:
+            for index, disk in enumerate(disks[1:]):
                 devspec = vim.vm.device.VirtualDeviceSpec()
                 devspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.remove
                 devspec.device = disk
@@ -1238,7 +1259,20 @@ class Ksphere:
                 spec.deviceChange = [devspec]
                 t = vm.ReconfigVM_Task(spec=spec)
                 waitForMe(t)
-            self.update_metadata(name, 'keep', 'True')
+                datastore = disk.backing.datastore.name
+                path = f"[{datastore}] {name}"
+                keep_path = f"[{datastore}] {name}_keep"
+                fileManager = self.si.content.fileManager
+                if index == 0:
+                    fileManager.MakeDirectory(name=keep_path, datacenter=dc)
+                file_name = f"{name}_{index + 1}"
+                for entry in [f"{file_name}.vmdk", f"{file_name}-flat.vmdk"]:
+                    t = fileManager.MoveDatastoreFile_Task(sourceName=f"{path}/{entry}",
+                                                           sourceDatacenter=dc,
+                                                           destinationName=f"{keep_path}/{entry}",
+                                                           destinationDatacenter=dc,
+                                                           force=True)
+                    WaitForTask(t)
         return {'result': 'success'}
 
     def add_nic(self, name, network, model='virtio'):

@@ -2,6 +2,7 @@ from kvirt.common import warning, error
 from math import ceil
 import pyVmomi
 from pyVmomi import vim, vmodl
+from pyVim.task import WaitForTask
 import sys
 import time
 from uuid import UUID
@@ -219,11 +220,12 @@ def createscsispec():
     return scsispec
 
 
-def creatediskspec(unit_number, disksize, ds, diskmode, thin=False, uuid=None):
+def creatediskspec(unit_number, disksize, ds, diskmode, thin=False, uuid=None, path=None):
     ckey = 1000
     diskspec = vim.vm.device.VirtualDeviceSpec()
     diskspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
-    diskspec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
+    if path is None:
+        diskspec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
     vd = vim.vm.device.VirtualDisk()
     vd.capacityInKB = disksize
     vd.key = 2000 + unit_number
@@ -232,6 +234,8 @@ def creatediskspec(unit_number, disksize, ds, diskmode, thin=False, uuid=None):
     vd.controllerKey = ckey
     diskfilebacking = vim.vm.device.VirtualDisk.FlatVer2BackingInfo()
     filename = "[" + ds.name + "]"
+    if path is not None:
+        filename += f' {path}'
     diskfilebacking.fileName = filename
     diskfilebacking.diskMode = diskmode
     diskfilebacking.thinProvisioned = True if thin else False
@@ -389,3 +393,12 @@ def convert_properties(obj):
     for prop in obj.propSet:
         result[prop.name] = prop.val
     return result
+
+
+def folder_exists(datastore, path):
+    try:
+        task = datastore.browser.SearchDatastore_Task(datastorePath=f"[{datastore.name}] {path}")
+        WaitForTask(task)
+        return True
+    except:
+        return False
