@@ -3,6 +3,7 @@ from binascii import hexlify
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
+from getpass import getpass
 import json
 from kvirt import common
 from kvirt.common import error, pprint, warning, sdn_ip
@@ -37,6 +38,7 @@ class Ksphere:
     def __init__(self, host, user, password, datacenter, cluster, debug=False, isofolder=None,
                  filtervms=False, filteruser=False, filtertag=None, category='kcli', basefolder=None, dvs=True,
                  import_network='VM Network', timeout=3600, force_pool=False, restricted=False, serial=False):
+        password = password or getpass()
         if timeout < 1:
             smart_stub = connect.SmartStubAdapter(host=host, port=443, sslContext=_create_unverified_context(),
                                                   connectionPoolTimeout=0)

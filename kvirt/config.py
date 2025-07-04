@@ -304,9 +304,6 @@ class Kconfig(Kbaseconfig):
                     error("Missing user in the configuration. Leaving")
                     sys.exit(1)
                 password = options.get('password')
-                if password is None:
-                    error("Missing password in the configuration. Leaving")
-                    sys.exit(1)
                 cluster = options.get('cluster')
                 if cluster is None:
                     error("Missing cluster in the configuration. Leaving")
