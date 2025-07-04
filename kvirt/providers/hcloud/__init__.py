@@ -47,8 +47,10 @@ class Khcloud():
                 disksize = disk.get('size', '10')
 
             diskname = f"{name}-disk{index}"
-            volumeresponse = self.conn.volumes.create(disksize, diskname, location=self.location,
-                                                      labels={"kcli-managed": "volume"})
+            volumeresponse = self.conn.volumes.get_by_name(diskname)
+            if volumeresponse is None:
+                volumeresponse = self.conn.volumes.create(disksize, diskname, location=self.location,
+                                                          labels={"kcli-managed": "volume"})
             volumeresponses.append(volumeresponse)
 
         if not keys:
