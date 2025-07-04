@@ -290,7 +290,10 @@ class Kgcp(object):
                 init = {'name': diskname, 'sizeGb': disksize}
                 if disk_type is not None:
                     init['type'] = disk_type
-                conn.disks().insert(zone=zone, project=project, body=init).execute()
+                try:
+                    conn.disks().get(zone=zone, project=project, disk=diskname).execute()
+                except:
+                    conn.disks().insert(zone=zone, project=project, body=init).execute()
                 timeout = 0
                 while True:
                     if timeout > 60:
