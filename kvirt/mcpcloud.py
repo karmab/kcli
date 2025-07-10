@@ -1,3 +1,4 @@
+import argparse
 from kvirt import common
 from kvirt.config import Kconfig
 from kvirt.nameutils import get_random_name
@@ -216,7 +217,13 @@ def update_securitygroup(securitygroup: str,
 
 
 def main():
-    mcp.run(transport="stdio")
+    parser = argparse.ArgumentParser(description="kclimcpcloud")
+    parser.add_argument("--http", action='store_true')
+    args = parser.parse_args()
+    if args.http:
+        mcp.run(transport="http", host="0.0.0.0", port=args.port)
+    else:
+        mcp.run(transport="stdio")
 
 
 if __name__ == "__main__":

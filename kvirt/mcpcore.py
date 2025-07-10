@@ -1,3 +1,4 @@
+import argparse
 from kvirt import common
 from kvirt.config import Kbaseconfig, Kconfig
 from kvirt.common import get_git_version, compare_git_versions
@@ -348,7 +349,13 @@ def stop_vm(name: str,
 
 
 def main():
-    mcp.run(transport="stdio")
+    parser = argparse.ArgumentParser(description="kclimcpcore")
+    parser.add_argument("--http", action='store_true')
+    args = parser.parse_args()
+    if args.http:
+        mcp.run(transport="http", host="0.0.0.0", port=args.port)
+    else:
+        mcp.run(transport="stdio")
 
 
 if __name__ == "__main__":
