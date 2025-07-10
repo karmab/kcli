@@ -5,7 +5,7 @@ import json
 import os
 import re
 import sys
-from urllib.request import urlopen
+from urllib.request import urlopen, Request
 from time import sleep
 import yaml
 
@@ -72,7 +72,10 @@ def github_version(repo, version=None, tag_mode=False):
     if version is None or version == 'latest':
         obj = 'tags' if tag_mode else 'releases'
         tag_name = 'name' if tag_mode else 'tag_name'
-        data = json.loads(urlopen(f"https://api.github.com/repos/{repo}/{obj}", timeout=5).read())
+        request = Request(f"https://api.github.com/repos/{repo}/{obj}")
+        if 'GITHUB_TOKEN' in os.environ:
+            request.add_header('Authorization', f'Bearer: {os.environ["GITHUB_TOKEN"]}')
+        data = json.loads(urlopen(request, timeout=5).read())
         if 'message' in data and data['message'] == 'Not Found':
             return ''
         tags = sorted([x[tag_name] for x in data if stable_release(x, tag_mode)],
