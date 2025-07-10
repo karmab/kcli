@@ -615,7 +615,7 @@ def update_baremetal_host(context: Context,
 def main():
     parser = argparse.ArgumentParser(description="kclimcp")
     parser.add_argument('-e', '--enable', action='append', help='enable additional tools. Can be used multiple times',
-                        choices=["baremetal", "cloud"])
+                        choices=["baremetal", "cloud"], default=[])
     parser.add_argument("--http", action='store_true')
     args = parser.parse_args()
     for tool in args.enable:
