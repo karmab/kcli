@@ -176,3 +176,6 @@ prega: false
 virtualization_nightly: false
 techpreview: false
 mirror_dir:
+ksushy_protocol: https
+ksushy_ip: 192.168.122.1
+ksushy_port: 9000
