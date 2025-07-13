@@ -290,4 +290,4 @@ class Kexposer():
         self.port = port
 
     def run(self):
-        self.app.run(host='0.0.0.0', port=self.port)
+        self.app.run(host='::', port=self.port)

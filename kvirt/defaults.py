@@ -226,7 +226,7 @@ StandardOutput=journal
 StandardError=journal
 Environment=HOME={home}
 Environment=PYTHONUNBUFFERED=true
-{port}{ipv6}{ssl}{user}{password}{bootonce}
+{port}{user}{password}{bootonce}
 [Install]
 WantedBy=multi-user.target"""
 
@@ -240,7 +240,7 @@ StandardOutput=journal
 StandardError=journal
 Environment=HOME={home}
 Environment=PYTHONUNBUFFERED=true
-{port}{ipv6}
+{port}
 [Install]
 WantedBy=multi-user.target"""
 

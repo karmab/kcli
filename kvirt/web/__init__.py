@@ -1258,10 +1258,8 @@ class Kweb():
         self.app = app
         self.port = os.environ.get('KWEB_PORT', 8000)
         self.debug = 'KWEB_DEBUG' in os.environ
-        self.ipv6 = 'KWEB_IPV6' in os.environ
-        self.host = '::' if self.ipv6 else '0.0.0.0'
         self.pull_secret = os.environ.get('PULL_SECRET')
 
     def run(self):
-        data = {'host': self.host, 'port': self.port, 'debug': self.debug}
+        data = {'host': '::', 'port': self.port, 'debug': self.debug}
         self.app.run(**data)

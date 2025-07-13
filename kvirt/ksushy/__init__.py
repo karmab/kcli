@@ -11,6 +11,7 @@ from datetime import datetime
 import functools
 from tempfile import NamedTemporaryFile
 from wsgiref.simple_server import make_server, WSGIServer
+from socket import AF_INET6
 from socketserver import ThreadingMixIn
 import ssl
 
@@ -43,8 +44,9 @@ class SSLAdapter(ServerAdapter):
         context.set_ciphers('EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH')
 
         class ThreadAdapter(ThreadingMixIn, WSGIServer):
+            address_family = AF_INET6
             pass
-        ssl_server = make_server(self.host, self.port, handler, server_class=ThreadAdapter, **self.options)
+        ssl_server = make_server('::', self.port, handler, server_class=ThreadAdapter, **self.options)
         ssl_server.socket = context.wrap_socket(ssl_server.socket, server_side=True)
         ssl_server.serve_forever()
 
@@ -56,8 +58,6 @@ class Ksushy():
 
         @app.hook('after_request')
         def wsgilog():
-            if 'KSUSHY_SSL' not in os.environ:
-                return
             ip = request.environ.get('REMOTE_ADDR')
             time = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
             method = request.environ.get('REQUEST_METHOD')
@@ -332,11 +332,9 @@ class Ksushy():
         self.app = app
         self.port = os.environ.get('KSUSHY_PORT', 9000)
         self.debug = 'KSUSHY_DEBUG' in os.environ
-        self.ipv6 = 'KSUSHY_IPV6' in os.environ
-        self.host = '::' if self.ipv6 else '0.0.0.0'
         self.bootonce = 'KSUSHY_BOOTONCE' in os.environ
 
     def run(self):
-        data = {'host': self.host, 'port': self.port, 'debug': self.debug}
+        data = {'host': '::', 'port': self.port, 'debug': self.debug}
         data['server'] = SSLAdapter
         self.app.run(**data)

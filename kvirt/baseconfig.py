@@ -1441,7 +1441,7 @@ class Kbaseconfig:
                 call(cmcmd, shell=True)
         return {'result': 'success'}
 
-    def deploy_ksushy_service(self, port=9000, ipv6=False, user=None, password=None, bootonce=False,
+    def deploy_ksushy_service(self, port=9000, user=None, password=None, bootonce=False,
                               plan=None):
         root = os.getuid() == 0
         if root:
@@ -1454,11 +1454,10 @@ class Kbaseconfig:
         home = os.environ.get('HOME', '/root')
         executable = which('ksushy')
         port = f"Environment=KSUSHY_PORT={port}\n" if port != 9000 else ''
-        ipv6 = "Environment=KSUSHY_IPV6=true\n" if ipv6 else ''
         user = f"Environment=KSUSHY_USER={user}\n" if user is not None else ''
         password = f"Environment=KSUSHY_PASSWORD={password}\n" if password is not None else ''
         bootonce = "Environment=KSUSHY_BOOTONCE=true\n" if bootonce else ''
-        sushydata = kdefaults.KSUSHYSERVICE.format(home=home, port=port, ipv6=ipv6, user=user,
+        sushydata = kdefaults.KSUSHYSERVICE.format(home=home, port=port, user=user,
                                                    password=password, bootonce=bootonce, executable=executable)
         with open(service_file, "w") as f:
             f.write(sushydata)
@@ -1466,12 +1465,11 @@ class Kbaseconfig:
         cmd = f"systemctl {user_space} restart ksushy" if update else f"systemctl {user_space} enable --now ksushy"
         call(cmd, shell=True)
 
-    def deploy_web_service(self, port=8000, ssl=False, ipv6=False):
+    def deploy_web_service(self, port=8000, ssl=False):
         update = os.path.exists("/usr/lib/systemd/system/kweb.service")
         home = os.environ.get('HOME', '/root')
         port = f"Environment=KWEB_PORT={port}\n" if port != 8000 else ''
-        ipv6 = "Environment=KWEB_IPV6=true\n" if ipv6 else ''
-        webdata = kdefaults.WEBSERVICE.format(home=home, port=port, ipv6=ipv6, ssl=ssl)
+        webdata = kdefaults.WEBSERVICE.format(home=home, port=port, ssl=ssl)
         with open("/usr/lib/systemd/system/kweb.service", "w") as f:
             f.write(webdata)
         cmd = "systemctl restart kweb" if update else "systemctl enable --now kweb"
