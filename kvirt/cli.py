@@ -3291,7 +3291,7 @@ def update_securitygroup(args):
 
 def create_ksushy_service(args):
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
-    baseconfig.deploy_ksushy_service(port=args.port, ipv6=args.ipv6, ssl=args.ssl, user=args.user,
+    baseconfig.deploy_ksushy_service(port=args.port, ipv6=args.ipv6, user=args.user,
                                      password=args.password, bootonce=args.bootonce, plan=args.plan)
 
 
@@ -3964,7 +3964,6 @@ def cli():
     sushycreate_parser.add_argument('-b', '--bootonce', action='store_true', help='Enable bootonce hack')
     sushycreate_parser.add_argument('-i', '--ipv6', action='store_true', help='Listen on ipv6')
     sushycreate_parser.add_argument('--port', help='Port where to listen', default=9000)
-    sushycreate_parser.add_argument('-s', '--ssl', action='store_true', help='Enable ssl')
     sushycreate_parser.add_argument('-u', '--user', help='User for authentication')
     sushycreate_parser.add_argument('-p', '--password', help='Password for authentication')
     sushycreate_parser.add_argument('--plan', help='Plan for filtering vms when using bootonce')

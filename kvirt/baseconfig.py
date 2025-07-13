@@ -1441,10 +1441,8 @@ class Kbaseconfig:
                 call(cmcmd, shell=True)
         return {'result': 'success'}
 
-    def deploy_ksushy_service(self, port=9000, ssl=False, ipv6=False, user=None, password=None, bootonce=False,
+    def deploy_ksushy_service(self, port=9000, ipv6=False, user=None, password=None, bootonce=False,
                               plan=None):
-        if ssl:
-            warning("ssl support requires installing manually pyopenssl and cherrypy")
         root = os.getuid() == 0
         if root:
             service_file = "/etc/systemd/system/ksushy.service"
@@ -1456,12 +1454,11 @@ class Kbaseconfig:
         home = os.environ.get('HOME', '/root')
         executable = which('ksushy')
         port = f"Environment=KSUSHY_PORT={port}\n" if port != 9000 else ''
-        ssl = "Environment=KSUSHY_SSL=true\n" if ssl else ''
         ipv6 = "Environment=KSUSHY_IPV6=true\n" if ipv6 else ''
         user = f"Environment=KSUSHY_USER={user}\n" if user is not None else ''
         password = f"Environment=KSUSHY_PASSWORD={password}\n" if password is not None else ''
         bootonce = "Environment=KSUSHY_BOOTONCE=true\n" if bootonce else ''
-        sushydata = kdefaults.KSUSHYSERVICE.format(home=home, port=port, ipv6=ipv6, ssl=ssl, user=user,
+        sushydata = kdefaults.KSUSHYSERVICE.format(home=home, port=port, ipv6=ipv6, user=user,
                                                    password=password, bootonce=bootonce, executable=executable)
         with open(service_file, "w") as f:
             f.write(sushydata)

@@ -1,7 +1,7 @@
 # coding=utf-8
 
 from kvirt.defaults import FAKECERT
-from kvirt.bottle import Bottle, request, response, jinja2_view, server_names, ServerAdapter, auth_basic
+from kvirt.bottle import Bottle, request, response, jinja2_view, ServerAdapter, auth_basic
 from kvirt.common import pprint, error
 from kvirt.baseconfig import Kbaseconfig
 from kvirt.config import Kconfig
@@ -10,6 +10,9 @@ import subprocess
 from datetime import datetime
 import functools
 from tempfile import NamedTemporaryFile
+from wsgiref.simple_server import make_server, WSGIServer
+from socketserver import ThreadingMixIn
+import ssl
 
 
 basedir = f"{os.path.dirname(Bottle.run.__code__.co_filename)}/ksushy"
@@ -30,21 +33,20 @@ def credentials(user, password):
         return False
 
 
-class SSLCherryPy(ServerAdapter):
+class SSLAdapter(ServerAdapter):
     def run(self, handler):
         cert = NamedTemporaryFile(delete=False)
         cert.write(FAKECERT.encode())
         cert.close()
-        from cheroot.ssl.pyopenssl import pyOpenSSLAdapter
-        from cheroot import wsgi
-        server = wsgi.Server((self.host, self.port), handler, request_queue_size=32)
-        self.srv = server
-        server.ssl_adapter = pyOpenSSLAdapter(cert.name, cert.name)
-        try:
-            server.start()
-        finally:
-            server.stop()
-            os.unlink(cert.name)
+        context = ssl.SSLContext(protocol=ssl.PROTOCOL_TLSv1_2)
+        context.load_cert_chain(certfile=cert.name)
+        context.set_ciphers('EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH')
+
+        class ThreadAdapter(ThreadingMixIn, WSGIServer):
+            pass
+        ssl_server = make_server(self.host, self.port, handler, server_class=ThreadAdapter, **self.options)
+        ssl_server.socket = context.wrap_socket(ssl_server.socket, server_side=True)
+        ssl_server.serve_forever()
 
 
 class Ksushy():
@@ -336,7 +338,5 @@ class Ksushy():
 
     def run(self):
         data = {'host': self.host, 'port': self.port, 'debug': self.debug}
-        if 'KSUSHY_SSL' in os.environ:
-            server_names['sslcherrypy'] = SSLCherryPy
-            data['server'] = 'sslcherrypy'
+        data['server'] = SSLAdapter
         self.app.run(**data)

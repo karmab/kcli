@@ -51,7 +51,7 @@ featureSet: TechPreviewNoUpgrade
     credentials:
 {% for num in range(0, 2) %}
     - hostname: {{ cluster }}-ctlplane-{{ num }}.{{ domain }}
-      address: {{ ksushy_protocol }}://{{ ksushy_ip }}:{{ ksushy_port }}/redfish/v1/Systems/{{ config_client }}/{{ cluster }}-ctlplane-{{ num }}
+      address: https://{{ ksushy_ip }}:{{ ksushy_port }}/redfish/v1/Systems/{{ config_client }}/{{ cluster }}-ctlplane-{{ num }}
       username: {{ bmc_user|default('dummy') }}
       password: {{ bmc_password|default('dummy') }}
       certificateVerification: Disabled

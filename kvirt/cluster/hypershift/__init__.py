@@ -68,7 +68,7 @@ def get_info(url, user, password):
         model = 'virtual'
         user = user or 'fake'
         password = password or 'fake'
-        url = url.replace('http', 'redfish-virtualmedia+http')
+        url = url.replace('http', 'redfish-virtualmedia')
         return url, user, password
     oem_url = f"https://{url}" if '://' not in url else url
     p = urlparse(oem_url)
@@ -286,7 +286,7 @@ def scale(config, plandir, cluster, overrides):
     new_baremetal_hosts = overrides.get('baremetal_hosts', [])
     if assisted:
         ksushy_ip = data['assisted_vms_ksushy_ip']
-        ksushy_url = f'http://{ksushy_ip}:9000/redfish/v1/Systems/{config.client}'
+        ksushy_url = f'https://{ksushy_ip}:9000/redfish/v1/Systems/{config.client}'
         old_physical_baremetal_hosts = [h for h in old_baremetal_hosts if ksushy_ip not in h['url']]
         assisted_vms_number = workers - len(old_physical_baremetal_hosts + new_baremetal_hosts)
         if assisted_vms_number > 0:
@@ -787,7 +787,7 @@ def create(config, plandir, cluster, overrides):
                 return result
             vms = result['newvms']
             ksushy_ip = data['assisted_vms_ksushy_ip']
-            ksushy_url = f'http://{ksushy_ip}:9000/redfish/v1/Systems/{config.client}'
+            ksushy_url = f'https://{ksushy_ip}:9000/redfish/v1/Systems/{config.client}'
             virtual_hosts = []
             for vm in vms:
                 new_mac = config.k.info(vm)['nets'][0]['mac']
