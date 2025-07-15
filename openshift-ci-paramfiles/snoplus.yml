@@ -9,6 +9,6 @@ ctlplanes: 3
 bmc_user: admin
 bmc_password: admin
 baremetal_hosts:
-- bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/snoplus-node-0
-- bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/snoplus-node-1
-- bmc_url: http://192.168.122.1:9000/redfish/v1/Systems/local/snoplus-node-2
+- bmc_url: https://192.168.122.1:9000/redfish/v1/Systems/local/snoplus-node-0
+- bmc_url: https://192.168.122.1:9000/redfish/v1/Systems/local/snoplus-node-1
+- bmc_url: https://192.168.122.1:9000/redfish/v1/Systems/local/snoplus-node-2
