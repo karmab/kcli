@@ -1046,7 +1046,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         disconnected_overrides['OPENSHIFT_TAG'] = OPENSHIFT_TAG
         disconnected_overrides['kube'] = f"{cluster}-reuse" if disconnected_reuse else cluster
         disconnected_overrides['openshift_version'] = INSTALLER_VERSION
-        disconnected_overrides['disconnected_operators_version'] = f"4.{INSTALLER_VERSION.split('.')[1]}"
+        disconnected_overrides['disconnected_operators_version'] = f"v4.{INSTALLER_VERSION.split('.')[1]}"
         x_apps = ['users', 'autolabeller', 'metal3', 'nfs']
         disconnected_operators_2 = [o['name'] for o in disconnected_operators if isinstance(o, dict) and 'name' in o]
         for app in apps:
