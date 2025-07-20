@@ -68,7 +68,7 @@ def get_info(url, user, password):
         model = 'virtual'
         user = user or 'fake'
         password = password or 'fake'
-        url = url.replace('http', 'redfish-virtualmedia')
+        url = url.replace('https', 'redfish-virtualmedia')
         return url, user, password
     oem_url = f"https://{url}" if '://' not in url else url
     p = urlparse(oem_url)
