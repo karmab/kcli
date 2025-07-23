@@ -50,7 +50,7 @@ IMAGES = {'almalinux8': f'{ALMA}/8/cloud/x86_64/images/AlmaLinux-8-GenericCloud-
           'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-image-bootstrap.qcow2',
           'centos7': f'{CENTOS}/7/images/CentOS-7-x86_64-GenericCloud.qcow2',
           'centos8stream': f'{CENTOS}/8-stream/x86_64/images/CentOS-Stream-GenericCloud-8-latest.x86_64.qcow2',
-          'centos9stream': f'{CENTOS}/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-latest.x86_64.qcow2',
+          'centos9stream': f'{CENTOS}/9-stream/x86_64/images/CentOS-Stream-GenericCloud-x86_64-9-latest.x86_64.qcow2',
           'centos10stream': f'{CENTOS}/10-stream/x86_64/images/CentOS-Stream-GenericCloud-10-latest.x86_64.qcow2',
           'cirros': 'http://download.cirros-cloud.net/0.5.2/cirros-0.5.2-x86_64-disk.img',
           'debian10': f'{DEBIAN}/openstack/current-10/debian-10-openstack-amd64.qcow2',
