@@ -1774,7 +1774,7 @@ Here's the list of typical variables that can be used (you can list them with `k
 |-----------------------|----------------------------------|--------|
 |cluster                |testk                             ||
 |domain                 |karmalabs.corp                    ||For cloud platforms, it should point to a domain name you have access to|
-|*version*|stable|You can choose between stable, dev-preview, nightly, ci or stable. both ci and nightly require specific data in the pull secret|
+|*version*|stable|You can choose between stable, candidate, nightly, ci or stable. both ci and nightly require specific data in the pull secret|
 |tag                    |4.12                               ||
 |async                  |false                             |Exit once vms are created and let job in cluster delete bootstrap|
 |notify                 |false                             |Whether to send notifications once cluster is deployed. Mean to be used in async mode|

@@ -1882,12 +1882,12 @@ A minimal one could be the following one
 
 Here’s the list of typical variables that can be used (you can list them with ``kcli info cluster openshift``)
 
-===================== =================== ===============================================================================================================================
+===================== =================== =============================================================================================================================
 Parameter             Default Value       Comments
-===================== =================== ===============================================================================================================================
+===================== =================== =============================================================================================================================
 cluster               testk               
 domain                karmalabs.corp      
-*version*             stable              You can choose between stable, dev-preview, nightly, ci or stable. both ci and nightly require specific data in the pull secret
+*version*             stable              You can choose between stable, candidate, nightly, ci or stable. both ci and nightly require specific data in the pull secret
 tag                   4.12                
 async                 false               Exit once vms are created and let job in cluster delete bootstrap
 notify                false               Whether to send notifications once cluster is deployed. Mean to be used in async mode
@@ -1922,7 +1922,7 @@ cloud_tag             None
 cloud_scale           False               
 cloud_api_internal    False               
 apps                  []                  Extra applications to deploy on the cluster
-===================== =================== ===============================================================================================================================
+===================== =================== =============================================================================================================================
 
 We can then deploy it with
 
