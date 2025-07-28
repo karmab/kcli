@@ -2133,7 +2133,10 @@ def get_rhcos_url_from_file(filename, _type='kvm'):
 
 
 def info_baremetal_host(url, user, password, debug=False, full=False):
-    red = Redfish(url, user, password, debug=debug)
+    try:
+        red = Redfish(url, user, password, debug=debug)
+    except:
+        sys.exit(1)
     pprint(f"Reporting info on host with url {url}")
     try:
         info = red.info()
@@ -2152,7 +2155,10 @@ def info_baremetal_host(url, user, password, debug=False, full=False):
 
 
 def reset_baremetal_host(url, user, password, debug=False):
-    red = Redfish(url, user, password, debug=debug)
+    try:
+        red = Redfish(url, user, password, debug=debug)
+    except:
+        sys.exit(1)
     pprint(f"Resetting host with url {url}")
     try:
         red.reset()
@@ -2169,7 +2175,10 @@ def start_baremetal_host(url, user, password, overrides={}, debug=False):
     if iso_url is not None and overrides.get('sno_worker', False):
         role = overrides.get('role') or 'worker'
         iso_url = iso_url.replace('-sno.iso', f'-{role}.iso')
-    red = Redfish(url, user, password, debug=debug)
+    try:
+        red = Redfish(url, user, password, debug=debug)
+    except:
+        sys.exit(1)
     if reset:
         red.reset()
         sleep(240)
@@ -2211,7 +2220,10 @@ def start_baremetal_hosts_with_iso(hosts, iso_url, overrides={}, debug=False):
 
 
 def stop_baremetal_host(url, user, password, debug=False):
-    red = Redfish(url, user, password, debug=debug)
+    try:
+        red = Redfish(url, user, password, debug=debug)
+    except:
+        sys.exit(1)
     try:
         if red.status() != 'Off':
             pprint(f"Stopping host with url {url}")
@@ -2228,7 +2240,10 @@ def stop_baremetal_host(url, user, password, debug=False):
 def update_baremetal_host(url, user, password, overrides={}, debug=False):
     secureboot = overrides.get('secureboot') or overrides.get('bmc_secureboot')
     iso_none = 'iso' in overrides and overrides['iso'] is None
-    red = Redfish(url, user, password, debug=debug)
+    try:
+        red = Redfish(url, user, password, debug=debug)
+    except:
+        sys.exit(1)
     if secureboot is not None:
         try:
             if secureboot:

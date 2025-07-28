@@ -53,7 +53,7 @@ def get_info(url, headers, context):
     except Exception as e:
         msg = getattr(e, 'msg', str(e))
         error(f"Hit issue {msg} when accessing url {chassis_url}")
-        sys.exit(1)
+        raise e
     request_url = f"{p.scheme}://{p.netloc}{chassis}"
     request = Request(request_url, headers=headers)
     manufacturer = json.loads(urlopen(request, context=context).read()).get('Manufacturer', '').lower()
