@@ -478,7 +478,7 @@ class Kopenstack(object):
     def ip(self, name):
         print("not implemented")
 
-    def volumes(self, iso=False):
+    def volumes(self, iso=False, extended=False):
         images = []
         isos = []
         glance = self.glance

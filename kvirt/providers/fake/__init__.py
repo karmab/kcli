@@ -6,7 +6,7 @@ class Kfake():
     def __init__(self):
         self.conn = 'fake'
 
-    def volumes(self, iso=True):
+    def volumes(self, iso=True, extended=False):
         return glob.glob('*.iso')
 
     def add_image(self, url, pool, cmds=[], name=None, size=None, convert=False):

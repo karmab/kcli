@@ -444,7 +444,7 @@ class Khcloud():
 
         return info["ip"]
 
-    def volumes(self, iso=False):
+    def volumes(self, iso=False, extended=False):
         images = self.conn.images.get_all()
         results = []
         for image in images:
@@ -455,6 +455,8 @@ class Khcloud():
                 'type': image.type,
                 'architecture': image.architecture
             })
+        if extended:
+            return sorted(results, key=lambda x: x['name'])
         return sorted([i['name'] for i in results])
 
     def add_image(self, url, pool, cmd=None, name=None, size=None, convert=False):

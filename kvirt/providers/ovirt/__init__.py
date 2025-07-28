@@ -689,7 +689,7 @@ release-cursor=shift+f12""".format(address=address, port=port, ticket=ticket.val
         else:
             return ips[-1]
 
-    def volumes(self, iso=False):
+    def volumes(self, iso=False, extended=False):
         if iso:
             isos = []
             for pool in self.conn.system_service().storage_domains_service().list():

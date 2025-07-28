@@ -529,7 +529,7 @@ class Kibm(object):
             return None
         return vm['primary_network_interface']['primary_ipv4_address']
 
-    def volumes(self, iso=False):
+    def volumes(self, iso=False, extended=False):
         image_list = []
         try:
             images = self.conn.list_images().result['images']

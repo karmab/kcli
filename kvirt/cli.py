@@ -1116,14 +1116,21 @@ def list_images(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.client != 'all':
         k = config.k
-    images = k.volumes()
+    images = k.volumes(extended=args.extended)
     output = args.global_output or args.output
     if output is not None:
         _list_output(images, output)
-    imagestable = PrettyTable(["Images"])
-    imagestable.align["Images"] = "l"
-    for image in images:
-        imagestable.add_row([image])
+    if args.extended and len(images) > 0 and isinstance(images[0], dict):
+        imagestable = PrettyTable()
+        for key in images[0].keys():
+            imagestable.add_column(key, [])
+        for image in images:
+            imagestable.add_row(image.values())
+    else:
+        imagestable = PrettyTable(["Images"])
+        imagestable.align["Images"] = "l"
+        for image in images:
+            imagestable.add_row([image])
     print(imagestable)
 
 
@@ -1131,14 +1138,21 @@ def list_isos(args):
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     if config.client != 'all':
         k = config.k
-    isos = k.volumes(iso=True)
+    isos = k.volumes(iso=True, extended=args.extended)
     output = args.global_output or args.output
     if output is not None:
         _list_output(isos, output)
-    isostable = PrettyTable(["Iso"])
-    isostable.align["Iso"] = "l"
-    for iso in isos:
-        isostable.add_row([iso])
+    if args.extended and len(isos) > 0 and isinstance(isos[0], dict):
+        isostable = PrettyTable()
+        for key in isos[0].keys():
+            isostable.add_column(key, [])
+        for iso in isos:
+            isostable.add_row(iso.values())
+    else:
+        isostable = PrettyTable(["Iso"])
+        isostable.align["Iso"] = "l"
+        for iso in isos:
+            isostable.add_row([iso])
     print(isostable)
 
 
@@ -4707,11 +4721,13 @@ def cli():
     imagelist_desc = 'List Images'
     imagelist_parser = list_subparsers.add_parser('image', description=imagelist_desc, help=imagelist_desc,
                                                   aliases=['images', 'template', 'templates'], parents=[output_parser])
+    imagelist_parser.add_argument('-e', '--extended', action='store_true')
     imagelist_parser.set_defaults(func=list_images)
 
     isolist_desc = 'List Isos'
     isolist_parser = list_subparsers.add_parser('iso', description=isolist_desc, help=isolist_desc, aliases=['isos'],
                                                 parents=[output_parser])
+    isolist_parser.add_argument('-e', '--extended', action='store_true')
     isolist_parser.set_defaults(func=list_isos)
 
     keywordlist_desc = 'List Keywords'

@@ -925,7 +925,7 @@ class Kubevirt():
                     break
         return ip
 
-    def volumes(self, iso=False):
+    def volumes(self, iso=False, extended=False):
         kubectl = self.kubectl
         namespace = self.namespace
         isos = []

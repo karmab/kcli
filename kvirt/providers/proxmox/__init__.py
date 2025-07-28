@@ -140,7 +140,7 @@ class Kproxmox(Kbase):
                 continue
         return sorted(vms, key=lambda x: x['name'])
 
-    def volumes(self, iso=False):
+    def volumes(self, iso=False, extended=False):
         return [t["name"] for t in self._get_isos()] if iso else [t["name"] for t in self._get_templates()]
 
     def _check_node(self, node):
