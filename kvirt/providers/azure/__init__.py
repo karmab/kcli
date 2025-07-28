@@ -1101,7 +1101,7 @@ class Kazure(object):
         if ip is None:
             error(f"Couldn't assign DNS for {name}")
             return
-        dnsip = ip if internalip is None else internalip
+        dnsip = internalip or ip
         dns_data = {"ttl": 300, "arecords": [{"ipv4_address": dnsip}]}
         dns_client.record_sets.create_or_update(self.resource_group, domain, entry, 'A', dns_data)
         for a in alias:

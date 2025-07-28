@@ -17,7 +17,7 @@ class Kcontainerconfig():
         default_k8s = False
         debug = config.debug
         insecure = config.insecure
-        client = config.client if client is None else client
+        client = client or config.client
         if client == 'local':
             currentconfig = {'host': '127.0.0.1'}
         elif client == 'kubernetes':
@@ -49,7 +49,7 @@ class Kcontainerconfig():
             elif not os.path.exists(os.path.expanduser(kubeconfig_file)):
                 error("Kubeconfig file path doesn't exist. Leaving")
                 sys.exit(1)
-            namespace = currentconfig.get('namespace') if namespace is None else namespace
+            namespace = namespace or currentconfig.get('namespace')
             context = currentconfig.get('context')
             readwritemany = currentconfig.get('readwritemany', False)
             from kvirt.kubernetes import Kubernetes

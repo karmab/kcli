@@ -1422,7 +1422,7 @@ class Kgcp(object):
             error(f"Couldn't assign DNS for {name}")
             return
         changes = dnszone.changes()
-        dnsip = ip if internalip is None else internalip
+        dnsip = internalip or ip
         record_set = dnszone.resource_record_set(entry, 'A', 300, [dnsip])
         changes.add_record_set(record_set)
         if alias:

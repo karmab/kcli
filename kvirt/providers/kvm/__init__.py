@@ -431,7 +431,7 @@ class Kvirt(object):
             diskformat = 'qcow2'
             if not diskthin:
                 diskformat = 'raw'
-            storagename = f"{name}_{index}.img" if diskname is None else diskname
+            storagename = diskname or f"{name}_{index}.img"
             diskpath = f"{diskpoolpath}/{storagename}"
             if image is not None and index == 0:
                 diskimage = image
@@ -3651,7 +3651,7 @@ class Kvirt(object):
                 attributes = entry.attrib
                 firstip = attributes.get('address')
                 netmask = attributes.get('netmask')
-                netmask = attributes.get('prefix') if netmask is None else netmask
+                netmask = netmask or attributes.get('prefix')
                 ipnet = f'{firstip}/{netmask}' if netmask is not None else firstip
                 ipnet = ip_network(ipnet, strict=False)
                 if index > 0:
@@ -4132,7 +4132,7 @@ class Kvirt(object):
                     attributes = entry.attrib
                     firstip = attributes.get('address')
                     netmask = attributes.get('netmask')
-                    netmask = attributes.get('prefix') if netmask is None else netmask
+                    netmask = netmask or attributes.get('prefix')
                     ipnet = f'{firstip}/{netmask}' if netmask is not None else firstip
                     ipnet = ip_network(ipnet, strict=False)
                     cidr = str(ipnet)

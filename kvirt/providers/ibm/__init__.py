@@ -969,7 +969,7 @@ class Kibm(object):
                             internal=False, dnsclient=None, ip=None):
 
         ports = [int(port) for port in ports]
-        internal = False if internal is None else internal
+        internal = internal or False
         clean_name = name.replace('.', '-')
         pprint(f"Creating Security Group {clean_name}")
         security_group_ports = ports + [int(checkport)] if int(checkport) not in ports else ports

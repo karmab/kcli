@@ -471,7 +471,7 @@ class Kconfig(Kbaseconfig):
         overrides['name'] = name
         kube = overrides.get('kube')
         kubetype = overrides.get('kubetype')
-        k = self.k if k is None else k
+        k = k or self.k
         tunnel = self.tunnel
         esx = self.type == 'vsphere' and self.k.esx
         profile = profile or overrides.get('image') or 'kvirt'
@@ -1555,7 +1555,7 @@ class Kconfig(Kbaseconfig):
                 pprint(f"Trying to retrieve {url}")
             inputfile = os.path.basename(url)
             onfly = os.path.dirname(url)
-            path = plan if path is None else path
+            path = path or plan
             if not quiet:
                 pprint(f"Retrieving specified plan from {url} to {path}")
             if container_mode():
@@ -2396,7 +2396,7 @@ class Kconfig(Kbaseconfig):
 
     def create_loadbalancer(self, name, nets=['default'], ports=[], checkpath='/', vms=[], domain=None,
                             plan=None, checkport=80, alias=[], internal=False, dnsclient=None, ip=None):
-        name = nameutils.get_random_name().replace('_', '-') if name is None else name
+        name = name or nameutils.get_random_name().replace('_', '-')
         pprint(f"Deploying loadbalancer {name}")
         k = self.k
         if self.type in ['aws', 'azure', 'gcp', 'ibm', 'hcloud']:

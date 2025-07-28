@@ -1392,7 +1392,7 @@ class Kaws(object):
         if ip is None:
             error(f"Couldn't assign DNS for {name}")
             return
-        dnsip = ip if internalip is None else internalip
+        dnsip = internalip or ip
         changes = [{'Action': 'CREATE', 'ResourceRecordSet':
                    {'Name': entry, 'Type': 'A', 'TTL': 300, 'ResourceRecords': [{'Value': dnsip}]}}]
         if alias:
