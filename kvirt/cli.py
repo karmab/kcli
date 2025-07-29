@@ -2473,6 +2473,7 @@ def create_vmdata(args):
     args.serial = None
     args.count = 0
     args.force = False
+    args.keep = False
     create_vm(args)
 
 
