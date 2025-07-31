@@ -547,7 +547,7 @@ class Kazure(object):
                                                                     os.path.basename(public_address.id)).ip_address
         return public_address or private_ip
 
-    def volumes(self, iso=False):
+    def volumes(self, iso=False, extended=False):
         publishers = ['RedHat', 'Suse', 'Canonical', 'Debian', 'MicrosoftWindowsServer', 'OpenLogic']
         images = []
         if iso:

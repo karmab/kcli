@@ -1005,7 +1005,7 @@ class Ksphere:
                                 isos.append(iso_path)
         return isos
 
-    def volumes(self, iso=False):
+    def volumes(self, iso=False, extended=False):
         if iso:
             return self._getisos()
         results = []

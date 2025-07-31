@@ -774,7 +774,7 @@ class Kaws(object):
             ip = None
         return ip
 
-    def volumes(self, iso=False):
+    def volumes(self, iso=False, extended=False):
         conn = self.conn
         images = []
         oses = ['CentOS Stream*', 'CentOS Linux 8*', 'RHEL-7*', 'RHEL-8.*', 'RHEL-9.*', 'Debian*', 'Ubuntu*']

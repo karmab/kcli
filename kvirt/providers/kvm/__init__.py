@@ -2078,7 +2078,7 @@ class Kvirt(object):
             else:
                 return None
 
-    def volumes(self, iso=False):
+    def volumes(self, iso=False, extended=False):
         isos = []
         images = []
         conn = self.conn

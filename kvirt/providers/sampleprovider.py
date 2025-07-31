@@ -118,7 +118,7 @@ class Kbase(object):
         print("not implemented")
 
 # should return a list of available images, or isos ( if iso is set to True
-    def volumes(self, iso=False):
+    def volumes(self, iso=False, extended=False):
         print("not implemented")
         return []
 

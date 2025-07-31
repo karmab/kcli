@@ -150,7 +150,7 @@ class Kwebclient(object):
         result = json.loads(urlopen(request, context=self.context).read())
         return result.get('ip')
 
-    def volumes(self, iso=False):
+    def volumes(self, iso=False, extended=False):
         _type = 'isos' if iso else 'images'
         url = f"{self.base}/{_type}"
         request = Request(url, headers=self.headers)

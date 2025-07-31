@@ -729,7 +729,7 @@ class Kgcp(object):
             ip = vm['networkInterfaces'][0]['networkIP']
         return ip
 
-    def volumes(self, iso=False):
+    def volumes(self, iso=False, extended=False):
         projects = ['centos-cloud', 'coreos-cloud', 'cos-cloud', 'debian-cloud', 'fedora-coreos-cloud', 'rhel-cloud',
                     'suse-cloud', 'ubuntu-os-cloud', self.project]
         conn = self.conn
