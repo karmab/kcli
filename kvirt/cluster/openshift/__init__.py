@@ -1341,12 +1341,14 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         with open(f"{clusterdir}/openshift/99-kubevirt-fix-worker.yaml", 'w') as _f:
             _f.write(kubevirtworker)
     if sno:
-        sno_name = f"{cluster}-sno"
         sno_files = []
         sno_disable_nics = data['sno_disable_nics']
         if ipv6 or sno_disable_nics:
             nm_data = config.process_inputfile(cluster, f"{plandir}/kcli-ipv6.conf.j2", overrides=data)
             sno_files.append({'path': "/etc/NetworkManager/conf.d/kcli-ipv6.conf", 'data': nm_data})
+        sno_hostname = data['sno_hostname']
+        if sno_hostname is None:
+            sno_files.append({'path': "/etc/hostname", 'data': sno_hostname})
         sno_dns = data['sno_dns']
         if sno_dns is None:
             sno_dns = False
@@ -1403,7 +1405,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         disable_ipv6 = 'ipv6' in overrides and not overrides['ipv6']
         data['disable_ipv6'] = disable_ipv6
         overrides['disable_ipv6'] = disable_ipv6
-        move(f"{clusterdir}/bootstrap-in-place-for-live-iso.ign", f"./{sno_name}.ign")
+        move(f"{clusterdir}/bootstrap-in-place-for-live-iso.ign", f"{cluster}-sno.ign")
         with open("iso.ign", 'w') as f:
             iso_overrides = data.copy()
             iso_overrides['image'] = 'rhcos4000'
@@ -1426,7 +1428,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 else:
                     sno_extra_args = bootstrap_data
                 iso_overrides['sno_extra_args'] = sno_extra_args
-            result = config.create_vm(sno_name, overrides=iso_overrides, onlyassets=True)
+            result = config.create_vm(f"{cluster}-sno", overrides=iso_overrides, onlyassets=True)
             pprint("Writing iso.ign to current dir")
             f.write(result['userdata'])
         live_url = os.environ.get('LIVEISO_URL') or overrides.get('liveiso_url')

@@ -115,18 +115,19 @@ localhost_fix: false
 ctlplane_localhost_fix: false
 worker_localhost_fix: false
 sno: false
-sno_disk:
-sno_debug: false
 sno_cloud_remove_lb: true
-sno_disable_nics: []
 sno_ctlplanes: false
-sno_workers: false
-sno_dns:
-sno_wait: false
-sno_nic:
 sno_cpuset:
-sno_vm: false
+sno_debug: false
+sno_disable_nics: []
+sno_disk:
+sno_dns:
 sno_extra_args:
+sno_hostname:
+sno_nic:
+sno_vm: false
+sno_wait: false
+sno_workers: false
 metal3: false
 baremetal_user: root
 baremetal_password: calvin
