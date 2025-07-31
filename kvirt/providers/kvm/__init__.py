@@ -221,7 +221,7 @@ class Kvirt(object):
         bootdev = 1
         namespace = ''
         ignition = False
-        usermode = False
+        usermode = overrides.get('usermode', False)
         macosx = False
         diskpath = None
         qemuextra = overrides.get('qemuextra')
@@ -229,7 +229,8 @@ class Kvirt(object):
         needs_ignition = image is not None and (common.needs_ignition(image) or 'ignition_file' in overrides)
         iommuxml = ""
         ioapicxml = ""
-        if 'session' in self.url:
+        if usermode or 'session' in self.url:
+            self.url = 'qemu:///session'
             usermode = True
             userport = common.get_free_port()
             metadata['ip'] = userport
@@ -1387,7 +1388,8 @@ class Kvirt(object):
                 os.system(cmd)
         xml = vm.XMLDesc(0)
         vmxml = ET.fromstring(xml)
-        self._reserve_ip(name, domain, vmxml, nets, primary=reserveip, networks=allnetworks)
+        if not usermode:
+            self._reserve_ip(name, domain, vmxml, nets, primary=reserveip, networks=allnetworks)
         if start:
             try:
                 vm.create()
