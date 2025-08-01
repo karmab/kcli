@@ -663,14 +663,14 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         warning("Forcing dualstack")
         data['dualstack'] = True
     http_proxy = os.environ.get('HTTP_PROXY') or os.environ.get('http_proxy')
-    if 'http_proxy' not in data and http_proxy is not None:
+    if data['http_proxy'] is None and http_proxy is not None:
         pprint("Using proxy settings from environment")
         data['http_proxy'] = http_proxy
         https_proxy = os.environ.get('HTTPS_PROXY') or os.environ.get('https_proxy')
-        if 'https_proxy' not in data and https_proxy is not None:
+        if data['https_proxy'] is None and https_proxy is not None:
             data['https_proxy'] = https_proxy
         no_proxy = os.environ.get('NO_PROXY') or os.environ.get('no_proxy')
-        if 'no_proxy' not in data and no_proxy is not None:
+        if data['no_proxy'] is None and no_proxy is not None:
             data['no_proxy'] = no_proxy
     if data['ctlplanes'] == 1 and data['workers'] == 0\
        and 'ctlplane_memory' not in overrides and 'memory' not in overrides:
@@ -841,7 +841,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         data['ipv6'] = True
         overrides['ipv6'] = True
         data['disconnected_ipv6_network'] = True
-        if not disconnected_vm and disconnected_url is None:
+        if not disconnected_vm and disconnected_url is None and data['http_proxy'] is None:
             warning("Forcing disconnected_vm to True as no disconnected_url was provided")
             data['disconnected_vm'] = True
             disconnected_vm = True

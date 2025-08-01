@@ -186,10 +186,9 @@ def ipv6_wrap(name):
     try:
         if ip_address(name).version == 6:
             return f'[{name}]'
-        else:
-            return name
     except:
-        return name
+        pass
+    return name
 
 
 def has_ctlplane(_list):
