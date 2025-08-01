@@ -388,8 +388,8 @@ def create(config, plandir, cluster, overrides):
         version = 'stable'
     coredns = data.get('coredns')
     tag = data.get('tag')
-    if str(tag) == '4.1':
-        tag = '4.10'
+    if isinstance(tag, float) and str(tag).count('.') == 1 and len(str(tag).split('.')[1]) == 1:
+        tag = f'{tag}0'
         data['tag'] = tag
     pull_secret = os.path.expanduser(pwd_path(data.get('pull_secret')))
     if not os.path.exists(pull_secret):
