@@ -5,7 +5,7 @@ sslip: true
 ctlplanes: 3
 workers: 2
 version: nightly
-tag: 4.20
+tag: '4.20'
 sslip: true
 api_ip: 10.6.118.222
 network: br-ex
