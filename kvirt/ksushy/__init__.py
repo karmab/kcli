@@ -330,7 +330,7 @@ class Ksushy():
             return {'client': client, 'name': name}
 
         self.app = app
-        self.port = os.environ.get('KSUSHY_PORT', 9000)
+        self.port = os.environ.get('KSUSHY_LISTEN_PORT', 9000)
         self.debug = 'KSUSHY_DEBUG' in os.environ
         self.bootonce = 'KSUSHY_BOOTONCE' in os.environ
 

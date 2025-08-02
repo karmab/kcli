@@ -2327,14 +2327,11 @@ ksushy is bundled within kcli but ssl support requires installing manually cherr
 
 ksushy can be launched manually for testing purposes but the following command creates a systemd unit instead, listening on port 9000. The call parses the following environment variables:
 
-- KSUSHY_PORT: use a specific port
-- KSUSHY_IPV6: listen on ipv6
-- KSUSHY_SSL: enable ssl
+- KSUSHY_LISTEN_PORT: use a specific port
 - KSUSHY_DEBUG: enable debug
 - KSUSHY_USER: username for authentication
 - KSUSHY_PASSWORD: password for authentication
 - KSUSHY_BOOTONCE: enable bootonce
-- KSUSHY_PLAN: specific plan to restrict actions when using bootonce
 
 ```
 kcli create sushy-service
@@ -2345,13 +2342,13 @@ kcli create sushy-service
 Once the service is deployed, one can query an existing vm running locally using the following
 
 ```
-curl http://127.0.0.1/redfish/v1/Systems/local/mynode
+curl https://127.0.0.1/redfish/v1/Systems/local/mynode
 ```
 
 For querying a vm running on a different provider, the url would change to specify the provider as defined in ~/.kcli/config.yml
 
 ```
-curl http://127.0.0.1/redfish/v1/Systems/myotherprovider/mynode2
+curl https://127.0.0.1/redfish/v1/Systems/myotherprovider/mynode2
 ```
 
 Typical redfish operations like start, stop, info, listing nics of a vm are supported for all providers.
