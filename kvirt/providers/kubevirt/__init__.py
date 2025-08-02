@@ -1268,7 +1268,10 @@ class Kubevirt():
             size = _base_image_size(url)
             warning(f"Setting size of image to {size}G. This will be the size of primary disks using this")
         pool = self.check_pool(pool)
-        volume_mode, volume_access = self.get_volume_details(pool, self.volume_mode, self.volume_access)
+        if name is not None and 'sno' in name and name.endswith('iso'):
+            volume_mode, volume_access = 'Filesystem', 'ReadWriteOnce'
+        else:
+            volume_mode, volume_access = self.get_volume_details(pool, self.volume_mode, self.volume_access)
         if volume_mode is None:
             return {'result': 'failure', 'reason': "Incorrect volume_mode"}
         if volume_access is None:
