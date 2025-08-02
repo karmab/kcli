@@ -1,6 +1,6 @@
 parameters:
  pool: default
- image: debian11
+ image: cirros
  network: mynetwork
  profile: myprofile
 
