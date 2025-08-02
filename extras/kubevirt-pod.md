@@ -17,8 +17,8 @@ This page describes a way to deploy OpenShift on top of KubeVirt
 ```
 SERVICEACCOUNT=kcli
 NAMESPACE=default
-kubectl create serviceaccount kcli -n $NAMESPACE
-kubectl create rolebinding kcli --clusterrole=admin --user=system:serviceaccount:$NAMESPACE:kcli
+kubectl create serviceaccount $SERVICEACCOUNT -n $NAMESPACE
+kubectl create rolebinding $SERVICEACCOUNT --clusterrole=admin --user=system:serviceaccount:$NAMESPACE:$SERVICEACCOUNT
 kubectl create secret generic pull-secret --from-file=pull-secret=openshift_pull.json
-kubectl create -f kubevirt-pod.yml
+kubectl create -f kubevirt-pod.yml || kubectl create -f https://raw.githubusercontent.com/karmab/kcli/refs/heads/main/extras/kubevirt-pod.yml
 ```

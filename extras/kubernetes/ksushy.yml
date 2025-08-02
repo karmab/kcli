@@ -8,11 +8,11 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: kcli
+      app: ksushy
   template:
     metadata:
       labels:
-        app: kcli
+        app: ksushy
     spec:
       containers:
       - name: kcli
@@ -46,3 +46,5 @@ spec:
   to:
     kind: Service
     name: ksushy
+  tls:
+    termination: passthrough
