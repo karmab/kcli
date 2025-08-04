@@ -1,7 +1,6 @@
 from base64 import b64decode
 import json
 import os
-from shutil import which
 import ssl
 from tempfile import NamedTemporaryFile
 from urllib.request import urlopen, Request
@@ -48,12 +47,9 @@ def _patch_resource(kubectl, resource, name, data, namespace, debug=False):
     return os.popen(f"{kubectl} patch -n {namespace} {resource} {name} -p '{json.dumps(data)}'").read()
 
 
-def _put(subresource, data, debug=False):
+def _get_credentials(kubectl):
     headers = {'Content-Type': 'application/json'}
-    kubectl = which('kubectl') or which('oc')
-    cmd = '%s config view --minify --output jsonpath="{.clusters[*].cluster.server}"' % kubectl
-    baseurl = os.popen(cmd).read()
-    url = f'{baseurl}/{subresource}'
+    baseurl = os.popen('%s config view --minify --output jsonpath="{.clusters[*].cluster.server}"' % kubectl).read()
     cmd = "%s config view -o jsonpath='{.clusters[0]}' --raw" % kubectl
     ca_cert_data = json.loads(os.popen(cmd).read())['cluster']['certificate-authority-data']
     ca_cert_file = NamedTemporaryFile(delete=False)
@@ -75,7 +71,13 @@ def _put(subresource, data, debug=False):
         context.load_cert_chain(certfile=client_cert_file.name, keyfile=client_key_file.name)
     else:
         headers["Authorization"] = f"Bearer {kubeconfig_data['token']}"
+    return baseurl, context, headers
+
+
+def _put(kubectl, subresource, data, debug=False):
+    baseurl, context, headers = _get_credentials(kubectl)
     data = json.dumps(data).encode('utf-8')
+    url = f'{baseurl}/{subresource}'
     request = Request(url, headers=headers, method='PUT', data=data)
     urlopen(request, context=context)
 

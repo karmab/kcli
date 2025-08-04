@@ -3,14 +3,17 @@
 from ipaddress import ip_address
 from kvirt import common
 from kvirt.common import error, pprint, warning
-from kvirt.kubecommon import _create_resource, _delete_resource, _patch_resource, _replace_resource
+from kvirt.kubecommon import _create_resource, _delete_resource, _patch_resource, _replace_resource, _get_credentials
 from kvirt.kubecommon import _get_resource, _get_all_resources, _put, _create_secret
 from kvirt.defaults import IMAGES, UBUNTUS, METADATA_FIELDS
 import datetime
 import os
 from shutil import which
+from socket import socket, AF_INET, SOCK_STREAM
 import sys
+from threading import Event, Thread
 import time
+import tty
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from uuid import UUID
@@ -49,6 +52,51 @@ def _base_image_size(image):
     else:
         size = 9
     return size
+
+
+def _vnc_ws_to_socket(ws, sock):
+    while True:
+        data = sock.recv(4096)
+        if not data:
+            break
+        ws.send_binary(data)
+
+
+def _vnc_socket_to_ws(ws, sock):
+    while True:
+        data = ws.recv()
+        if not data:
+            break
+        sock.sendall(data)
+
+
+def _vnc_wait_for_client(server, container, event):
+    sock, _ = server.accept()
+    container['sock'] = sock
+    event.set()
+
+
+def _console_read_from_ws(ws):
+    try:
+        while True:
+            msg = ws.recv()
+            if not msg:
+                break
+            sys.stdout.buffer.write(msg)
+            sys.stdout.buffer.flush()
+    except Exception:
+        pass
+
+
+def _console_write_to_ws(ws):
+    try:
+        while True:
+            data = sys.stdin.buffer.read(1)
+            if not data:
+                break
+            ws.send(data, opcode=2)
+    except Exception:
+        pass
 
 
 class Kubevirt():
@@ -645,6 +693,11 @@ class Kubevirt():
         return sorted(vms, key=lambda x: x['name'])
 
     def console(self, name, tunnel=False, tunnelhost=None, tunnelport=22, tunneluser='root', web=False):
+        try:
+            from websocket import create_connection
+        except:
+            error("You need to install websocket-client package")
+            return
         kubectl = self.kubectl
         if os.path.exists("/i_am_a_container"):
             error("This functionality is not supported in container mode")
@@ -654,22 +707,19 @@ class Kubevirt():
         if vm is None:
             error(f"VM {name} not found")
             return {'result': 'failure', 'reason': f"VM {name} not found"}
-        uid = vm.get("metadata")['uid']
-        for pod in _get_all_resources(kubectl, 'pod', namespace, debug=self.debug):
-            if pod['metadata']['name'].startswith(f"virt-launcher-{name}-") and\
-                    pod['metadata']['labels']['kubevirt.io/domain'] == name:
-                podname = pod['metadata']['name']
-                localport = common.get_free_port()
-                break
-        nccmd = f'KUBECONFIG={self.kubeconfig_file} ' if self.kubeconfig_file is not None else ''
-        nccmd += f"{kubectl} exec -n {namespace} {podname} -- /bin/sh -c "
-        nccmd += f"'nc -l {localport} --sh-exec \"nc -U /var/run/kubevirt-private/{uid}/virt-vnc\"'"
-        nccmd += " &"
-        os.system(nccmd)
-        forwardcmd = f'KUBECONFIG={self.kubeconfig_file} ' if self.kubeconfig_file is not None else ''
-        forwardcmd += f"{kubectl} port-forward {podname} {localport}:{localport} &"
-        os.system(forwardcmd)
-        time.sleep(5)
+        baseurl, context, headers = _get_credentials(kubectl)
+        baseurl = baseurl.replace('https://', 'wss://')
+        ws_url = f"{baseurl}/apis/subresources.{DOMAIN}/{VERSION}/namespaces/{namespace}/virtualmachineinstances/{name}"
+        ws_url += "/vnc"
+        ws = create_connection(ws_url, sslopt={"context": context}, header=headers)
+        server = socket(AF_INET, SOCK_STREAM)
+        localport = common.get_free_port()
+        server.bind(("127.0.0.1", localport))
+        server.listen(1)
+        sock_container = {}
+        sock_ready_event = Event()
+        t0 = Thread(target=_vnc_wait_for_client, args=(server, sock_container, sock_ready_event), daemon=True)
+        t0.start()
         if web:
             return f"vnc://127.0.0.1:{localport}"
         url = f"vnc://127.0.0.1:{localport}"
@@ -685,29 +735,41 @@ class Kubevirt():
             pprint(msg)
         else:
             os.system(consolecommand)
-        return
+        sock_ready_event.wait()
+        sock = sock_container['sock']
+        t1 = Thread(target=_vnc_socket_to_ws, args=(ws, sock))
+        t2 = Thread(target=_vnc_ws_to_socket, args=(ws, sock))
+        t1.start()
+        t2.start()
+        t1.join()
+        t2.join()
+        sock.close()
+        ws.close()
 
     def serialconsole(self, name, web=False):
+        try:
+            from websocket import create_connection
+        except:
+            error("You need to install websocket-client package")
         kubectl = self.kubectl
         namespace = self.namespace
         vm = _get_resource(kubectl, 'vm', name, namespace, debug=self.debug)
         if vm is None:
             error(f"VM {name} not found")
             return {'result': 'failure', 'reason': f"VM {name} not found"}
-        uid = vm.get("metadata")['uid']
-        for pod in _get_all_resources(kubectl, 'pod', namespace, debug=self.debug):
-            if pod['metadata']['name'].startswith(f"virt-launcher-{name}-") and\
-                    pod['metadata']['labels']['kubevirt.io/domain'] == name:
-                podname = pod['metadata']['name']
-                break
-        nccmd = "%s exec -n %s -it %s -- /bin/sh -c 'nc -U /var/run/kubevirt-private/%s/virt-serial0'" % (kubectl,
-                                                                                                          namespace,
-                                                                                                          podname,
-                                                                                                          uid)
-        if web:
-            return nccmd
-        os.system(nccmd)
-        return
+        baseurl, context, headers = _get_credentials(kubectl)
+        baseurl = baseurl.replace('https://', 'wss://')
+        ws_url = f"{baseurl}/apis/subresources.{DOMAIN}/{VERSION}/namespaces/{namespace}/virtualmachineinstances/{name}"
+        ws_url += "/console"
+        ws = create_connection(ws_url, sslopt={"context": context}, header=headers)
+        tty.setraw(sys.stdin.fileno())
+        t1 = Thread(target=_console_read_from_ws, args=(ws,))
+        t2 = Thread(target=_console_write_to_ws, args=(ws,))
+        t1.start()
+        t2.start()
+        t1.join()
+        t2.join()
+        ws.close()
 
     def dnsinfo(self, name):
         kubectl = self.kubectl
