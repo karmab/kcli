@@ -90,6 +90,9 @@ IMAGES = {'almalinux8': f'{ALMA}/8/cloud/x86_64/images/AlmaLinux-8-GenericCloud-
           'rhel8': 'https://access.redhat.com/downloads/content/479/ver=/rhel---8',
           'rhel9': 'https://access.redhat.com/downloads/content/479/ver=/rhel---9',
           'rhel10': 'https://access.redhat.com/downloads/content/479/ver=/rhel---10',
+          'rockylinux8': f'{ROCKY}/8/images/x86_64/Rocky-8-GenericCloud.latest.x86_64.qcow2',
+          'rockylinux9': f'{ROCKY}/9/images/x86_64/Rocky-9-GenericCloud.latest.x86_64.qcow2',
+          'rockylinux10': f'{ROCKY}/10/images/x86_64/Rocky-10-GenericCloud-Base.latest.x86_64.qcow2',
           'ubuntu1804': f'{UBUNTU}/18.04/release/ubuntu-18.04-server-cloudimg-amd64.img',
           'ubuntu2004': f'{UBUNTU}/20.04/release/ubuntu-20.04-server-cloudimg-amd64.img',
           'ubuntu2204': f'{UBUNTU}/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img',
@@ -97,8 +100,8 @@ IMAGES = {'almalinux8': f'{ALMA}/8/cloud/x86_64/images/AlmaLinux-8-GenericCloud-
           'ubuntu2310': f'{UBUNTU}/23.10/release/ubuntu-23.10-server-cloudimg-amd64.img',
           'ubuntu2404': f'{UBUNTU}/24.04/release/ubuntu-24.04-server-cloudimg-amd64.img',
           'ubuntu2410': f'{UBUNTU}/24.10/release/ubuntu-24.10-server-cloudimg-amd64.img',
-          'rockylinux8': f'{ROCKY}/8/images/x86_64/Rocky-8-GenericCloud.latest.x86_64.qcow2',
-          'rockylinux9': f'{ROCKY}/9/images/x86_64/Rocky-9-GenericCloud.latest.x86_64.qcow2'}
+          'ubuntu2504': f'{UBUNTU}/24.04/release/ubuntu-25.04-server-cloudimg-amd64.img',
+          'ubuntu2510': f'{UBUNTU}/24.10/release/ubuntu-25.10-server-cloudimg-amd64.img'}
 
 IMAGESCOMMANDS = {'debian8': 'echo datasource_list: [NoCloud, ConfigDrive, Openstack, Ec2] > /etc/cloud/cloud.cfg.d/'
                   '90_dpkg.cfg'}
