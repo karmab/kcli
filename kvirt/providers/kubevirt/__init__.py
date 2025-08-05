@@ -301,7 +301,7 @@ class Kubevirt():
         if uefi or secureboot:
             if secureboot:
                 features['smm'] = {'enabled': True}
-            vm['spec']['template']['spec']['domain']['firmware'] = {'bootloader': {'efi': {'secure': secureboot}}}
+            vm['spec']['template']['spec']['domain']['firmware'] = {'bootloader': {'efi': {'secureBoot': secureboot}}}
         for flag in cpuflags:
             if isinstance(flag, str):
                 feature = flag
