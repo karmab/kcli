@@ -366,7 +366,7 @@ class Kubevirt():
                     return {'result': 'failure', 'reason': f"network {netname} not found"}
                 else:
                     newnet['multus'] = {'networkName': netname}
-                    guest_agent = True
+                    guest_agent = image is not None
                     if index == 0:
                         need_access_service = False
             else:
@@ -465,7 +465,7 @@ class Kubevirt():
             cloudinit = False
         if guest_agent:
             gcmds = []
-            if image is not None and common.need_guest_agent(image):
+            if common.need_guest_agent(image):
                 gcmds.append('yum -y install qemu-guest-agent')
                 gcmds.append('systemctl enable qemu-guest-agent')
                 gcmds.append('systemctl restart qemu-guest-agent')
@@ -475,7 +475,7 @@ class Kubevirt():
                 gcmds.append('apt-get update')
                 gcmds.append('apt-get -f install qemu-guest-agent')
             idx = 1
-            if image is not None and image.startswith('rhel'):
+            if image.startswith('rhel'):
                 subindex = [i for i, value in enumerate(cmds) if value.startswith('subscription-manager')]
                 if subindex:
                     idx = subindex.pop() + 1
