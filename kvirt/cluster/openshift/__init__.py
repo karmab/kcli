@@ -1350,7 +1350,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             nm_data = config.process_inputfile(cluster, f"{plandir}/kcli-ipv6.conf.j2", overrides=data)
             sno_files.append({'path': "/etc/NetworkManager/conf.d/kcli-ipv6.conf", 'data': nm_data})
         sno_hostname = data['sno_hostname']
-        if sno_hostname is None:
+        if sno_hostname is not None:
             sno_files.append({'path': "/etc/hostname", 'data': sno_hostname})
         sno_dns = data['sno_dns']
         if sno_dns is None:
