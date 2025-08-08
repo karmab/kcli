@@ -231,9 +231,9 @@ class Kvirt(object):
         ioapicxml = ""
         if usermode or 'session' in self.url:
             self.url = 'qemu:///session'
-            usermode = True
             userport = common.get_free_port()
-            metadata['ip'] = userport
+            metadata['userport'] = userport
+            usermode = True
         if self.exists(name):
             return {'result': 'failure', 'reason': f"VM {name} already exists"}
         default_diskinterface = diskinterface
@@ -666,8 +666,6 @@ class Kvirt(object):
         default_gateway = overrides.get('gateway')
         default_dns = overrides.get('dns')
         for index, net in enumerate(nets):
-            if usermode:
-                continue
             ovs = False
             nicnuma = None
             macxml = ''
@@ -737,7 +735,11 @@ class Kvirt(object):
                 nets[index]['netmask'] = netmasks[index]
             if netname in ovsnetworks:
                 ovs = True
-            if netname in networks:
+            if usermode:
+                iftype = 'user'
+                sourcexml = "<backend type='passt'/>"
+                sourcexml += f"<portForward proto='tcp'><range start='{userport}' to='22'/></portForward>"
+            elif netname in networks:
                 iftype = 'network'
                 sourcexml = f"<source network='{netname}'/>"
                 if netname in forward_bridges:
@@ -1097,19 +1099,12 @@ class Kvirt(object):
             vcpuxml = f"<vcpu>{numcpus}</vcpu>"
         clockxml = "<clock offset='utc'/>"
         qemuextraxml = ''
-        if ignition or usermode or macosx or tpm or qemuextra is not None or nvmedisks:
+        if ignition or macosx or tpm or qemuextra is not None or nvmedisks:
             namespace = "xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'"
             ignitionxml = ""
             if ignition:
                 ignitionxml = """<qemu:arg value='-fw_cfg' />
 <qemu:arg value='name=opt/com.coreos/config,file=%s/%s.ign' />""" % (default_poolpath, name)
-            usermodexml = ""
-            if usermode:
-                netmodel = 'virtio-net-pci' if not macosx else 'e1000-82545em'
-                usermodexml = """<qemu:arg value='-netdev'/>
-<qemu:arg value='user,id=mynet.0,net=10.0.10.0/24,hostfwd=tcp::%s-:22'/>
-<qemu:arg value='-device'/>
-<qemu:arg value='%s,netdev=mynet.0'/>""" % (userport, netmodel)
             macosxml = ""
             if macosx:
                 clockxml = """<clock offset='utc'>
@@ -1148,12 +1143,10 @@ class Kvirt(object):
 <qemu:arg value='nvme,drive=NVME{index},serial=nvme-{index}'/>""".format(index=index, diskpath=diskpath)
             qemuextraxml = """<qemu:commandline>
 {ignitionxml}
-{usermodexml}
 {macosxml}
 {freeformxml}
 {nvmexml}
-</qemu:commandline>""".format(ignitionxml=ignitionxml, usermodexml=usermodexml, macosxml=macosxml,
-                              freeformxml=freeformxml, nvmexml=nvmexml)
+</qemu:commandline>""".format(ignitionxml=ignitionxml, macosxml=macosxml, freeformxml=freeformxml, nvmexml=nvmexml)
         sharedxml = ""
         if sharedfolders:
             for folder in sharedfolders:
@@ -1893,6 +1886,9 @@ class Kvirt(object):
             e = element.find('{kvirt}nodhcp')
             if e is not None:
                 nodhcp = True
+            e = element.find('{kvirt}userport')
+            if e is not None:
+                yamlinfo['userport'] = e.text
         if image is not None:
             yamlinfo['image'] = image
         yamlinfo['plan'] = plan

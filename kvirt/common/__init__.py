@@ -1460,6 +1460,9 @@ def _ssh_credentials(k, name):
         if ip is None:
             warning(f"Connecting to {name} using node fqdn")
             ip = nodehost
+    elif 'userport' in info:
+        ip = '127.0.0.1'
+        vmport = info['userport']
     if ip is None:
         error(f"No ip found for {name}")
     return user, ip, vmport
