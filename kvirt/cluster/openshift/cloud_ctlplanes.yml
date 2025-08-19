@@ -25,6 +25,7 @@
  - name: {{ network }}
  disks:
  - size: {{ disk_size }}
+ tpm: {{ tpm }}
 {% if config_type == 'ibm' %}
  files:
   - path: /etc/NetworkManager/dispatcher.d/99-kcli-forcedns

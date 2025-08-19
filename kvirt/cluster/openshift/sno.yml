@@ -23,6 +23,7 @@
  autostart: {{ autostart }}
  nets: {{ [network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
+ tpm: {{ tpm }}
 
 {% if sno_workers %}
 {% for num in range(0, workers|int) %}
@@ -39,5 +40,6 @@
  autostart: {{ autostart }}
  nets: {{ [network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
+ tpm: {{ tpm }}
 {% endfor %}
 {% endif %}

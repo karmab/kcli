@@ -33,6 +33,7 @@
 {% endif %}
  nets: {{ [network] + extra_networks }}
  disks: {{ [disk_size] + extra_disks }}
+ tpm: {{ tpm }}
 {% if coredns or mdns or keepalived %}
  files:
 {% endif %}

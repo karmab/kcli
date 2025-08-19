@@ -23,6 +23,7 @@
    mode: 755
 {% endif %}
  disks: {{ [disk_size] + extra_disks }}
+ tpm: {{ tpm }}
 {% if cloud_tag != None %}
  tags: [{{ cloud_tag }}]
 {% endif %}
