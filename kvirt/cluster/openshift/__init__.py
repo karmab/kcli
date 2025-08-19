@@ -974,14 +974,19 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if sno:
         pass
     elif image is None:
-        image_type = provider
-        region = k.region if provider == 'aws' else None
-        try:
-            image_url = get_installer_rhcos(_type=image_type, region=region, arch=arch)
-        except:
-            msg = f"Couldn't gather the {provider} image associated to this installer version"
-            msg += "Force an image in your parameter file"
-            return {'result': 'failure', 'reason': msg}
+        custom_image_url = data.get('image_url')
+        if custom_image_url:
+            pprint(f"Using custom image URL: {custom_image_url}")
+            image_url = custom_image_url
+        else:
+            image_type = provider
+            region = k.region if provider == 'aws' else None
+            try:
+                image_url = get_installer_rhcos(_type=image_type, region=region, arch=arch)
+            except:
+                msg = f"Couldn't gather the {provider} image associated to this installer version"
+                msg += "Force an image in your parameter file"
+                return {'result': 'failure', 'reason': msg}
         if provider in ['aws', 'gcp']:
             image = image_url
         elif esx:
@@ -1009,8 +1014,16 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         pprint(f"Checking if image {image} is available")
         images = [v for v in k.volumes() if image in v]
         if not images:
-            msg = f"Missing {image}. Indicate correct image in your parameters file..."
-            return {'result': 'failure', 'reason': msg}
+            custom_image_url = data.get('image_url')
+            if custom_image_url:
+                pprint(f"Image {image} not found locally, downloading from custom URL: {custom_image_url}")
+                result = config.download_image(pool=config.pool, image=image, url=custom_image_url,
+                                               size=data.get('kubevirt_disk_size'))
+                if result['result'] != 'success':
+                    return result
+            else:
+                msg = f"Missing {image}. Indicate correct image in your parameters file..."
+                return {'result': 'failure', 'reason': msg}
     overrides['image'] = image
     static_networking_ctlplane, static_networking_worker = False, False
     macentries = []
