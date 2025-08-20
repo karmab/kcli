@@ -5,7 +5,7 @@ from kvirt import common
 from kvirt.common import get_git_version, compare_git_versions
 from kvirt.config import Kbaseconfig, Kconfig
 from kvirt.nameutils import get_random_name
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from urllib.request import urlopen
 
 
@@ -59,9 +59,9 @@ def get_doc() -> str:
 @core.tool()
 def create_kube(context: Context,
                 cluster: str, kubetype: str = 'generic', threaded: bool = False, force: bool = False,
-                disks: list = [], nets: list = [], sno_vm: bool = False,
+                disks: List[Dict] = [], nets: List[Dict] = [], sno_vm: bool = False,
                 client: str = None, debug: bool = False, region: str = None,
-                zone: str = None, namespace: str = None, overrides: dict = {}) -> dict:
+                zone: str = None, namespace: str = None, overrides: Dict[str, Any] = {}) -> Dict[str, Any]:
     """Create cluster"""
     if disks:
         overrides['disk_size'] = disks[0]['size'] if isinstance(disks[0], dict) else disks[0]
@@ -193,9 +193,9 @@ def delete_kube(context: Context,
 
 @core.tool()
 def delete_network(context: Context,
-                   names: list = [], force: bool = False,
+                   names: List[str] = [], force: bool = False,
                    client: str = None, debug: bool = False, region: str = None,
-                   zone: str = None, namespace: str = None) -> dict:
+                   zone: str = None, namespace: str = None) -> Dict[str, Any]:
     """Delete network"""
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     k = config.k
@@ -208,9 +208,9 @@ def delete_network(context: Context,
 
 @core.tool()
 def delete_plan(context: Context,
-                plans: list = [], allplans: bool = False,
+                plans: List[str] = [], allplans: bool = False,
                 client: str = None, debug: bool = False, region: str = None,
-                zone: str = None, namespace: str = None) -> dict:
+                zone: str = None, namespace: str = None) -> Dict[str, Any]:
     """Delete plan"""
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     plans = [p[0] for p in config.list_plans()] if allplans else plans
@@ -328,9 +328,9 @@ def scale_kube(context: Context,
 
 @core.tool()
 def start_plan(context: Context,
-               plans: list = [],
+               plans: List[str] = [],
                client: str = None, debug: bool = False, region: str = None,
-               zone: str = None, namespace: str = None):
+               zone: str = None, namespace: str = None) -> Dict[str, Any]:
     """Start plan"""
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     for plan in plans:
@@ -351,9 +351,9 @@ def start_vm(context: Context,
 
 @core.tool()
 def stop_plan(context: Context,
-              plans: list = [], soft: bool = False,
+              plans: List[str] = [], soft: bool = False,
               client: str = None, debug: bool = False, region: str = None,
-              zone: str = None, namespace: str = None):
+              zone: str = None, namespace: str = None) -> Dict[str, Any]:
     """Stop plan"""
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     for plan in plans:
