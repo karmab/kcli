@@ -3832,8 +3832,7 @@ class Kvirt(object):
         thincommand = ("lvs -o lv_name  %s -S 'lv_attr =~ ^V && origin = \"\" && pool_lv = \"%s\"'  --noheadings"
                        % (path, thinpool))
         if self.protocol == 'ssh':
-            thincommand = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host,
-                                                         thincommand)
+            thincommand = f"ssh {self.identitycommand} -p {self.port} {self.user}@{self.host} \"{thincommand}\""
         results = os.popen(thincommand).read().strip()
         if results == '':
             return []
