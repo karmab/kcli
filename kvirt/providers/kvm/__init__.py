@@ -3831,7 +3831,11 @@ class Kvirt(object):
     def thinimages(self, path, thinpool):
         thincommand = ("lvs -o lv_name  %s -S 'lv_attr =~ ^V && origin = \"\" && pool_lv = \"%s\"'  --noheadings"
                        % (path, thinpool))
-        if self.protocol == 'ssh':
+        # Avoid SSH wrapping when effectively local (either explicit local URL or localhost host)
+        use_ssh = (self.protocol == 'ssh' and not (
+            self.host in ['localhost', '127.0.0.1'] or (self.url is not None and self.url.startswith('qemu:///'))
+        ))
+        if use_ssh:
             thincommand = "ssh %s -p %s %s@%s \"%s\"" % (self.identitycommand, self.port, self.user, self.host,
                                                          thincommand)
         results = os.popen(thincommand).read().strip()
