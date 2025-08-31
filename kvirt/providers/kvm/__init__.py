@@ -2278,13 +2278,15 @@ class Kvirt(object):
         addressxml = ''
         if bus is not None and slot is not None:
             addressxml = f"<address type='pci' domain='0x0000' bus='0x0{bus}' slot='0x{slot:02x}' function='0x0'/>"
-        diskxml = """<disk type='file' device='disk'>
+        dtype = 'block' if diskpath.startswith('/dev') else 'file'
+        dsource = 'dev' if diskpath.startswith('/dev') else 'file'
+        diskxml = """<disk type='%s' device='disk'>
         <driver name='qemu' type='%s' cache='none'/>
-        <source file='%s'/>
+        <source %s='%s'/>
         <target bus='%s' dev='%s'/>
         %s
         %s
-        </disk>""" % (diskformat, diskpath, diskbus, diskdev, addressxml, sharexml)
+        </disk>""" % (dtype, diskformat, dsource, diskpath, diskbus, diskdev, addressxml, sharexml)
         return diskxml
 
     def _xmlvolume(self, path, size, pooltype='file', backing=None, diskformat='qcow2', owner=None):
