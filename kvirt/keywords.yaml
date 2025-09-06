@@ -139,6 +139,13 @@ tunneldir: Specific directory on the tunnel host where to store ignition files
 tunnelhost: Specific host to use for tunneling console, ssh and scp commands
 tunnelport: Specific port to use for tunneling console, ssh and scp commands
 tunneluser: Specific user to use for tunneling console, ssh and scp commands
+usermode: |
+  Enable user mode networking for the VM. When enabled, the VM will use user mode networking instead of bridged or NAT networking.
+  Automatically sets up port forwarding for SSH (port 22) to a random host port.
+usermode_backend: |
+  Backend to use for user mode networking. Options are:
+  - passt (default): Modern usermode networking backend with better performance
+  - slirp: Traditional usermode networking backend, more widely compatible
 virttype: |
   Only used for libvirt where it evaluates to kvm if acceleration shows in capabilities, or qemu emulation otherwise.
   If a value is provided, it must be either kvm, qemu, xen or lxc
