@@ -1,7 +1,7 @@
 acm_deploy_baremetal_console: false
 acm_disable_hub: false
 pull_secret: openshift_pull.json
-acm_ibi: true
+acm_ibi: false
 acm_hypershift: true
 acm_mce_catalog:
 acm_siteconfig: true
