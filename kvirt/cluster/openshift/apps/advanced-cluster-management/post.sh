@@ -25,5 +25,5 @@ oc -n open-cluster-management patch multiclusterhub multiclusterhub --type=merge
 {% endif %}
 
 {% if acm_ibi %}
-oc patch mce multiclusterengine  --type=merge -p '{"spec":{"overrides":{"components":[{"name":"image-based-install-operator","enabled": true}]}}}'
+oc patch mce multiclusterengine --type=merge -p '{"spec":{"overrides":{"components":[{"name":"image-based-install-operator","enabled": true}]}}}'
 {% endif %}

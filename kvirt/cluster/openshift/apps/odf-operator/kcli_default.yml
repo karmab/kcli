@@ -1,6 +1,7 @@
 odf_disksize: 60
 odf_nodes: []
 odf_devicesets: 1
+odf_encryption: false
 odf_storageclass: localstorage-sc
 odf_replicas: 3
 odf_accessmode: ReadWriteOnce
