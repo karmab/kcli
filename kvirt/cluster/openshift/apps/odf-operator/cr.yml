@@ -4,7 +4,7 @@ metadata:
   name: odf-storagecluster
   namespace: {{ namespace }}
 spec:
-{% if odf_encryption $}
+{% if odf_encryption %}
   encryption:
     clusterWide: true
     enable: true
