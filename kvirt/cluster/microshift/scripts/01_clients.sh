@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-MAJOR={{ 8 if 'rhel8' in image else 9 }}
+MAJOR=$(awk '{print $6}' /etc/redhat-release | cut -d'.' -f1)
 {% set tag_str = tag|string %}
 
 {% if version in ['candidate', 'nightly'] %}
