@@ -1,22 +1,15 @@
 haproxy = """
 parameters:
- image: centos9stream
+ image: centos10stream
  name: haproxy
  nets:
  - default
  vms: []
  domain:
 
-{{ image }}:
- type: image
-
-loadbalancer-{{ ports | join('+') }}:
- type: profile
+{{ name }}:
  image: {{ image }}
  nets: {{ nets }}
-
-{{ name }}:
- profile: loadbalancer-{{ ports | join('+') }}
  {% if domain != None %}
  domain: {{ domain }}
  {% endif %}
@@ -30,7 +23,6 @@ loadbalancer-{{ ports | join('+') }}:
          maxconn     4000
          user        haproxy
          group       haproxy
-         nbproc 4
          daemon
       defaults
         mode        http
@@ -67,6 +59,7 @@ loadbalancer-{{ ports | join('+') }}:
   - yum -y install haproxy
   - sed -i "s/SELINUX=enforcing/SELINUX=permissive/" /etc/selinux/config
   - setenforce 0
+  - echo "" >> /root/haproxy.cfg
   - cp /root/haproxy.cfg /etc/haproxy
   - systemctl start haproxy
   - systemctl enable haproxy

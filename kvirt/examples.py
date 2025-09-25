@@ -688,6 +688,9 @@ $ kcli create lb -P ports=[80,443] -P vms=[myvm1,myvm2] -P domain=mysuperdomain.
 
 # Customize check path and checkport
 $ kcli create lb -P ports=[6443] -P vms=[myvm1,myvm2] -P checkport=6080 -P checkpath='/'
+
+# Create an LB vm for accessing a private kubernetes cluster from outside
+$ kcli create lb -P ports=[443,6443] -P nets=[default,baremetal] -P vms=[ctlplane0,ctlplane1,ctlplane2] myproxy
 """
 
 networkcreate = """# Create a network
