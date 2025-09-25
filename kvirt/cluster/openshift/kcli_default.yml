@@ -54,7 +54,7 @@ keepalived: true
 coredns: true
 mdns: true
 ignore_hosts: false
-disk_size: 30
+disk_size: 60
 autostart: false
 keys: []
 apps: []
