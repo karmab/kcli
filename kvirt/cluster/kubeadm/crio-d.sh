@@ -4,18 +4,18 @@ VERSION=$(echo "v${VERSION#v}" | cut -d. -f1,2)
 
 {% if ubuntu|default(False) %}
 PROJECT_PATH={{ engine_version or 'stable:/$VERSION' }}
-curl -fsSL https://pkgs.k8s.io/addons:/cri-o:/$PROJECT_PATH/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/cri-o-apt-keyring.gpg
-echo "deb [signed-by=/etc/apt/keyrings/cri-o-apt-keyring.gpg] https://pkgs.k8s.io/addons:/cri-o:/$PROJECT_PATH/deb/ /" > /etc/apt/sources.list.d/cri-o.list
+curl -fsSL https://download.opensuse.org/repositories/isv:/cri-o:/$PROJECT_PATH/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/cri-o-apt-keyring.gpg
+echo "deb [signed-by=/etc/apt/keyrings/cri-o-apt-keyring.gpg] https://download.opensuse.org/repositories/isv:/cri-o:/$PROJECT_PATH/deb/ /" > /etc/apt/sources.list.d/cri-o.list
 apt-get update
 apt-get -y install cri-o runc software-properties-common
 {% else %}
 PROJECT_PATH={{ engine_version or 'stable:/$VERSION' }}
 echo """[cri-o]
 name=CRI-O
-baseurl=https://pkgs.k8s.io/addons:/cri-o:/$PROJECT_PATH/rpm
+baseurl=https://download.opensuse.org/repositories/isv:/cri-o:/$PROJECT_PATH/rpm
 enabled=1
 gpgcheck=1
-gpgkey=https://pkgs.k8s.io/addons:/cri-o:/$PROJECT_PATH/rpm/repodata/repomd.xml.key""" >/etc/yum.repos.d/cri-o.repo
+gpgkey=https://download.opensuse.org/repositories/isv:/cri-o:/$PROJECT_PATH/rpm/repodata/repomd.xml.key""" >/etc/yum.repos.d/cri-o.repo
 dnf -y install container-selinux cri-o conntrack
 {% endif %}
 
