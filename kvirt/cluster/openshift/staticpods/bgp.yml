@@ -1,0 +1,34 @@
+---
+kind: Pod
+apiVersion: v1
+metadata:
+  name: bgp
+  namespace: kcli-infra
+  creationTimestamp:
+  deletionGracePeriodSeconds: 65
+  labels:
+    app: kcli-bgp
+spec:
+  volumes:
+  - name: conf-dir
+    hostPath:
+      path: "/etc/kubernetes"
+  containers:
+  - name: bgp
+    securityContext:
+      privileged: true
+    image: {{ disconnected_url if disconnected_url != None else 'quay.io' }}/frrouting/frr:8.5.0
+    resources:
+      requests:
+        cpu: 150m
+        memory: 2048Mi
+    volumeMounts:
+    - name: conf-dir
+      mountPath: "/etc/frr"
+    terminationMessagePolicy: FallbackToLogsOnError
+    imagePullPolicy: IfNotPresent
+  hostNetwork: true
+  tolerations:
+  - operator: Exists
+  priorityClassName: system-node-critical
+status: {}

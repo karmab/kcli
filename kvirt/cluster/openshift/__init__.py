@@ -758,6 +758,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     keepalived = data['keepalived']
     if not keepalived:
         warning("You will need to provide LB for api and ingress on your own")
+    bgp = data['bgp']
+    if bgp:
+        data['keepalived'] = False
+        keepalived = False
     mdns = data['mdns']
     localhost_fix = data['localhost_fix']
     ctlplane_localhost_fix = data['ctlplane_localhost_fix'] or localhost_fix
@@ -785,7 +789,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     image = data['image']
     api_ip = data['api_ip']
     cidr = None
-    if provider in virt_providers and keepalived and not sno and api_ip is None:
+    if provider in virt_providers and (keepalived or bgp) and not sno and api_ip is None:
         network = data['network']
         networkinfo = k.info_network(network)
         if not networkinfo:

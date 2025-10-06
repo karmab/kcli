@@ -97,7 +97,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
     userdata, metadata, netdata = None, None, None
     default_gateway = gateway
     noname = overrides.get('noname', False)
-    legacy = True if image is not None and (is_7(image) or is_debian9(image)) else False
+    legacy = image is not None and (is_7(image) or is_debian9(image))
     prefix = 'eth'
     if image is not None and (is_ubuntu(image) or is_debian_new(image)):
         if machine == 'pc':
@@ -108,7 +108,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             prefix = 'ens19'
         else:
             prefix = 'enp1s'
-    dns_hack = True if image is not None and is_debian_new(image) else False
+    dns_hack = image is not None and is_debian_new(image)
     netdata = {} if not legacy else ''
     bridges = {}
     vlans = {}
@@ -507,6 +507,7 @@ def _unique_list_dict(a):
 def process_ignition_files(files=[], overrides={}):
     filesdata = []
     unitsdata = []
+    linksdata = []
     for directory in files:
         if not isinstance(directory, dict) or 'origin' not in directory\
                 or not os.path.isdir(os.path.expanduser(directory['origin'])):
@@ -525,11 +526,12 @@ def process_ignition_files(files=[], overrides={}):
         origin = fil.get('origin')
         content = fil.get('content')
         path = fil.get('path')
+        target = fil.get('target')
         mode = int(str(fil.get('mode', '644')), 8)
         permissions = fil.get('permissions', mode)
         render = fil.get('render', True)
         if isinstance(render, str):
-            render = True if render.lower() == 'true' else False
+            render = render.lower() == 'true'
         if origin is not None:
             origin = os.path.expanduser(origin)
             if not os.path.exists(origin):
@@ -537,6 +539,7 @@ def process_ignition_files(files=[], overrides={}):
                 continue
             elif overrides and render:
                 file_overrides = overrides.copy()
+                file_overrides.update(fil)
                 basedir = os.path.dirname(origin) if os.path.dirname(origin) != '' else '.'
                 env = Environment(loader=FileSystemLoader(basedir), undefined=undefined, extensions=['jinja2.ext.do'])
                 for jinjafilter in jinjafilters.jinjafilters:
@@ -563,6 +566,9 @@ def process_ignition_files(files=[], overrides={}):
                 except UnicodeDecodeError:
                     warning(f"SKipping file {origin} as binary")
                     continue
+        elif target is not None:
+            linksdata.append({"path": path, "target": target, "hard": False})
+            continue
         elif content is None:
             continue
         if not isinstance(content, str):
@@ -574,7 +580,7 @@ def process_ignition_files(files=[], overrides={}):
             filesdata.append({'path': path, 'mode': permissions, 'overwrite': True,
                               "contents": {"source": f"data:text/plain;charset=utf-8;base64,{content}",
                                            "verification": {}}})
-    return _unique_list_dict(filesdata), _unique_list_dict(unitsdata)
+    return _unique_list_dict(filesdata), _unique_list_dict(unitsdata), _unique_list_dict(linksdata)
 
 
 def process_cmds(cmds, overrides):
@@ -1053,7 +1059,7 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     indent = 0 if compact else 4
     default_gateway = gateway
     publickeys = []
-    storage = {"files": []}
+    storage = {"files": [], "links": []}
     systemd = {"units": []}
     if domain is not None:
         localhostname = f"{name}.{domain}"
@@ -1173,11 +1179,13 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
                 storage["files"].append({"path": nicpath, "contents": {"source": f"data:,{static}", "verification": {}},
                                          "mode": int(static_nic_file_mode, 8)})
     if files:
-        filesdata, unitsdata = process_ignition_files(files=files, overrides=overrides)
+        filesdata, unitsdata, linksdata = process_ignition_files(files=files, overrides=overrides)
         if filesdata:
             storage["files"].extend(filesdata)
         if unitsdata:
             systemd["units"].extend(unitsdata)
+        if linksdata:
+            storage["links"].extend(linksdata)
     cmdunit = None
     if cmds and not needs_combustion(image):
         cmdsdata = process_ignition_cmds(cmds, overrides)
@@ -1513,6 +1521,8 @@ def mergeignition(name, ignitionextrapath, data):
                             ignitionextra[key][children[key]] = newdata
                 elif children[key] in data[key] and children[key] not in ignitionextra[key]:
                     ignitionextra[key][children[key]] = data[key][children[key]]
+                if key == 'storage' and 'links' in data['storage']:
+                    ignitionextra['storage']['links'] = data['storage']['links']
             elif key in data and key not in ignitionextra:
                 ignitionextra[key] = data[key]
         if 'config' in data['ignition'] and data['ignition']['config']:
@@ -2114,7 +2124,7 @@ def compare_git_versions(commit1, commit2):
         timestamp2 = os.popen(f"git show -s --format=%ct {commit2}").read().strip()
         date2 = datetime.fromtimestamp(int(timestamp2))
         os.chdir(mycwd)
-    return True if date1 < date2 else False
+    return date1 < date2
 
 
 def correct_sha(_file, sha):

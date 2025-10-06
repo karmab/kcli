@@ -20,8 +20,38 @@
 {% endif %}
  disks:
  - size: {{ disk_size }}
-{% if coredns or mdns or keepalived or ipv6 %}
+{% if coredns or mdns or keepalived or ipv6 or bgp %}
  files:
+{% endif %}
+{% if bgp %}
+ - path: /etc/kubernetes/manifests/bgp.yml
+   origin: staticpods/bgp.yml
+ - path: /etc/kubernetes/daemons
+   origin: frr_daemons
+ - path: /etc/kubernetes/frr.conf
+   origin: frr.conf
+   peers: {{ bgp_peers|filter_bgp_peers(loop.index) }}
+ - path: /usr/local/bin/bgp-vip.sh
+   origin: bgp-vip.sh
+   mode: 700
+ - path: /etc/systemd/system/bgp-vip.service
+   content: |
+      [Unit]
+      Description=Manage BGP VIP
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/bin/bgp-vip.sh
+ - path: /etc/systemd/system/bgp-vip.timer
+   content: |
+      [Unit]
+      Description=Run BGP VIP periodically
+      [Timer]
+      OnBootSec=5
+      OnUnitActiveSec=5
+      [Install]
+      WantedBy=timers.target
+ - path: /etc/systemd/system/timers.target.wants/bgp-vip.timer
+   target: /etc/systemd/system/bgp-vip.timer
 {% endif %}
 {% if coredns %}
  - path: /etc/NetworkManager/dispatcher.d/99-kcli-forcedns

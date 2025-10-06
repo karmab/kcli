@@ -50,6 +50,8 @@ memory: 16384
 bootstrap_memory: 8192
 ctlplane_memory:
 worker_memory:
+bgp: false
+bgp_peers: []
 keepalived: true
 coredns: true
 mdns: true

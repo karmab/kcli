@@ -36,6 +36,15 @@
 {% if coredns or mdns or keepalived %}
  files:
 {% endif %}
+{% if bgp %}
+ - path: /etc/kubernetes/manifests/bgp.yml
+   origin: staticpods/bgp.yml
+ - path: /etc/kubernetes/daemons
+   origin: frr_daemons
+ - path: /etc/kubernetes/frr.conf
+   origin: frr.conf
+   peers: {{ bgp_peers|filter_bgp_peers(loop.index) }}
+{% endif %}
 {% if coredns %}
  - path: /etc/NetworkManager/dispatcher.d/99-kcli-forcedns
    origin: 99-kcli-forcedns
