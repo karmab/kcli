@@ -3254,6 +3254,7 @@ class Kconfig(Kbaseconfig):
             elif isinstance(fil, dict):
                 origin = fil.get('origin')
                 content = fil.get('content')
+                target = fil.get('target')
                 path = fil.get('path')
                 if path is None:
                     if origin is not None:
@@ -3283,7 +3284,7 @@ class Kconfig(Kbaseconfig):
                         files[index]['origin'] = origin
                 if not os.path.exists(origin):
                     return {'result': 'failure', 'reason': f"Origin file {origin} not found for {name}"}
-            elif content is None:
+            elif target is None and content is None:
                 return {'result': 'failure', 'reason': f"Content of file {path} not found for {name}"}
 
     def prepend_input_dir(self, newfiles, inputdir):
