@@ -190,26 +190,18 @@ def process_nodepools(config, plandir, namespace, cluster, platform, nodepools, 
         return
     for entry in nodepools:
         nodepool = entry['name']
-        pprint(f"Waiting before ignition data for nodepool {nodepool} is available")
-        user_data = f"user-data-{cluster}"
-        cmd = f"until oc -n {namespace}-{cluster} get secret | grep {user_data} >/dev/null 2>&1 ; do sleep 1 ; done"
+        note = r"{.metadata.annotations.hypershift\.openshift\.io/nodePoolCurrentConfigVersion}"
+        cmd = f"until oc get nodepool ci-hypershift -n clusters -o jsonpath='{note}' | grep -q . ; do sleep 2; done"
         call(cmd, shell=True)
-        ignition_data = {'namespace': namespace, 'cluster': cluster, 'nodepool': nodepool}
-        ignitionscript = config.process_inputfile(cluster, f"{plandir}/ignition.sh", overrides=ignition_data)
-        with open(f"{clusterdir}/ignition_{nodepool}.sh", 'w') as f:
-            f.write(ignitionscript)
-        ignition_worker = f"{clusterdir}/nodepool_{nodepool}.ign"
-        timeout = 0
-        while True:
-            if os.path.exists(ignition_worker):
-                break
-            else:
-                sleep(30)
-                timeout += 30
-                if timeout > 300:
-                    msg = "Timeout trying to retrieve worker ignition"
-                    return {'result': 'failure', 'reason': msg}
-            call(f'bash {clusterdir}/ignition_{nodepool}.sh', shell=True)
+        cmd = f"oc get nodepool ci-hypershift -n clusters -o jsonpath='{note}'"
+        version = os.popen(cmd).read()
+        pprint(f"Waiting before ignition data for nodepool {nodepool} is available")
+        cmd = f"until oc -n {namespace}-{cluster} get secret user-data-{cluster}-{version} ; do sleep 2 ; done"
+        call(cmd, shell=True)
+        cmd = f"oc extract -n {namespace}-{cluster} secret/user-data-{cluster}-{version} --keys=value --to=-"
+        ignition = os.popen(cmd).read()
+        with open(f"{clusterdir}/nodepool_{nodepool}.ign", 'w') as f:
+            f.write(ignition)
 
 
 def scale(config, plandir, cluster, overrides):
