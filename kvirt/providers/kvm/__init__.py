@@ -233,6 +233,7 @@ class Kvirt(object):
             self.url = 'qemu:///session'
             userport = common.get_free_port()
             metadata['userport'] = userport
+            metadata['usermode_backend'] = 'passt' if which('passt') is not None else 'slirp'
             usermode = True
         if self.exists(name):
             return {'result': 'failure', 'reason': f"VM {name} already exists"}
@@ -736,9 +737,15 @@ class Kvirt(object):
             if netname in ovsnetworks:
                 ovs = True
             if usermode:
-                iftype = 'user'
-                sourcexml = "<backend type='passt'/>"
-                sourcexml += f"<portForward proto='tcp'><range start='{userport}' to='22'/></portForward>"
+                usermode_backend = 'passt' if which('passt') is not None else 'slirp'
+                if usermode_backend == 'slirp':
+                    # Skip libvirt interface for slirp - handled via QEMU command line
+                    continue
+                else:
+                    # Default to passt
+                    iftype = 'user'
+                    sourcexml = "<backend type='passt'/>"
+                    sourcexml += f"<portForward proto='tcp'><range start='{userport}' to='22'/></portForward>"
             elif netname in networks:
                 iftype = 'network'
                 sourcexml = f"<source network='{netname}'/>"
@@ -1097,7 +1104,8 @@ class Kvirt(object):
             vcpuxml = f"<vcpu>{numcpus}</vcpu>"
         clockxml = "<clock offset='utc'/>"
         qemuextraxml = ''
-        if ignition or macosx or tpm or qemuextra is not None or nvmedisks:
+        slirp = usermode and which('passt') is None
+        if ignition or macosx or tpm or qemuextra is not None or nvmedisks or slirp:
             namespace = "xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'"
             ignitionxml = ""
             if ignition:
@@ -1139,12 +1147,19 @@ class Kvirt(object):
 <qemu:arg value='file={diskpath},format=qcow2,if=none,id=NVME{index}'/>
 <qemu:arg value='-device'/>
 <qemu:arg value='nvme,drive=NVME{index},serial=nvme-{index}'/>""".format(index=index, diskpath=diskpath)
+            slirpxml = ""
+            if slirp:
+                slirpxml = f"""<qemu:arg value='-netdev'/>
+<qemu:arg value='user,id=net0,hostfwd=tcp::{userport}-:22'/>
+<qemu:arg value='-device'/>
+<qemu:arg value='virtio-net-pci,netdev=net0,addr=0x10'/>"""
             qemuextraxml = """<qemu:commandline>
 {ignitionxml}
 {macosxml}
 {freeformxml}
 {nvmexml}
-</qemu:commandline>""".format(ignitionxml=ignitionxml, macosxml=macosxml, freeformxml=freeformxml, nvmexml=nvmexml)
+{slirpxml}
+</qemu:commandline>""".format(ignitionxml=ignitionxml, macosxml=macosxml, freeformxml=freeformxml, nvmexml=nvmexml, slirpxml=slirpxml)
         sharedxml = ""
         if sharedfolders:
             for folder in sharedfolders:

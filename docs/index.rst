@@ -862,6 +862,14 @@ Or change the nic driver
 
 Again, both syntaxes can be combined
 
+It is also possible to leverage user mode networking
+
+.. code:: shell
+
+   kcli create vm -i centos9stream -P usermode=true vm-passt
+
+By default, passt is used as backend unless not available, in which case we fail back to slirp
+
 Injecting files
 ~~~~~~~~~~~~~~~
 

@@ -836,6 +836,14 @@ kcli create vm -i centos9stream -P nets=['{"name": "default", "type": "e1000"}']
 
 Again, both syntaxes can be combined
 
+It is also possible to leverage user mode networking
+
+```Shell
+kcli create vm -i centos9stream -P usermode=true vm-passt
+```
+
+By default, passt is used as backend unless not available, in which case we fail back to slirp
+
 ### Injecting files
 
 You can inject a list of `files` in your vms. For instance, to inject a file named myfile.txt, use
