@@ -1503,7 +1503,7 @@ def create_vm(args):
             pprint(f"Using {image} as profile")
         profile = image
     elif profile is not None:
-        if profile.endswith('.yml'):
+        if profile.endswith('.yml') or profile.endswith('.yaml'):
             profilefile = profile
             profile = None
             if not os.path.exists(profilefile):

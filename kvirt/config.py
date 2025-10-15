@@ -1550,7 +1550,7 @@ class Kconfig(Kbaseconfig):
         if url is not None:
             if url.startswith('/'):
                 url = f"file://{url}"
-            if not url.endswith('.yml'):
+            if not url.endswith('.yml') and not url.endswith('.yaml'):
                 url = f"{url}/kcli_plan.yml"
                 pprint(f"Trying to retrieve {url}")
             inputfile = os.path.basename(url)
@@ -1800,7 +1800,7 @@ class Kconfig(Kbaseconfig):
                     continue
                 elif planurl is not None:
                     path = planentry
-                    if not planurl.endswith('yml'):
+                    if not planurl.endswith('yml') and not planurl.endswith('yaml'):
                         planurl = f"{planurl}/kcli_plan.yml"
                 else:
                     path = os.path.dirname(planfile) or '.'
