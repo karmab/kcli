@@ -3,6 +3,9 @@
 {% if async|default(False) %}
 {% do kcli_images.append("quay.io/karmab/kcli:latest") %}
 {% endif %}
+{% if bgp|default(False) %}
+{% do kcli_images.append("quay.io/frrouting/frr:8.5.0") %}
+{% endif %}
 
 apiVersion: mirror.openshift.io/v2alpha1
 kind: ImageSetConfiguration

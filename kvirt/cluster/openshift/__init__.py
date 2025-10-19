@@ -756,12 +756,14 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if not data['coredns']:
         warning("You will need to provide DNS records for api and ingress on your own")
     keepalived = data['keepalived']
-    if not keepalived:
-        warning("You will need to provide LB for api and ingress on your own")
     bgp = data['bgp']
     if bgp:
         data['keepalived'] = False
         keepalived = False
+        if not data['bgp_peers']:
+            return {'result': 'failure', 'reason': 'bgp_peers needs to be set'}
+    elif not keepalived:
+        warning("You will need to provide LB for api and ingress on your own")
     mdns = data['mdns']
     localhost_fix = data['localhost_fix']
     ctlplane_localhost_fix = data['ctlplane_localhost_fix'] or localhost_fix

@@ -43,7 +43,7 @@
    origin: frr_daemons
  - path: /etc/kubernetes/frr.conf
    origin: frr.conf
-   peers: {{ bgp_peers|filter_bgp_peers(loop.index) }}
+   peers: {{ bgp_peers|filter_bgp_peers(loop.index0) }}
 {% endif %}
 {% if coredns %}
  - path: /etc/NetworkManager/dispatcher.d/99-kcli-forcedns

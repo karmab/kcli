@@ -1,8 +1,12 @@
 export PATH=/root/bin:$PATH
 export PULL_SECRET=/root/openshift_pull.json
 export REGISTRY_IMAGE=quay.io/karmab/registry:latest
+{% if disconnected_fqdn != None %}
+REGISTRY={{ disconnected_fqdn }}
+{% else %}
 IP=$(ip -o addr show eth0 | grep -v '169.254\|fe80::' | tail -1 | awk '{print $4}' | cut -d'/' -f1)
 REGISTRY=$(echo $IP | sed 's/\./-/g' | sed 's/:/-/g').sslip.io
+{% endif %}
 echo $REGISTRY:5000 > /root/url.txt
 REGISTRY_USER={{ disconnected_user }}
 REGISTRY_PASSWORD={{ disconnected_password }}

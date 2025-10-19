@@ -30,7 +30,7 @@
    origin: frr_daemons
  - path: /etc/kubernetes/frr.conf
    origin: frr.conf
-   peers: {{ bgp_peers|filter_bgp_peers(loop.index) }}
+   peers: {{ bgp_peers|filter_bgp_peers(0) }}
  - path: /usr/local/bin/bgp-vip.sh
    origin: bgp-vip.sh
    mode: 700

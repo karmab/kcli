@@ -4,8 +4,12 @@ export HOME=/root
 cd $HOME
 export PATH=/root/bin:$PATH
 export PULL_SECRET=/root/openshift_pull.json
+{% if disconnected_fqdn != None %}
+REGISTRY={{ disconnected_fqdn }}
+{% else %}
 IP=$(ip -o addr show eth0 | grep -v '169.254\|fe80::' | tail -1 | awk '{print $4}' | cut -d'/' -f1)
 REGISTRY=$(echo $IP | sed 's/\./-/g' | sed 's/:/-/g').sslip.io
+{% endif %}
 
 # Add extra registry keys
 curl -Lo /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-isv https://www.redhat.com/security/data/55A34A82.txt

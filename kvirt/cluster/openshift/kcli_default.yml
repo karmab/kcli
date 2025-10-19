@@ -52,6 +52,7 @@ ctlplane_memory:
 worker_memory:
 bgp: false
 bgp_peers: []
+bgp_extra_peers: []
 keepalived: true
 coredns: true
 mdns: true
@@ -80,6 +81,7 @@ disconnected_haproxy: false
 disconnected_reuse: false
 bootstrap_mac:
 disconnected_reuse_name:
+disconnected_fqdn:
 disconnected_default_network: default
 disconnected_image: centos9stream
 disconnected_disk_size: 100

@@ -735,6 +735,9 @@ $ kcli create network -P macvtap=true -P nic=eno2 mytap
 # Create a network with custom dnsmasq options
 $ kcli create network -c 192.168.123.0/24 -P arp-timeout=120 mynetwork
 
+# Create a network with a custom route
+$ kcli create network -c 192.168.123.0/24 -P classless-static-route=192.168.124.100/32,192.168.123.2 mynetwork
+
 # Create an ovn overlay network (on KubeVirt) with a localnet topology and connected to br-ex bridge
 $ kcli create network -c 192.168.126.0/24 mynetwork
 
