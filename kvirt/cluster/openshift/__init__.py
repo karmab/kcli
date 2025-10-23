@@ -710,8 +710,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     data['sno'] = sno
     sno_wait = overrides.get('sno_wait') or baremetal_sno or data['api_ip'] is not None or sno_vm
     sno_disk = data['sno_disk']
+    if sno_disk is not None and not sno_disk.startswith('/dev/'):
+        sno_disk = f'/dev/{sno_disk}'
     sno_ctlplanes = data['sno_ctlplanes'] or baremetal_ctlplane
     sno_workers = data['sno_workers']
+    sno_telco = data['sno_telco']
     ignore_hosts = data['ignore_hosts'] or sslip
     if sno:
         if sno_disk is None:
@@ -1159,21 +1162,31 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                                             overrides={'role': role, 'node_ip_hint': node_ip_hint})
             with open(f"{clusterdir}/manifests/99-chrony-{role}.yaml", 'w') as f:
                 f.write(hint)
-    manifestsdir = data.get('manifests')
-    manifestsdir = pwd_path(manifestsdir)
-    if os.path.exists(manifestsdir) and os.path.isdir(manifestsdir):
-        for f in glob(f"{manifestsdir}/*.y*ml"):
-            pprint(f"Injecting manifest {f}")
-            copy2(f, f"{clusterdir}/openshift")
-    elif isinstance(manifestsdir, list):
+    if sno_telco:
+        manifestsdir = safe_load(open(f"{plandir}/telco_manifests.yml"))
+    else:
+        manifestsdir = data.get('manifests')
+        manifestsdir = pwd_path(manifestsdir)
+    if isinstance(manifestsdir, list):
         for manifest in manifestsdir:
             f, content = list(manifest.keys())[0], list(manifest.values())[0]
             if not f.endswith('.yml') and not f.endswith('.yaml'):
                 warning(f"Skipping manifest {f}")
                 continue
+            if f == '99-openshift-disconnected-catalog.yaml':
+                if disconnected_url is not None:
+                    content = content.replace('REGISTRY', disconnected_url).replace('TAG', OPENSHIFT_TAG)
+                else:
+                    continue
+            if f == '98-var-lib-containers-partitioned.yaml':
+                content = content.replace('SNO_DISK', sno_disk or '/dev/sda')
             pprint(f"Injecting manifest {f}")
             with open(f'{clusterdir}/openshift/{f}', 'w') as f:
                 f.write(content)
+    elif os.path.exists(manifestsdir) and os.path.isdir(manifestsdir):
+        for f in glob(f"{manifestsdir}/*.y*ml"):
+            pprint(f"Injecting manifest {f}")
+            copy2(f, f"{clusterdir}/openshift")
     for manifest in glob(f"{clusterdir}/*.yaml"):
         if os.stat(manifest).st_size == 0:
             warning(f"Skipping empty manifest {manifest}")
@@ -1253,10 +1266,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 _f.write(crondata)
             continue
         if '99-monitoring.yaml' in f:
-            monitoring_retention = data['monitoring_retention']
-            monitoringfile = config.process_inputfile(cluster, f, overrides={'retention': monitoring_retention})
-            with open(f"{clusterdir}/openshift/99-monitoring.yaml", 'w') as _f:
-                _f.write(monitoringfile)
+            if not sno_telco:
+                monitoring_retention = data['monitoring_retention']
+                monitoringfile = config.process_inputfile(cluster, f, overrides={'retention': monitoring_retention})
+                with open(f"{clusterdir}/openshift/99-monitoring.yaml", 'w') as _f:
+                    _f.write(monitoringfile)
             continue
         copy2(f, f"{clusterdir}/openshift")
     if virtualization_nightly:

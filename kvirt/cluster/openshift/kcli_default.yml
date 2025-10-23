@@ -132,6 +132,7 @@ sno_nic:
 sno_vm: false
 sno_wait: false
 sno_workers: false
+sno_telco: false
 metal3: false
 baremetal_user: root
 baremetal_password: calvin

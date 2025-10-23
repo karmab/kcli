@@ -20,6 +20,7 @@ sno_wait: false
 sno_nic:
 sno_cpuset:
 sno_vm: false
+sno_telco: false
 baremetal_user: root
 baremetal_password: calvin
 baremetal_hosts: []
