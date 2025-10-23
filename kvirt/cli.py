@@ -166,6 +166,26 @@ def reset_baremetal_host(args):
     sys.exit(0 if result['result'] == 'success' else 1)
 
 
+def restart_baremetal_host(args):
+    overrides = handle_parameters(args.param, args.paramfile)
+    baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
+    url = args.host or overrides.get('bmc_url') or overrides.get('url')
+    user = args.user or overrides.get('bmc_user') or overrides.get('user') or overrides.get('bmc_username')\
+        or overrides.get('username') or baseconfig.bmc_user
+    password = args.password or overrides.get('bmc_password') or overrides.get('password') or baseconfig.bmc_password
+    if url is None:
+        error("Missing url")
+        sys.exit(1)
+    if user is None:
+        error("Missing user")
+        sys.exit(1)
+    if password is None:
+        error("Missing password")
+        sys.exit(1)
+    result = common.restart_baremetal_host(url, user, password, debug=args.debug)
+    sys.exit(0 if result['result'] == 'success' else 1)
+
+
 def start_baremetal_host(args):
     overrides = handle_parameters(args.param, args.paramfile)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
@@ -4826,6 +4846,17 @@ def cli():
     restart_desc = 'Restart Vm/Plan/Container'
     restart_parser = subparsers.add_parser('restart', description=restart_desc, help=restart_desc)
     restart_subparsers = restart_parser.add_subparsers(metavar='', dest='subcommand_restart')
+
+    restarthost_desc = 'Restart Baremetal Host'
+    restarthost_epilog = f"Examples:\n\n{examples.restarthost}"
+    restarthost_parser = restart_subparsers.add_parser('baremetal-host', description=restarthost_desc,
+                                                       help=restarthost_desc, parents=[parent_parser],
+                                                       epilog=restarthost_epilog, formatter_class=rawhelp,
+                                                       aliases=['baremetal', 'bm'])
+    restarthost_parser.add_argument('-p', '--password', help='Bmc password')
+    restarthost_parser.add_argument('-u', '--user', help='Bmc user')
+    restarthost_parser.add_argument('host', metavar='HOST', nargs='?')
+    restarthost_parser.set_defaults(func=restart_baremetal_host)
 
     containerrestart_desc = 'Restart Containers'
     containerrestart_parser = restart_subparsers.add_parser('container', description=containerrestart_desc,

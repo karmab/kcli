@@ -2182,6 +2182,21 @@ def reset_baremetal_host(url, user, password, debug=False):
     return {'result': 'success'}
 
 
+def restart_baremetal_host(url, user, password, debug=False):
+    try:
+        red = Redfish(url, user, password, debug=debug)
+    except:
+        sys.exit(1)
+    pprint(f"Restarting host with url {url}")
+    try:
+        red.restart()
+    except Exception as e:
+        msg = f'Hit {e} when restarting host with url {url}'
+        error(msg)
+        return {'result': 'failure', 'reason': msg}
+    return {'result': 'success'}
+
+
 def start_baremetal_host(url, user, password, overrides={}, debug=False):
     iso_url = overrides.get('iso_url')
     reset = overrides.get('reset', False)

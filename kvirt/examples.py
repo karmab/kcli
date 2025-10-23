@@ -583,6 +583,13 @@ $ kcli reset baremetal-host -P user=admin -P password=admin 10.10.10.10
 $ kcli reset baremetal-host -u admin -p admin 10.10.10.10
 """
 
+restarthost = """# Restart a baremetal host
+$ kcli restart baremetal-host -P user=admin -P password=admin 10.10.10.10
+
+# Restart a baremetal host with dedicated flags for credentials
+$ kcli restart baremetal-host -u admin -p admin 10.10.10.10
+"""
+
 starthost = """# Start a baremetal host
 $ kcli start baremetal-host -P user=admin -P password=admin 10.10.10.10
 
