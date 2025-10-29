@@ -1067,8 +1067,11 @@ class Kconfig(Kbaseconfig):
                 if index < len(disks):
                     disk = disks[index]
                     currentdisksize = currentdisk['size']
-                    disksize = disk.get('size', 10) if isinstance(disk, dict) else int(disk)
-                    if disksize > currentdisksize:
+                    disksize = disk.get('size', 10) if isinstance(disk, dict) else int(disk) if disk.isdigit() else None
+                    if disksize is None:
+                        warning(f"Invalid Disk {index} value {disk} in {name}")
+                        break
+                    elif disksize > currentdisksize:
                         if currentvm.get('status') != 'down':
                             warning(f"Cant resize Disk {index} in {name} while VM is up")
                             break
