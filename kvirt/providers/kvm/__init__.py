@@ -2692,7 +2692,6 @@ class Kvirt(object):
                 else:
                     vm.setVcpus(numcpus)
                     return {'result': 'success'}
-            warning("Note it will only be effective upon next start")
         cpunode.text = str(numcpus)
         newxml = ET.tostring(root).decode("utf-8")
         conn.defineXML(newxml)
