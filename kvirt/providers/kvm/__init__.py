@@ -1449,7 +1449,8 @@ class Kvirt(object):
         xml = vm.XMLDesc(0)
         root = ET.fromstring(xml)
         for _os in list(root.iter('os')):
-            if list(_os.iter('boot'))[0].get('dev') == 'cdrom':
+            boot = _os.iter('boot')
+            if boot is not None and list(boot)[0].get('dev') == 'cdrom':
                 return {'result': 'success'}
         newxml = ET.tostring(root).decode("utf-8")
         newxml = newxml.replace('dev="cdrom"', 'dev="TEMP"')
