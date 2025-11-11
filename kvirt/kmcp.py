@@ -9,6 +9,10 @@ from typing import Optional, List, Dict, Any
 from urllib.request import urlopen
 
 
+def handle_none(values):
+    return [None if e is not None and isinstance(e, str) and 'none' in e.lower() else e for e in values]
+
+
 def _parse_vms_list(_list, overrides={}):
     if isinstance(_list, str):
         print(_list)
@@ -62,6 +66,7 @@ def create_kube(context: Context,
                 disks: List[Dict] = [], nets: List[Dict] = [], sno_vm: bool = False,
                 client: str = None, debug: bool = False, region: str = None,
                 zone: str = None, namespace: str = None, overrides: Dict[str, Any] = {}) -> Dict[str, Any]:
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     """Create cluster"""
     if disks:
         overrides['disk_size'] = disks[0]['size'] if isinstance(disks[0], dict) else disks[0]
@@ -109,6 +114,7 @@ def create_network(context: Context,
                    client: str = None, debug: bool = False, region: str = None,
                    zone: str = None, namespace: str = None, overrides: dict = {}) -> dict:
     """Create network"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     nodhcp = not dhcp if dhcp is not None else nodhcp
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     k = config.k
@@ -128,6 +134,7 @@ def create_plan(context: Context,
                 client: str = None, debug: bool = False, region: str = None,
                 zone: str = None, namespace: str = None, overrides: dict = {}) -> dict:
     """Create plan"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     # if container_mode():
     #    inputfile = f"/workdir/{inputfile}"
     if 'minimum_version' in overrides:
@@ -159,6 +166,7 @@ def create_pool(context: Context,
                 client: str = None, debug: bool = False, region: str = None,
                 zone: str = None, namespace: str = None) -> dict:
     """Create pool"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     k = config.k
     if path is None:
@@ -173,6 +181,7 @@ def create_vm(context: Context,
               client: str = None, debug: bool = False, region: str = None,
               zone: str = None, namespace: str = None, overrides: dict = {}) -> dict:
     """Create vm"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     return config.create_vm(name, profile, overrides=overrides)
 
@@ -183,6 +192,7 @@ def delete_kube(context: Context,
                 client: str = None, debug: bool = False, region: str = None,
                 zone: str = None, namespace: str = None, overrides: dict = {}):
     """Delete cluster"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     if client is not None:
         overrides['client'] = client
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
@@ -197,6 +207,7 @@ def delete_network(context: Context,
                    client: str = None, debug: bool = False, region: str = None,
                    zone: str = None, namespace: str = None) -> Dict[str, Any]:
     """Delete network"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     k = config.k
     for name in names:
@@ -212,6 +223,7 @@ def delete_plan(context: Context,
                 client: str = None, debug: bool = False, region: str = None,
                 zone: str = None, namespace: str = None) -> Dict[str, Any]:
     """Delete plan"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     plans = [p[0] for p in config.list_plans()] if allplans else plans
     for plan in plans:
@@ -227,6 +239,7 @@ def delete_pool(context: Context,
                 client: str = None, debug: bool = False, region: str = None,
                 zone: str = None, namespace: str = None) -> dict:
     """Delete pool"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     k = config.k
     return k.delete_pool(name=pool, full=full)
@@ -238,6 +251,7 @@ def delete_vm(context: Context,
               client: str = None, debug: bool = False, region: str = None,
               zone: str = None, namespace: str = None) -> dict:
     """Delete vm"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     return config.k.delete(vm)
 
@@ -248,6 +262,7 @@ def info_vm(context: Context,
             client: str = None, debug: bool = False, region: str = None,
             zone: str = None, namespace: str = None) -> dict:
     """Get info of vm"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     return config.k.info(name)
 
@@ -256,6 +271,7 @@ def info_vm(context: Context,
 def list_clients(context: Context,
                  client: str = None, debug: bool = False) -> list:
     """List clients"""
+    client = handle_none([client])
     clientstable = ["Client", "Type", "Enabled", "Current"]
     baseconfig = Kbaseconfig(client=client, debug=debug)
     for client in sorted(baseconfig.clients):
@@ -273,6 +289,7 @@ def list_clusters(context: Context,
                   client: str = None, debug: bool = False, region: str = None,
                   zone: str = None, namespace: str = None) -> list:
     """List clusters"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     return config.k.list_kubes()
 
@@ -282,6 +299,7 @@ def list_images(context: Context,
                 client: str = None, debug: bool = False, region: str = None,
                 zone: str = None, namespace: str = None) -> list:
     """List images"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     return Kconfig(client=client).k.volumes()
 
 
@@ -290,6 +308,7 @@ def list_networks(context: Context,
                   client: str = None, debug: bool = False, region: str = None,
                   zone: str = None, namespace: str = None) -> dict:
     """List networks"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     return config.k.list_networks()
 
@@ -299,6 +318,7 @@ def list_pools(context: Context,
                client: str = None, debug: bool = False, region: str = None,
                zone: str = None, namespace: str = None) -> list:
     """List pools"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     return config.k.list_pools()
 
@@ -308,6 +328,7 @@ def list_vms(context: Context,
              client: str = None, debug: bool = False, region: str = None,
              zone: str = None, namespace: str = None) -> list:
     """List vms"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     return config.k.list()
 
@@ -318,6 +339,7 @@ def scale_kube(context: Context,
                client: str = None, debug: bool = False, region: str = None,
                zone: str = None, namespace: str = None, overrides: dict = {}) -> dict:
     """Scale cluster"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     if ctlplanes is not None:
         overrides['ctlplanes'] = ctlplanes
@@ -332,6 +354,7 @@ def start_plan(context: Context,
                client: str = None, debug: bool = False, region: str = None,
                zone: str = None, namespace: str = None) -> Dict[str, Any]:
     """Start plan"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     for plan in plans:
         result = config.start_plan(plan)
@@ -346,6 +369,7 @@ def start_vm(context: Context,
              client: str = None, debug: bool = False, region: str = None,
              zone: str = None, namespace: str = None) -> dict:
     """Start vm"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     return Kconfig(client).k.start(name)
 
 
@@ -355,6 +379,7 @@ def stop_plan(context: Context,
               client: str = None, debug: bool = False, region: str = None,
               zone: str = None, namespace: str = None) -> Dict[str, Any]:
     """Stop plan"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     for plan in plans:
         result = config.stop_plan(plan, soft=soft)
@@ -369,6 +394,7 @@ def stop_vm(context: Context,
             client: str = None, debug: bool = False, region: str = None,
             zone: str = None, namespace: str = None) -> dict:
     """Stop vm"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     return config.k.stop(name)
 
@@ -379,6 +405,7 @@ def create_bucket(context: Context,
                   client: str = None, debug: bool = False, region: str = None,
                   zone: str = None, namespace: str = None):
     """Create bucket"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     k = config.k
     for bucket in buckets:
@@ -391,6 +418,7 @@ def create_bucketfile(context: Context,
                       client: str = None, debug: bool = False, region: str = None,
                       zone: str = None, namespace: str = None) -> str:
     """Create bucketfile in bucket"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     k = config.k
     return k.upload_to_bucket(bucket, path, temp_url=temp, public=public)
@@ -402,6 +430,7 @@ def create_dns(context: Context,
                client: str = None, debug: bool = False, region: str = None,
                zone: str = None, namespace: str = None):
     """Create dns entry"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     if alias is None:
         alias = []
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
@@ -419,6 +448,7 @@ def create_lb(context: Context,
               client: str = None, debug: bool = False, region: str = None,
               zone: str = None, namespace: str = None):
     """Create load balancer"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     if name is None:
         name = get_random_name().replace('_', '-')
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
@@ -432,6 +462,7 @@ def create_securitygroup(context: Context,
                          client: str = None, debug: bool = False, region: str = None,
                          zone: str = None, namespace: str = None, overrides: dict = {}) -> dict:
     """Create security group"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     securitygroup = securitygroup
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     k = config.k
@@ -444,6 +475,7 @@ def delete_bucket(context: Context,
                   client: str = None, debug: bool = False, region: str = None,
                   zone: str = None, namespace: str = None):
     """Delete bucket"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     k = config.k
     for bucket in buckets:
@@ -456,6 +488,7 @@ def delete_bucketfile(context: Context,
                       client: str = None, debug: bool = False, region: str = None,
                       zone: str = None, namespace: str = None):
     """Delete bucketfile from bucket"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     k = config.k
     k.delete_from_bucket(bucket, path)
@@ -467,6 +500,7 @@ def delete_dns(context: Context,
                client: str = None, debug: bool = False, region: str = None,
                zone: str = None, namespace: str = None):
     """Delete dns entry"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     domain = domain or net
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     k = config.k
@@ -479,6 +513,7 @@ def delete_lb(context: Context,
               names: list = [], client: str = None, debug: bool = False, region: str = None,
               zone: str = None, namespace: str = None):
     """Delete load balancer"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     for name in names:
         config.delete_loadbalancer(name)
@@ -490,6 +525,7 @@ def delete_securitygroup(context: Context,
                          client: str = None, debug: bool = False, region: str = None,
                          zone: str = None, namespace: str = None):
     """Delete security group"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     k = config.k
     for securitygroup in securitygroups:
@@ -502,6 +538,7 @@ def download_bucketfile(context: Context,
                         client: str = None, debug: bool = False, region: str = None,
                         zone: str = None, namespace: str = None):
     """Download bucketfile from bucket"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     k = config.k
     k.download_from_bucket(bucket, path)
@@ -513,6 +550,7 @@ def list_bucketfiles(context: Context,
                      client: str = None, debug: bool = False, region: str = None,
                      zone: str = None, namespace: str = None) -> list:
     """List bucketfiles of bucket"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     k = config.k
     return k.list_bucketfiles(bucket)
@@ -523,6 +561,7 @@ def list_buckets(context: Context,
                  client: str = None, debug: bool = False, region: str = None,
                  zone: str = None, namespace: str = None) -> list:
     """List buckets"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     k = config.k
     return k.list_buckets()
@@ -534,6 +573,7 @@ def list_dns_entries(context: Context,
                      client: str = None, debug: bool = False, region: str = None,
                      zone: str = None, namespace: str = None) -> list:
     """List dns entries"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     if domain is None:
         return config.k.list_dns_zones()
@@ -546,6 +586,7 @@ def list_lbs(context: Context,
              client: str = None, debug: bool = False, region: str = None,
              zone: str = None, namespace: str = None) -> list:
     """List load balancers"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     return config.list_loadbalancers()
 
@@ -556,6 +597,7 @@ def list_securitygroups(context: Context,
                         client: str = None, debug: bool = False, region: str = None,
                         zone: str = None, namespace: str = None) -> list:
     """List security groups"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     k = config.k
     return k.list_security_groups(network=network)
@@ -567,6 +609,7 @@ def update_securitygroup(context: Context,
                          client: str = None, debug: bool = False, region: str = None,
                          zone: str = None, namespace: str = None, overrides: dict = {}):
     """Update security group"""
+    client, region, zone, namespace = handle_none([client, region, zone, namespace])
     config = Kconfig(client=client, debug=debug, region=region, zone=zone, namespace=namespace)
     result = config.k.update_security_group(name=securitygroup, overrides=overrides)
     common.handle_response(result, securitygroup, element='SecurityGroup', action='updated')
