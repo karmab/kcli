@@ -959,7 +959,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     else:
         pprint("Reusing matching openshift-install")
     os.environ["PATH"] = f'{os.getcwd()}:{os.environ["PATH"]}'
-    sNSTALLER_VERSION = get_installer_version()
+    INSTALLER_VERSION = get_installer_version()
     pprint(f"Using installer version {INSTALLER_VERSION}")
     if disconnected_url is not None:
         if disconnected_user is None:

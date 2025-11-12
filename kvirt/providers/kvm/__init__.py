@@ -1961,7 +1961,7 @@ class Kvirt(object):
                 if ips and 'ip' not in yamlinfo:
                     ip4s = [i for i in ips if ':' not in i]
                     ip6s = [i for i in ips if i not in ip4s]
-                    yamlinfo['ip'] = ip4s[0] if ip4s else ip6s[0]
+                    yamlinfo['ip'] = ip4s[0] if ip4s else ip6s[-1]
         if len(all_ips) > 1:
             yamlinfo['ips'] = all_ips
         pcidevices = []
