@@ -13,18 +13,15 @@ mirror:
   platform:
     graph: false
 {% if version in ['ci', 'nightly'] %}
-{% set release = 'origin/release-scos:scos-%s' % tag if okd else 'registry.ci.openshift.org/ocp/release:%s' % tag %}
+{% set release = 'origin/release-scos:scos-%s' % tag if okd else 'ocp/release:%s' % tag %}
     release: registry.ci.openshift.org/{{ release }}
 {% else %}
     channels:
     - name: {{ disconnected_channel or ('candidate' if 'rc' in tag else 'stable') }}-{{ release }}
-{% if tag|count('.') > 1 %}
-      minVersion: {{ (disconnected_extra_release or tag)|min_ocp_version(tag) }}
-      maxVersion: {{ (disconnected_extra_release or tag)|max_ocp_version(tag) }}
-{% endif %}
+      minVersion: {{ (disconnected_extra_release or openshift_version)|min_ocp_version(openshift_version) }}
+      maxVersion: {{ (disconnected_extra_release or openshift_version)|max_ocp_version(openshift_version) }}
 {% endif %}
     architectures:
-#   - multi
     - amd64
   additionalImages:
 {% for image in kcli_images + extra_images|default([]) %}
