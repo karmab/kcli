@@ -271,7 +271,8 @@ def info_vm(context: Context,
 def list_clients(context: Context,
                  client: str = None, debug: bool = False) -> list:
     """List clients"""
-    client = handle_none([client])
+    if client is not None and client.lower() == 'none':
+        client = None
     clientstable = ["Client", "Type", "Enabled", "Current"]
     baseconfig = Kbaseconfig(client=client, debug=debug)
     for client in sorted(baseconfig.clients):
