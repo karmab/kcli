@@ -135,7 +135,7 @@ class Kconfig(Kbaseconfig):
                 except Exception as e:
                     exception = e if debug else None
                     dependency_error('hcloud', exception)
-                k = Khcloud(api_key=apikey, location=location)
+                k = Khcloud(api_key=apikey, location=location, debug=debug)
             elif self.type == 'azure':
                 try:
                     from kvirt.providers.azure import Kazure
