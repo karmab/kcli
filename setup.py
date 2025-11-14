@@ -52,6 +52,7 @@ setup(
     },
     entry_points='''
         [console_scripts]
+        kagent=kvirt.agent.agent:main
         kcli=kvirt.cli:cli
         kweb=kvirt.web.main:run
         klist.py=kvirt.klist:main
