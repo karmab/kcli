@@ -15,10 +15,11 @@ import os
 
 
 class Khcloud():
-    def __init__(self, api_key=None, location=None):
+    def __init__(self, api_key=None, location=None, debug=False):
         self.conn = Client(token=api_key)
         self.location = self.conn.locations.get_by_name(location)
         self.machine_flavor_cache = {}
+        self.debug = debug
         return
 
     def create(self, name, virttype=None, profile='', flavor=None, plan='kvirt', cpumodel='host-model', cpuflags=[],
@@ -533,7 +534,7 @@ class Khcloud():
         for disk in alldisks:
             if self.debug:
                 print(disk)
-            disks[disk.name] = {'pool': "", 'path': self.location}
+            disks[disk.name] = {'pool': "", 'path': disk.location.name}
         return disks
 
     def list_buckets(self):
