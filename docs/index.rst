@@ -2598,8 +2598,54 @@ You can set the variable yamlinventory to True at default, host or profile level
 AI support
 ==========
 
-3 mcp servers are available to be used with chat apps such as ChatGpt, Claude Desktop and so on
+MCP
+---
 
-- mcpcore.py provides core tools to start, stop,create, delete and list pool, networks, vms and clusters
-- mcpcloud.py provides additional cloud tools to create, delete and list buckets, bucketfiles, dns entries, load balancers and securitygroups/firewalls
-- mcpbm.py provides baremetal tools that allow to get info, start, stop, reset and update a Baremetal Host via redfish
+an mcp server is available to be used with chat apps such as ChatGpt, Claude Desktop/Code and so on
+
+It accepts a repeatble *-e* flag to enable additional tools, namely baremetal and cloud support
+
+For STDIO transport, Include the following configuration snippet In VSCode or Claude Desktop:
+
+.. code:: json
+
+   "mcpServers": {
+       "kcli": {
+         "command": "python3",
+         "args": ["$PATH_TO_YOUR_KCLI_INSTALL/kvirt/kmcp.py", "-e", "cloud"]
+           }
+       }
+
+For Streamable HTTP, first start the server in a terminal:
+
+::
+
+   kmcp
+
+You can then point to the server from your client, for instance via *claude mcp*
+
+::
+
+   claude mcp add --transport http kcli http://your_server:8000/mcp"
+
+AGENT
+-----
+
+You can also use an A2A compatible agent
+
+just launch the following command:
+
+::
+
+   kmcp
+
+The following environment variables allow you to specify model and to use ollama, ollama or openai instead of google AI
+
+- MODEL. Defaults to gemini-2.5-flash. You can prefix the target model with ollama/, ollama_chat/ or openai to use a different provider
+- IP. Default to 127.0.0.1
+- PORT. Defaults to 8001
+- OLLAMA_API_BASE
+- OPENAI_BASE
+- OPENAI_API_KEY. Defaults to xxx (to ease using litellm proxy)
+- VLLM_API_BASE
+- VLMM_TOKEN
