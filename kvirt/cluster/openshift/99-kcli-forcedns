@@ -20,4 +20,4 @@ if [ "$2" = "dhcp4-change" ] || [ "$2" = "dhcp6-change" ] || [ "$2" = "up" ] || 
   fi
 fi
 
-sed -i '/plugins/a dns=none\nrc-manager=unmanaged ' /etc/NetworkManager/conf.d/20-keyfiles.conf
+[ "$(hostname -s)" == "$cluster-bootstrap" ] && chattr +i /etc/resolv.conf
