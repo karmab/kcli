@@ -1,6 +1,7 @@
 import ast
 from a2a.types import AgentCard, AgentSkill
 from google.adk.agents.llm_agent import Agent
+from google.adk.models.lite_llm import LiteLlm
 from google.adk.a2a.utils.agent_to_a2a import to_a2a
 from google.adk.tools.mcp_tool.mcp_toolset import McpToolset
 from google.adk.tools.mcp_tool.mcp_session_manager import StdioConnectionParams
@@ -18,8 +19,41 @@ MCP_PATH = which('kmcp')
 MODEL = os.getenv('MODEL', 'gemini-2.5-flash')
 IP = os.getenv('IP', '127.0.0.1')
 PORT = os.getenv('PORT', 8001)
-if os.getenv('GOOGLE_API_KEY') is None:
-    print("Missing GOOGLE_API_KEY env variable")
+if os.getenv('OLLAMA_API_BASE') is not None or MODEL.startswith('ollama'):
+    print("Using Ollama integration")
+    if not MODEL.startswith('ollama_chat'):
+        MODEL = f'ollama_chat/{MODEL.replace("ollama/", "")}'
+        os.environ['MODEL'] = MODEL
+    MODEL = LiteLlm(model=MODEL)
+elif os.getenv('OPENAI_API_BASE') is not None:
+    print("Using Openai integration")
+    if not MODEL.startswith('openai'):
+        MODEL = f'openai/{MODEL}'
+        os.environ['MODEL'] = MODEL
+    if not os.environ['OPENAI_API_BASE'].endswith('/v1'):
+        os.environ['OPENAI_API_BASE'] += '/v1'
+    if 'OPENAI_API_KEY' not in os.environ:
+        os.environ['OPENAI_API_KEY'] = 'xxx'
+    MODEL = LiteLlm(model=MODEL)
+elif os.getenv('VLLM_API_BASE') is not None:
+    print("Using VLLM integration")
+    if not os.environ['VLLM_API_BASE'].endswith('/v1'):
+        os.environ['VLLM_API_BASE'] += '/v1'
+    API_BASE_URL = os.environ['VLLM_API_BASE']
+    data = {'model': MODEL, 'api_base_url': API_BASE_URL}
+    if 'VLLM_TOKEN' in os.environ:
+        data['extra_headers'] = [f'Authorization: Bearer {os.environ["VLLM_TOKEN"]}']
+    elif 'VLLM_API_KEY' in os.environ:
+        data['api_key'] = 'xxx'
+    else:
+        print("Missing token or api key for vllm")
+        os._exit(1)
+    MODEL = LiteLlm(**data)
+elif os.getenv('GOOGLE_API_KEY') is not None:
+    print("Using Gemini integration")
+else:
+    print("Missing env variables to target a model")
+    print("Define GOOGLE_API_KEY or relevant env variables based on your model")
     os._exit(1)
 
 
