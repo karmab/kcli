@@ -19,5 +19,3 @@ if [ "$2" = "dhcp4-change" ] || [ "$2" = "dhcp6-change" ] || [ "$2" = "up" ] || 
     fi
   fi
 fi
-
-[ "$(hostname -s)" == "$cluster-bootstrap" ] && chattr +i /etc/resolv.conf
