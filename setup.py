@@ -52,12 +52,12 @@ setup(
     },
     entry_points='''
         [console_scripts]
-        kagent=kvirt.agent.agent:main
         kcli=kvirt.cli:cli
-        kweb=kvirt.web.main:run
+        kcliagent=kvirt.agent.agent:main
+        kclimcp=kvirt.kmcp:main
         klist.py=kvirt.klist:main
-        kmcp=kvirt.kmcp:main
         ksushy=kvirt.ksushy.main:run
+        kweb=kvirt.web.main:run
         ekstoken=kvirt.ekstoken:cli
         gketoken=kvirt.gketoken:cli
     ''',

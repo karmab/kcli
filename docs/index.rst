@@ -2620,7 +2620,7 @@ For Streamable HTTP, first start the server in a terminal:
 
 ::
 
-   kmcp
+   kclimcp
 
 You can then point to the server from your client, for instance via *claude mcp*
 
@@ -2637,7 +2637,7 @@ just launch the following command:
 
 ::
 
-   kmcp
+   kcliagent
 
 The following environment variables allow you to specify model and to use ollama, ollama or openai instead of google AI
 
