@@ -938,12 +938,18 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 tag = f'registry.ci.openshift.org/{basetag}/release:{tag}'
     which_openshift = which('openshift-install')
     openshift_dir = os.path.dirname(which_openshift) if which_openshift is not None else '.'
-    if which_openshift is not None and not has_internet():
-        pprint("Using existing openshift-install found in your PATH")
-        warning("Not checking version")
-    elif okd:
-        run = get_okd_installer(tag, version=version)
-    elif not same_release_images(version=version, tag=tag, pull_secret=pull_secret, path=openshift_dir):
+    if which_openshift is None:
+        download = True
+    elif not has_internet:
+        pprint("Using existing openshift-install found in your PATH and skipping version check")
+        download = False
+    else:
+        download = not same_release_images(version=version, tag=tag, pull_secret=pull_secret, path=openshift_dir)
+        if download:
+            pprint("Redownloading openshift-install as found version doesn't match requirements")
+    if download:
+        if okd:
+            run = get_okd_installer(tag, version=version)
         if version in ['ci', 'nightly'] or '/' in str(tag):
             nightly = version == 'nightly'
             run = get_ci_installer(pull_secret, tag=tag, nightly=nightly)
@@ -954,10 +960,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if run != 0:
             return {'result': 'failure', 'reason': "Couldn't download openshift-install"}
         pprint("Move downloaded openshift-install somewhere in your PATH if you want to reuse it")
-    elif which_openshift is not None:
-        pprint("Using existing openshift-install found in your PATH")
-    else:
-        pprint("Reusing matching openshift-install")
     os.environ["PATH"] = f'{os.getcwd()}:{os.environ["PATH"]}'
     INSTALLER_VERSION = get_installer_version()
     pprint(f"Using installer version {INSTALLER_VERSION}")
