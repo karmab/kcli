@@ -1061,8 +1061,11 @@ class Kbaseconfig:
         baremetal = overrides.get('baremetal') or False
         tag = overrides.get('tag') or OPENSHIFT_TAG
         version = overrides.get('version') or detect_openshift_version(tag, OPENSHIFT_TAG)
+        installer_url = overrides.get('installer_url')
         macosx = os.path.exists('/Users')
-        if okd:
+        if installer_url:
+            run = openshift.get_installer_from_url(installer_url, debug=self.debug)
+        elif okd:
             run = openshift.get_okd_installer(tag, version=version, debug=self.debug)
         elif version in ['ci', 'nightly']:
             nightly = version == 'nightly'

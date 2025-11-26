@@ -335,6 +335,32 @@ def get_downstream_installer(version='stable', macosx=False, tag=None, debug=Fal
     return call(cmd, shell=True)
 
 
+def get_installer_from_url(installer_url, debug=False):
+    INSTALLSYSTEM = 'mac' if os.path.exists('/Users') else 'linux'
+    installer_url = installer_url.rstrip('/')
+    pprint(f'Downloading openshift-install from {installer_url}')
+    try:
+        r = urlopen(f"{installer_url}/release.txt").readlines()
+    except Exception as e:
+        error(f"Couldn't open url {installer_url}/release.txt: {e}")
+        return 1
+    version = None
+    for line in r:
+        if 'Name' in str(line):
+            version = str(line).split(':')[1].strip().replace('\\n', '').replace("'", "")
+            break
+    if version is None:
+        error("Couldn't find version")
+        return 1
+    cmd = f"curl -Ls {installer_url}/"
+    cmd += f"openshift-install-{INSTALLSYSTEM}-{version}.tar.gz "
+    cmd += "| tar zxf - openshift-install"
+    cmd += "; chmod 700 openshift-install"
+    if debug:
+        pprint(cmd)
+    return call(cmd, shell=True)
+
+
 def get_okd_installer(tag, version='stable', debug=False):
     if version == 'stable' and str(tag).count('.') == 1:
         tag = f'quay.io/okd/scos-release:{tag}.0-okd-scos.1'
@@ -948,9 +974,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if download:
             pprint("Redownloading openshift-install as found version doesn't match requirements")
     if download:
-        if okd:
+        installer_url = data.get('installer_url')
+        if installer_url:
+            run = get_installer_from_url(installer_url)
+        elif okd:
             run = get_okd_installer(tag, version=version)
-        if version in ['ci', 'nightly'] or '/' in str(tag):
+        elif version in ['ci', 'nightly'] or '/' in str(tag):
             nightly = version == 'nightly'
             run = get_ci_installer(pull_secret, tag=tag, nightly=nightly)
         elif version in ['candidate', 'stable', 'latest']:

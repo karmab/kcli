@@ -662,6 +662,9 @@ $ kcli download openshift-install -P tag=4.20.0-rc.1
 
 # Download older version from CI
 $ kcli download openshift-install -P version=ci -P tag=4.14
+
+# Download from custom URL
+$ kcli download openshift-install -P installer_url=https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/candidate-4.20
 """
 
 securitygroupcreate = """# Create a security group named mygroup and opening tcp ports 22 and 25

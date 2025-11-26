@@ -18,6 +18,7 @@ info: |
     baremetal_hosts can be specified as an array of bmc urls to deploy baremetal workers (or in the case of SNO described before)
 version: stable
 tag: '4.20'
+installer_url:
 pull_secret: openshift_pull.json
 image:
 network: default
