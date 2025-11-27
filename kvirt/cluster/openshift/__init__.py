@@ -950,7 +950,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if download:
         if okd:
             run = get_okd_installer(tag, version=version)
-        if version in ['ci', 'nightly'] or '/' in str(tag):
+        elif version in ['ci', 'nightly'] or '/' in str(tag):
             nightly = version == 'nightly'
             run = get_ci_installer(pull_secret, tag=tag, nightly=nightly)
         elif version in ['candidate', 'stable', 'latest']:
