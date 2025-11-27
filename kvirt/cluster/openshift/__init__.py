@@ -336,16 +336,18 @@ def get_downstream_installer(version='stable', macosx=False, tag=None, debug=Fal
 
 
 def get_okd_installer(tag, version='stable', debug=False):
-    if version == 'stable' and str(tag).count('.') == 1:
-        tag = f'quay.io/okd/scos-release:{tag}.0-okd-scos.1'
-    elif 'quay.io' not in str(tag) and 'registry.ci.openshift.org' not in str(tag):
-        if version == 'candidate':
-            url = "https://amd64.origin.releases.ci.openshift.org/api/v1/releasestream/4-scos-next/latest"
-        elif version in ['ci', 'nightly']:
-            url = f"https://amd64.origin.releases.ci.openshift.org/api/v1/releasestream/{tag}.0-0.okd-scos/latest"
-        else:
-            url = "https://amd64.origin.releases.ci.openshift.org/api/v1/releasestream/4-scos-stable/latest"
+    if version == 'candidate':
+        url = "https://amd64.origin.releases.ci.openshift.org/api/v1/releasestream/4-scos-next/latest"
         tag = json.loads(urlopen(url).read())['pullSpec']
+    elif version in ['ci', 'nightly']:
+        url = f"https://amd64.origin.releases.ci.openshift.org/api/v1/releasestream/{tag}.0-0.okd-scos/latest"
+        tag = json.loads(urlopen(url).read())['pullSpec']
+    else:
+        url = 'https://quay.io/api/v1/repository/okd/scos-release/tag'
+        for t in json.loads(urlopen(url).read())["tags"]:
+            if tag in t["name"] and ".ec." not in t["name"]:
+                tag = f'quay.io/okd/scos-release:{t["name"]}'
+                break
     cmd = f"oc adm release extract --command=openshift-install --to . {tag}"
     cmd += "; chmod 700 openshift-install"
     pprint(f'Downloading openshift-install {tag} in current directory')
