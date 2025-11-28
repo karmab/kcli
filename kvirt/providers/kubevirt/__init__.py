@@ -751,6 +751,7 @@ class Kubevirt():
             from websocket import create_connection
         except:
             error("You need to install websocket-client package")
+            return
         kubectl = self.kubectl
         namespace = self.namespace
         vm = _get_resource(kubectl, 'vm', name, namespace, debug=self.debug)
