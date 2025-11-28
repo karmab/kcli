@@ -5,7 +5,7 @@ domain: karmalabs.corp
 network_type: OVNKubernetes
 ctlplanes: 3
 workers: 0
-version: ci
+version: stable
 network: okd-network
 sslip: true
 numcpus: 32
