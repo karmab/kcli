@@ -11,6 +11,7 @@ from kvirt.common import ssh, scp, _ssh_credentials, get_ssh_pub_key
 from kvirt.common import start_baremetal_hosts_with_iso, update_baremetal_hosts, get_new_vip, process_postscripts
 from kvirt.defaults import LOCAL_OPENSHIFT_APPS, OPENSHIFT_TAG
 import os
+import platform
 import re
 from random import choice
 from shutil import copy2, move, rmtree, which
@@ -1024,6 +1025,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if not images:
             msg = f"Missing {image}. Indicate correct image in your parameters file..."
             return {'result': 'failure', 'reason': msg}
+    if provider in virt_providers and platform.machine() != arch:
+        pprint(f"Forcing release image to {arch}")
+        base_url = 'quay.io/okd/scos-release' if okd else 'quay.io/openshift-release-dev'
+        os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = f'{base_url}:{INSTALLER_VERSION}-{arch}'
     overrides['image'] = image
     static_networking_ctlplane, static_networking_worker = False, False
     macentries = []
