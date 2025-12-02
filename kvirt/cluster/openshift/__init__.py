@@ -985,6 +985,10 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             cacmd = f"openssl s_client -showcerts -connect {disconnected_url} </dev/null 2>/dev/null|"
             cacmd += "openssl x509 -outform PEM"
             data['ca'] = os.popen(cacmd).read()
+        kcli_images = ["curl:multi", "origin-coredns:multi", "haproxy:multi", "origin-keepalived-ipfailover:multi",
+                       "mdns-publisher:multi", "kubectl:multi"]
+        kcli_images = [f'quay.io/karmab/{image}' for image in kcli_images]
+        warning(f"Make sure to push the following images in your registry: {'\n'.join(kcli_images)}")
     if sno:
         pass
     elif image is None:
