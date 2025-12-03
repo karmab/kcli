@@ -987,8 +987,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             data['ca'] = os.popen(cacmd).read()
         kcli_images = ["curl:multi", "origin-coredns:multi", "haproxy:multi", "origin-keepalived-ipfailover:multi",
                        "mdns-publisher:multi", "kubectl:multi"]
-        kcli_images = [f'quay.io/karmab/{image}' for image in kcli_images]
-        warning(f"Make sure to push the following images in your registry: {'\n'.join(kcli_images)}")
+        kcli_images = '\n'.join([f'quay.io/karmab/{image}' for image in kcli_images])
+        warning(f"Make sure to push the following images in your registry: {kcli_images}")
     if sno:
         pass
     elif image is None:
