@@ -789,7 +789,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if os.path.exists('coreos-installer'):
         pprint("Removing old coreos-installer")
         os.remove('coreos-installer')
-    if version not in ['ci', 'candidate', 'nightly', 'stable']:
+    if version not in ['ci', 'candidate', 'latest', 'nightly', 'stable']:
         return {'result': 'failure', 'reason': f"Incorrect version {version}"}
     else:
         pprint(f"Using {version} version")
