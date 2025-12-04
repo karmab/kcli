@@ -2556,6 +2556,8 @@ class Kconfig(Kbaseconfig):
     def create_kube(self, cluster, kubetype, overrides={}):
         cwd = os.getcwd()
         cluster = overrides.get('cluster') or cluster or f"my{kubetype}"
+        if 'domain' in overrides and overrides['domain'] == 'local':
+            return {'result': 'failure', 'reason': 'Invalid domain .local'}
         if self.type == 'web' and self.k.localkube:
             return self.k.create_kube(cluster, kubetype, overrides)
         ippool = overrides.get('ippool') or overrides.get('confpool')
