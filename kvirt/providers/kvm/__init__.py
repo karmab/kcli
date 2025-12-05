@@ -1203,6 +1203,7 @@ class Kvirt(object):
 <source><address domain='0x%s' bus='0x%s' slot='0x%s' function='0x%s'/></source>
 </hostdev>""" % (newdomain, newbus, newslot, newfunction)
             hostdevxml += newhostdev
+        pmuxml = "<pmu state='on'/>" if overrides.get('pmu', False) else ''
         rngxml = ""
         if rng:
             rngxml = """<rng model='virtio'>
@@ -1304,6 +1305,7 @@ class Kvirt(object):
 <bootmenu enable="yes" timeout="60"/>
 </os>
 <features>
+{pmuxml}
 {smmxml}
 {ioapicxml}
 {acpixml}
@@ -1344,7 +1346,7 @@ class Kvirt(object):
                     isoxml=isoxml, extraisoxml=extraisoxml, floppyxml=floppyxml, displayxml=displayxml,
                     serialxml=serialxml, sharedxml=sharedxml, guestxml=guestxml, videoxml=videoxml,
                     hostdevxml=hostdevxml, rngxml=rngxml, tpmxml=tpmxml, cpuxml=cpuxml, qemuextraxml=qemuextraxml,
-                    ioapicxml=ioapicxml, acpixml=acpixml, iommuxml=iommuxml, iommumemxml=iommumemxml,
+                    ioapicxml=ioapicxml, acpixml=acpixml, pmuxml=pmuxml, iommuxml=iommuxml, iommumemxml=iommumemxml,
                     iommufeaturesxml=iommufeaturesxml, iommudevicexml=iommudevicexml, controllerxml=controllerxml,
                     clockxml=clockxml)
         if self.debug:
