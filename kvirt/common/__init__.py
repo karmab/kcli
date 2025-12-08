@@ -30,6 +30,8 @@ from tempfile import TemporaryDirectory
 from time import sleep
 import yaml
 
+_original_construct_mapping = yaml.SafeLoader.construct_mapping
+
 
 class NoAliasDumper(yaml.SafeDumper):
     def ignore_aliases(self, data):
@@ -2522,7 +2524,11 @@ def plan_constructor(loader, node, deep=False):
     for key_node, value_node in node.value:
         key = loader.construct_object(key_node, deep=deep)
         value = loader.construct_object(value_node, deep=deep)
-        if isinstance(value, dict):
+        if key == "vmrules":
+            value = [_original_construct_mapping(loader, item_node, deep=deep) for item_node in value_node.value]
+            mapping[key] = value
+            continue
+        elif isinstance(value, dict):
             _type = value.get('type', 'vm')
             if key == 'parameters':
                 mapping[key] = value
