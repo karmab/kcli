@@ -61,6 +61,7 @@ IMAGES = {'almalinux8': f'{ALMA}/8/cloud/x86_64/images/AlmaLinux-8-GenericCloud-
           'fedora40': f'{FEDORA}/40/Cloud/x86_64/images/Fedora-Cloud-Base-Generic.x86_64-40-1.14.qcow2',
           'fedora41': f'{FEDORA}/41/Cloud/x86_64/images/Fedora-Cloud-Base-Generic-41-1.4.x86_64.qcow2',
           'fedora42': f'{FEDORA}/42/Cloud/x86_64/images/Fedora-Cloud-Base-Generic-42-1.1.x86_64.qcow2',
+          'fedora43': f'{FEDORA}/43/Cloud/x86_64/images/Fedora-Cloud-Base-Generic-43-1.6.x86_64.qcow2',
           'fedoralatest': 'https://alt.fedoraproject.org/cloud',
           'freebsd122': f'{BSD}/freebsd/12.2/freebsd-12.2.qcow2',
           'freebsd130': f'{BSD}/freebsd/13.0/freebsd-13.0-zfs.qcow2',
