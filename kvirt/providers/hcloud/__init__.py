@@ -31,6 +31,10 @@ class Khcloud():
                sharedfolders=[], cmdline=None, placement=[], autostart=False, cpuhotplug=False, memoryhotplug=False,
                numamode=None, numa=[], pcidevices=[], tpm=False, rng=False, metadata={}, securitygroups=[],
                vmuser=None, guestagent=True):
+        location = self.location
+        if overrides.get("location", False):
+            location = self.conn.locations.get_by_name(overrides.get("location"))
+
         if self.exists(name):
             return {'result': 'failure', 'reason': f"VM {name} already exists"}
 
@@ -50,7 +54,7 @@ class Khcloud():
             diskname = f"{name}-disk{index}"
             volumeresponse = self.conn.volumes.get_by_name(diskname)
             if volumeresponse is None:
-                volumeresponse = self.conn.volumes.create(disksize, diskname, location=self.location,
+                volumeresponse = self.conn.volumes.create(disksize, diskname, location=location,
                                                           labels={"kcli-managed": "volume"})
             volumeresponses.append(volumeresponse)
 
@@ -132,7 +136,7 @@ class Khcloud():
                     user_data=userdata,
                     volumes=[],
                     ssh_keys=hetzner_ssh_keys,
-                    location=self.location,
+                    location=location,
                     public_net=ServerCreatePublicNetwork(enable_ipv4=False, enable_ipv6=False),
                     labels=labels,
                     placement_group=placement_group
@@ -142,7 +146,7 @@ class Khcloud():
                 break
             except APIException as e:
                 if e.code == "resource_unavailable":
-                    msg = f"Could not get server of type '{flavor_option}' in location '{self.location.name}'"
+                    msg = f"Could not get server of type '{flavor_option}' in location '{location.name}'"
                     if len(flavor_options) > (idx + 1):
                         warning(f"{msg}' trying the next configured flavor option.")
                     else:
