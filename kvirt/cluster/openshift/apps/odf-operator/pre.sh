@@ -1,3 +1,4 @@
+{{ "storagecluster" | wait_crd }}
 {% if odf_nodes %}
 {% set nodes = odf_nodes %}
 {% elif localstorage_nodes is defined %}
