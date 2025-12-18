@@ -9,7 +9,7 @@ from hcloud.load_balancers import LoadBalancerAlgorithm, LoadBalancerService, Lo
 from hcloud.load_balancers import LoadBalancerTarget
 import json
 from kvirt import common
-from kvirt.common import error, pprint, warning, get_ssh_pub_key
+from kvirt.common import error, pprint, warning, get_ssh_pub_key, pprint
 from kvirt.defaults import METADATA_FIELDS
 import os
 
@@ -31,32 +31,12 @@ class Khcloud():
                sharedfolders=[], cmdline=None, placement=[], autostart=False, cpuhotplug=False, memoryhotplug=False,
                numamode=None, numa=[], pcidevices=[], tpm=False, rng=False, metadata={}, securitygroups=[],
                vmuser=None, guestagent=True):
-        location = self.location
-        if overrides.get("location", False):
-            location = self.conn.locations.get_by_name(overrides.get("location"))
-
         if self.exists(name):
             return {'result': 'failure', 'reason': f"VM {name} already exists"}
 
         # Discard the boot disk since hetzner includes a boot disk in their VM's
         if len(disks) > 0:
             disks = disks[1:]
-
-        volumeresponses = []
-        for index, disk in enumerate(disks):
-            if isinstance(disk, int):
-                disksize = disk
-            elif isinstance(disk, str) and disk.isdigit():
-                disksize = int(disk)
-            elif isinstance(disk, dict):
-                disksize = disk.get('size', '10')
-
-            diskname = f"{name}-disk{index}"
-            volumeresponse = self.conn.volumes.get_by_name(diskname)
-            if volumeresponse is None:
-                volumeresponse = self.conn.volumes.create(disksize, diskname, location=location,
-                                                          labels={"kcli-managed": "volume"})
-            volumeresponses.append(volumeresponse)
 
         if not keys:
             publickeyfile = get_ssh_pub_key()
@@ -118,40 +98,67 @@ class Khcloud():
 
                 placement_group = response.placement_group
 
+        # If "location_options" is specified use it, otherwise "location", otherwise use self.location
+        location_options = overrides.get("location_options", [overrides.get("location", self.location.name)])
         flavor_options = overrides.get("flavor_options", [flavor] if flavor is not None else [])
 
-        for idx, flavor_option in enumerate(flavor_options):
-            servertype = self.conn.server_types.get_by_name(flavor_option)
-            if "snapshot_id" in overrides:
-                hetzner_image = self.conn.images.get_by_id(overrides.get("snapshot_id"))
-            else:
-                hetzner_image = self.conn.images.get_by_name_and_architecture(image, servertype.architecture)
+        volumeresponses = []
+        for location_option in location_options:
+            location = self.conn.locations.get_by_name(location_option)
+            created_vm = None
+            for idx, flavor_option in enumerate(flavor_options):
+                if self.debug:
+                    pprint(f"Trying to create VM {name} in location {location.name} with flavor {flavor_option}")
+                servertype = self.conn.server_types.get_by_name(flavor_option)
+                if "snapshot_id" in overrides:
+                    hetzner_image = self.conn.images.get_by_id(overrides.get("snapshot_id"))
+                else:
+                    hetzner_image = self.conn.images.get_by_name_and_architecture(image, servertype.architecture)
 
-            try:
-                created_vm = self.conn.servers.create(
-                    name=name,
-                    server_type=servertype,
-                    image=hetzner_image,
-                    start_after_create=False,
-                    user_data=userdata,
-                    volumes=[],
-                    ssh_keys=hetzner_ssh_keys,
-                    location=location,
-                    public_net=ServerCreatePublicNetwork(enable_ipv4=False, enable_ipv6=False),
-                    labels=labels,
-                    placement_group=placement_group
-                )
+                try:
+                    created_vm = self.conn.servers.create(
+                        name=name,
+                        server_type=servertype,
+                        image=hetzner_image,
+                        start_after_create=False,
+                        user_data=userdata,
+                        volumes=[],
+                        ssh_keys=hetzner_ssh_keys,
+                        location=location,
+                        public_net=ServerCreatePublicNetwork(enable_ipv4=False, enable_ipv6=False),
+                        labels=labels,
+                        placement_group=placement_group
+                    )
 
-                created_vm.action.wait_until_finished(300)
-                break
-            except APIException as e:
-                if e.code == "resource_unavailable":
-                    msg = f"Could not get server of type '{flavor_option}' in location '{location.name}'"
-                    if len(flavor_options) > (idx + 1):
-                        warning(f"{msg}' trying the next configured flavor option.")
+                    for index, disk in enumerate(disks):
+                        if isinstance(disk, int):
+                            disksize = disk
+                        elif isinstance(disk, str) and disk.isdigit():
+                            disksize = int(disk)
+                        elif isinstance(disk, dict):
+                            disksize = disk.get('size', '10')
+
+                        diskname = f"{name}-disk{index}"
+                        volumeresponse = self.conn.volumes.get_by_name(diskname)
+                        if volumeresponse is None:
+                            volumeresponse = self.conn.volumes.create(disksize, diskname, location=location,
+                                                                    labels={"kcli-managed": "volume"})
+                        volumeresponses.append(volumeresponse)
+
+                    created_vm.action.wait_until_finished(300)
+                    break
+                except APIException as e:
+                    if e.code == "resource_unavailable":
+                        msg = f"Could not get server of type '{flavor_option}' in location '{location.name}'"
+                        if len(flavor_options) > (idx + 1):
+                            warning(f"{msg}, trying the next configured flavor option.")
+                        else:
+                            warning(msg)
+                            error("No more flavors available to try. Define more flavors in 'flavor_options'.")
                     else:
-                        warning(msg)
-                        error("No more flavors available to try. Define more flavors in 'flavor_options'.")
+                        return {'result': 'failure', 'reason': json.dumps(e)}
+            if created_vm is not None:
+                break
 
         created_vm = created_vm.server
 
