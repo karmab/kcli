@@ -1584,7 +1584,7 @@ def is_debian9(image):
 
 
 def is_debian_new(image):
-    return 'debian10' in image.lower() or 'debian12' in image.lower()
+    return 'debian' in image.lower() and image.lower() != 'debian9' and image.lower() != 'debian8'
 
 
 def is_ubuntu(image):
