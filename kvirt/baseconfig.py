@@ -926,7 +926,7 @@ class Kbaseconfig:
                 app_data['hypershift'] = True
             return common.create_app_generic(self, app, appdir, overrides=overrides, outputdir=outputdir)
         else:
-            name, catalog, channel, csv, description, namespace, channels, crds = common.olm_app(app, overrides)
+            name, catalog, channel, csv, description, namespace, channels, crds, installmode = common.olm_app(app, overrides)
             if name is None:
                 error(f"Couldn't find any app matching {app}. Skipping...")
                 return 1
@@ -939,7 +939,7 @@ class Kbaseconfig:
                     channel = overrides_channel
             if 'namespace' in overrides:
                 namespace = overrides['namespace']
-            app_data = {'catalog': catalog, 'channel': channel, 'namespace': namespace, 'csv': csv}
+            app_data = {'catalog': catalog, 'channel': channel, 'namespace': namespace, 'csv': csv, 'installmode': installmode}
             app_data.update(overrides)
             return common.create_app_openshift(self, app, appdir, app_data, outputdir)
 
@@ -968,11 +968,11 @@ class Kbaseconfig:
                 app_data['hypershift'] = True
             return common.delete_app_generic(self, app, appdir, app_data)
         else:
-            name, catalog, channel, csv, description, namespace, channels, crds = common.olm_app(app, overrides)
+            name, catalog, channel, csv, description, namespace, channels, crds, installmode = common.olm_app(app, overrides)
             if name is None:
                 error(f"Couldn't find any app matching {app}. Skipping...")
                 return 1
-            app_data = {'catalog': catalog, 'channel': channel, 'namespace': namespace, 'crds': crds}
+            app_data = {'catalog': catalog, 'channel': channel, 'namespace': namespace, 'crds': crds, 'installmode': installmode}
             app_data.update(overrides)
             return common.delete_app_openshift(self, app, appdir, app_data)
 
@@ -1004,7 +1004,7 @@ class Kbaseconfig:
     def info_app_openshift(self, app, overrides={}):
         plandir = os.path.dirname(openshift.create.__code__.co_filename)
         if app not in kdefaults.LOCAL_OPENSHIFT_APPS:
-            name, catalog, defaultchannel, csv, description, target_namespace, channels, crds = olm_app(app, overrides)
+            name, catalog, defaultchannel, csv, description, target_namespace, channels, crds, installmode = olm_app(app, overrides)
             if name is None:
                 warning(f"Couldn't find any app matching {app}")
             else:
@@ -1014,6 +1014,7 @@ class Kbaseconfig:
                 print(f"channel: {defaultchannel}")
                 print(f"target namespace: {target_namespace}")
                 print(f"csv: {csv}")
+                print(f"installmode: {installmode}")
                 print(f"description:\n{description}")
                 app = name
         appdir = f"{plandir}/apps/{app}"
