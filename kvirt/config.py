@@ -1742,7 +1742,8 @@ class Kconfig(Kbaseconfig):
                     continue
                 dhcp = netprofile.get('dhcp', True)
                 domain = netprofile.get('domain')
-                result = z.create_network(name=net, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain, plan=plan,
+                fwzone = netprofile.get('fwzone')
+                result = z.create_network(name=net, cidr=cidr, dhcp=dhcp, nat=nat, domain=domain, fwzone=fwzone, plan=plan,
                                           overrides=netprofile)
                 common.handle_response(result, net, element='Network')
         if poolentries and not onlyassets:

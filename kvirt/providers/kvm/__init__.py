@@ -3430,7 +3430,7 @@ class Kvirt(object):
         pool.refresh()
         return {'result': 'success'}
 
-    def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
+    def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, fwzone=None, plan='kvirt', overrides={}):
         conn = self.conn
         networks = self.list_networks()
         if name in networks:
@@ -3539,7 +3539,10 @@ class Kvirt(object):
             domainxml = f"<domain name='{name}' localOnly='{localdomain}'/>"
         if len(name) < 16:
             bridgename = name if name != 'default' else 'virbr0'
-            bridgexml = f"<bridge name='{bridgename}' stp='on' delay='0'/>"
+            if fwzone is not None:
+                bridgexml = f"<bridge name='{bridgename}' zone='{fwzone}' stp='on' delay='0'/>"
+            else:
+                bridgexml = f"<bridge name='{bridgename}' stp='on' delay='0'/>"
         else:
             return {'result': 'failure', 'reason': f"network {name} is more than 16 characters"}
         prefix = cidr.split('/')[1]
