@@ -2,6 +2,7 @@ arch: Architecture
 emulator: Custom emulator
 extra_iso: Extra Iso to plug to the node
 floppy: Floppy to plug to the node
+fwzone: firewall zone where to put a given network
 hugepages: hugepages flag
 hugepages_1gb: 1gb hugepages flag
 hugepages_2mb: 2mb hugepages flag
