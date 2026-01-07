@@ -890,8 +890,12 @@ class Kopenstack(object):
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
         if nat:
-            externalnets = [n for n in self.neutron.list_networks()['networks'] if n['router:external']]
-            externalnet_id = externalnets[0]['id'] if externalnets else None
+            if self.external_network is not None:
+                external_networks = self.neutron.list_networks(name=self.external_network)['networks']
+                externalnet_id = external_networks[0]['id']
+            else:
+                externalnets = [n for n in self.neutron.list_networks()['networks'] if n['router:external']]
+                externalnet_id = externalnets[0]['id'] if externalnets else None
             routers = [router for router in self.neutron.list_routers()['routers'] if router['name'] == 'kvirt']
             router_id = routers[0]['id'] if routers else None
         try:
