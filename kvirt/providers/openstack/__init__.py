@@ -217,8 +217,18 @@ class Kopenstack(object):
                                        security_groups=securitygroups)
         tenant_id = instance.tenant_id
         if need_floating:
-            floating_ips = [f['id'] for f in neutron.list_floatingips()['floatingips']
-                            if f['port_id'] is None]
+            available_floating_ips = [f for f in neutron.list_floatingips()['floatingips'] if f['port_id'] is None ]
+            if self.external_network is not None:
+                networks = neutron.list_networks(name=self.external_network)['networks']
+                if networks:
+                    network_id = networks[0]['id']
+                    if available_floating_ips:
+                        floating_ips = [f['id'] for f in available_floating_ips if f['floating_network_id'] == network_id]
+                else:
+                    error("Network " + self.external_network + "seems not to be a valid external network")
+            else:
+                if available_floating_ips:
+                    floating_ips = [f['id'] for f in available_floating_ips]
             if not floating_ips:
                 network_id = None
                 if self.external_network is not None:
