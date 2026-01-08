@@ -217,8 +217,18 @@ class Kopenstack(object):
                                        security_groups=securitygroups)
         tenant_id = instance.tenant_id
         if need_floating:
-            floating_ips = [f['id'] for f in neutron.list_floatingips()['floatingips']
-                            if f['port_id'] is None]
+            floating_ips = []
+            available_floating_ips = [f for f in neutron.list_floatingips()['floatingips'] if f['port_id'] is None]
+            if self.external_network is not None:
+                networks = neutron.list_networks(name=self.external_network)['networks']
+                if networks:
+                    network_id = networks[0]['id']
+                    if available_floating_ips:
+                        floating_ips = [f['id'] for f in available_floating_ips if f['floating_network_id'] == network_id]
+                else:
+                    error(f"Network {self.external_network} doesn't seem  to be a valid external network")
+            elif available_floating_ips:
+                floating_ips = [f['id'] for f in available_floating_ips]
             if not floating_ips:
                 network_id = None
                 if self.external_network is not None:
@@ -880,8 +890,12 @@ class Kopenstack(object):
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
         if nat:
-            externalnets = [n for n in self.neutron.list_networks()['networks'] if n['router:external']]
-            externalnet_id = externalnets[0]['id'] if externalnets else None
+            if self.external_network is not None:
+                external_networks = self.neutron.list_networks(name=self.external_network)['networks']
+                externalnet_id = external_networks[0]['id']
+            else:
+                externalnets = [n for n in self.neutron.list_networks()['networks'] if n['router:external']]
+                externalnet_id = externalnets[0]['id'] if externalnets else None
             routers = [router for router in self.neutron.list_routers()['routers'] if router['name'] == 'kvirt']
             router_id = routers[0]['id'] if routers else None
         try:
