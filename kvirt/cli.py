@@ -1764,7 +1764,11 @@ def create_kube(args):
         overrides = interactive_kube(args.type)
     disks = overrides.get('disks', [])
     if disks:
-        overrides['disk_size'] = disks[0]['size'] if isinstance(disks[0], dict) else disks[0]
+        disk_size = disks[0]['size'] if isinstance(disks[0], dict) else disks[0]
+        if not isinstance(disk_size, int):
+            error(f"Wrong disk size {disk_size}")
+            sys.exit(1)
+        overrides['disk_size'] = disk_size
         if len(disks) > 1:
             overrides['extra_disks'] = disks[1:]
     nets = overrides.get('nets', [])
