@@ -14,7 +14,7 @@ chown root:root /root/kubeconfig
 export KUBECONFIG=/root/kubeconfig
 echo "export KUBECONFIG=/root/kubeconfig" >> /root/.bashrc
 
-{% if workers == 0 %}
+{% if ctlplane_schedulable or workers == 0 %}
 # untaint ctlplane nodes when there are no workers
 kubectl taint nodes --all node-role.kubernetes.io/master-
 kubectl taint nodes --all node-role.kubernetes.io/control-plane-

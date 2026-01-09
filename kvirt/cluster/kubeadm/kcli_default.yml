@@ -20,6 +20,7 @@ version:
 pool: 
 cluster: mykube
 domain: karmalabs.corp
+ctlplane_schedulable: false
 engine: containerd
 engine_version:
 numcpus: 4

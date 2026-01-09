@@ -659,6 +659,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     ctlplanes = data['ctlplanes']
     if ctlplanes <= 0:
         return {'result': 'failure', 'reason': f"Invalid number of ctlplanes {ctlplanes}"}
+    ctlplane_schedulable = data['ctlplane_schedulable']
     workers = data['workers']
     if workers < 0:
         return {'result': 'failure', 'reason': f"Invalid number of workers {workers}"}
@@ -1236,7 +1237,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                                                        'mtu': mtu, 'mode': ipsec_mode})
         with open(f"{clusterdir}/openshift/99-ovn.yaml", 'w') as f:
             f.write(ovn_data)
-    if workers == 0 or not mdns or kubevirt_api_service:
+    if ctlplane_schedulable or workers == 0 or not mdns or kubevirt_api_service:
         copy2(f'{plandir}/cluster-scheduler-02-config.yml', f"{clusterdir}/manifests")
     if 'sslip' in domain:
         ingress_sslip_data = config.process_inputfile(cluster, f"{plandir}/cluster-ingress-02-config.yml",
