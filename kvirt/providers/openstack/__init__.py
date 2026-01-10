@@ -548,6 +548,8 @@ class Kopenstack(object):
                 volume = cinder.volumes.get(disk['id'])
             except cinderclient.exceptions.NotFound:
                 continue
+            if volume.status == "deleting":
+                continue
             for attachment in volume.attachments:
                 if attachment['server_id'] == vm.id:
                     cinder.volumes.detach(volume, attachment['attachment_id'])
