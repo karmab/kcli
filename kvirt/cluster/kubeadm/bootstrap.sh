@@ -3,6 +3,9 @@
 CLUSTER={{ cluster }}
 DOMAIN={{ domain }}
 POD_CIDR={{ cluster_network_ipv4 }}
+{% if dualstack|default(False) %}
+POD_CIDR_IPV6={{ cluster_network_ipv6 }}
+{% endif %}
 
 echo $(hostname -I) api.$CLUSTER.$DOMAIN >> /etc/hosts
 
@@ -24,7 +27,15 @@ kubectl taint nodes --all node-role.kubernetes.io/control-plane-
 # install Container Network Interface (CNI)
 {% if sdn == 'flannel' %}
 FLANNEL_VERSION={{ 'flannel-io/flannel'|github_version(flannel_version) }}
+{% if dualstack|default(False) %}
+curl -Ls https://raw.githubusercontent.com/flannel-io/flannel/$FLANNEL_VERSION/Documentation/kube-flannel.yml > /tmp/kube-flannel.yml
+# Configure flannel for dual stack
+sed -i 's@"Network": "10.244.0.0/16"@"Network": "'"$POD_CIDR"'", "IPv6Network": "'"$POD_CIDR_IPV6"'", "EnableIPv4": true, "EnableIPv6": true@' /tmp/kube-flannel.yml
+kubectl apply -f /tmp/kube-flannel.yml
+rm -f /tmp/kube-flannel.yml
+{% else %}
 curl -Ls https://raw.githubusercontent.com/flannel-io/flannel/$FLANNEL_VERSION/Documentation/kube-flannel.yml | sed "s@10.244.0.0/16@$POD_CIDR@" | kubectl apply -f -
+{% endif %}
 {% elif sdn == 'weavenet' %}
 kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=`kubectl version | base64 | tr -d '\n'`"
 {% elif sdn == 'calico' %}

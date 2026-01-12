@@ -70,8 +70,11 @@ cloud_dns: false
 registry: false
 registry_size: 20
 storedparameters: true
+dualstack: false
 cluster_network_ipv4: 10.244.0.0/16
+cluster_network_ipv6: fd01::/48
 service_network_ipv4: 10.96.0.0/12
+service_network_ipv6: fd02::/112
 docker_user:
 docker_password:
 disconnected: false
