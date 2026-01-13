@@ -945,16 +945,7 @@ def ssh(name, ip='', user=None, local=None, remote=None, tunnel=False, tunnelhos
             sshcommand = f'{sshcommand} "{cmd}"'
         if tunnelhost is not None and tunnelhost not in ['localhost', '127.0.0.1'] and tunnel and\
                 tunneluser is not None:
-            if insecure:
-                tunnelcommand = "-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o LogLevel=ERROR "
-            else:
-                tunnelcommand = ""
-            tunnelcommand += f"-qp {tunnelport} -W %h:%p {tunneluser}@{tunnelhost}"
-            if identityfile is not None:
-                tunnelcommand = f"-i {identityfile} {tunnelcommand}"
-            sshcommand = f"-o ProxyCommand='ssh {tunnelcommand}' {sshcommand}"
-            if ':' in ip:
-                sshcommand = sshcommand.replace(ip, f'[{ip}]')
+            sshcommand = f"-J {tunneluser}@{tunnelhost}:{tunnelport} {sshcommand}"
         if local is not None:
             sshcommand = f"-L {local} {sshcommand}"
         if remote is not None:
@@ -981,8 +972,7 @@ def scp(name, ip='', user=None, source=None, destination=None, recursive=None, t
         arguments = ''
         if tunnelhost is not None and tunnelhost not in ['localhost', '127.0.0.1'] and\
                 tunnel and tunneluser is not None:
-            h = "[%h]" if ':' in ip else "%h"
-            arguments += f"-o ProxyCommand='ssh -qp {tunnelport} -W {h}:%p {tunneluser}@{tunnelhost}'"
+            arguments += f"-J {tunneluser}@{tunnelhost}:{tunnelport}"
         if insecure:
             arguments += " -o LogLevel=quiet -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
         scpcommand = 'scp -q'
