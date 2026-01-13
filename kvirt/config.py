@@ -320,7 +320,6 @@ class Kconfig(Kbaseconfig):
                         isofolder = isofolder[1:]
                     isofolder = f'[{isopool}]/{isofolder}'
                 filtervms = options.get('filtervms', VSPHERE['filtervms'])
-                filtervms = options.get('filteruser', VSPHERE['filteruser'])
                 filteruser = options.get('filteruser', VSPHERE['filteruser'])
                 filtertag = options.get('filtertag')
                 category = options.get('category', VSPHERE['category'])
