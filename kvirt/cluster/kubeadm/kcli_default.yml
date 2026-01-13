@@ -3,7 +3,7 @@ info: |
     when using more than one ctlplane, a vip is used with keepalived.
     default image is centos9stream, but there's also support for ubuntu based ones and fedora.
     version can be let blank to get latest, or specified as x.yy or x.yy.z .
-    sdn can be choosen between flannel, weavenet, calico, canal, romana or cilium.
+    sdn can be choosen between flannel, calico or cilium.
     nfs can be set to deploy an initial set of pvcs on the first ctlplane node.
     You can deploy extra apps with the apps array and for each of the supported apps, indicate with the variable
     ${app}_version which version to target.
@@ -94,3 +94,8 @@ kube_proxy: true
 ignore_hosts: false
 runtime_config: []
 postscripts: []
+cluster_network_ipv6: "fd01::/48"
+service_network_ipv6: "fd02::/112"
+dualstack: false
+cluster_networks: []
+service_networks: []

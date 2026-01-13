@@ -220,6 +220,7 @@ def create(config, plandir, cluster, overrides):
         return {'result': 'failure', 'reason': msg}
     if which('kubectl') is None:
         get_kubectl()
+        pprint("Move downloaded kubectl somewhere in your PATH if you want to reuse it")
     if not os.path.exists(clusterdir):
         os.makedirs(clusterdir)
         os.mkdir(f"{clusterdir}/auth")
@@ -227,6 +228,7 @@ def create(config, plandir, cluster, overrides):
     disconnected_url = data['disconnected_url']
     disconnected_reuse = data['disconnected_reuse']
     disconnected_vm = data['disconnected_vm'] or (disconnected_url is None and disconnected)
+    data['ipv6'] = api_ip is not None and ':' in api_ip
     if provider not in cloud_providers and disconnected_vm:
         disconnected_vm = f"{data['disconnected_reuse_name'] or cluster}-registry"
         pprint(f"Deploying disconnected vm {disconnected_vm}")

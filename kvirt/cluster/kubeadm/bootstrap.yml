@@ -57,5 +57,6 @@
    origin: 90-flannel.rules
 {% endif %}
  - registry.yml
+ - sdn.sh
  cmds:
  - bash /root/deploy.sh

@@ -2,12 +2,23 @@ VERSION={{ version or "$(curl -L -s https://dl.k8s.io/release/stable.txt)" }}
 # Ensure the version is in the format v<major>.<minor> regardless of the source
 VERSION=$(echo "v${VERSION#v}" | cut -d. -f1,2)
 
+{% if ipv6 %}
+rm -rf /etc/yum.repos.d/*.repo
+BASEURL=http://{{ disconnected_url.split(':')[0] }}:8080
+GPGCHECK=0
+sed -i "/cri-o.repo/a\echo rm -f /etc/yum.repos.d/cri-o.repo" /root/crio-d.sh
+sed -i "/add-repo/d" /root/containerd.sh
+{% else %}
+BASEURL=https://pkgs.k8s.io/core:/stable:/$VERSION/rpm/
+GPGCHECK=1
+{% endif %}
+
 echo """[kubernetes]
 name=Kubernetes
-baseurl=https://pkgs.k8s.io/core:/stable:/$VERSION/rpm/
+baseurl=$BASEURL
 enabled=1
-gpgcheck=1
-gpgkey=https://pkgs.k8s.io/core:/stable:/$VERSION/rpm/repodata/repomd.xml.key""" >/etc/yum.repos.d/kubernetes.repo
+gpgcheck=$GPGCHECK
+gpgkey=https://pkgs.k8s.io/core:/stable:/$VERSION/rpm/repodata/repomd.xml.key""" > /etc/yum.repos.d/kubernetes.repo
 echo net.bridge.bridge-nf-call-iptables=1 >> /etc/sysctl.d/99-sysctl.conf
 sysctl -p
 setenforce 0
@@ -27,6 +38,8 @@ cat <<EOF | tee /etc/sysctl.d/99-kubernetes-cri.conf
 net.bridge.bridge-nf-call-iptables  = 1
 net.ipv4.ip_forward                 = 1
 net.bridge.bridge-nf-call-ip6tables = 1
+net.ipv6.conf.all.forwarding        = 1
+net.ipv6.conf.default.forwarding    = 1
 EOF
 sysctl --system
 
