@@ -53,6 +53,8 @@ codespell kvirt/ -L "aks"
 .github/linting.sh
 ```
 
+**Note:** The linting script excludes `kvirt/bottle.py` (vendored web framework) from checks.
+
 ## Running Tests
 
 ### Prerequisites
@@ -217,6 +219,8 @@ Project uses `.flake8`:
 max-line-length = 120
 ignore = E722,E402,E741,W504,E721,E501
 ```
+
+**Note:** Flake8 config also ignores `E501` (line too long) which is stricter than the CI linting script. The CI script uses pycodestyle directly without E501 ignore.
 
 ## Writing New Tests
 
