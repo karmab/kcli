@@ -117,9 +117,47 @@ myvm:
 ```
 
 ### Custom Filters
-kcli provides filters in `kvirt/jinjafilters/`:
-- Standard Jinja2 filters work
-- Check `kvirt/jinjafilters/__init__.py` for custom filters
+kcli provides custom Jinja2 filters in `kvirt/jinjafilters/jinjafilters.py`:
+
+**Path/File Filters:**
+- `basename` - Get filename from path
+- `dirname` - Get directory from path
+- `diskpath` - Convert to /dev/ path if needed
+- `exists` - Check if file/path exists
+- `pwd_path` - Handle workdir paths in containers
+- `real_path` - Get real/absolute path
+- `read_file` - Read file contents
+
+**String/Data Filters:**
+- `none` - Return empty string if None
+- `type` - Return type name (string, int, dict, list)
+- `base64` - Base64 encode value
+- `certificate` - Wrap in BEGIN/END CERTIFICATE if needed
+- `count` - Count occurrences of character
+
+**Kubernetes/Cluster Filters:**
+- `kubenodes` - Generate node names for cluster
+- `defaultnodes` - Generate default node list
+- `has_ctlplane` - Check if list has ctlplane/master entries
+
+**Version/Release Filters:**
+- `github_version` - Get latest version from GitHub releases
+- `min_ocp_version` - Compare OpenShift versions (minimum)
+- `max_ocp_version` - Compare OpenShift versions (maximum)
+
+**Network Filters:**
+- `local_ip` - Get local IP for network interface
+- `network_ip` - Get IP from network CIDR
+- `ipv6_wrap` - Wrap IPv6 addresses in brackets
+
+**Utility Filters:**
+- `kcli_info` - Get VM info via kcli command
+- `find_manifests` - Find YAML manifests in directory
+- `wait_crd` - Generate wait script for CRD creation
+- `wait_csv` - Generate wait script for CSV readiness
+- `filter_bgp_peers` - Filter BGP peer list
+
+Standard Jinja2 filters (default, join, upper, lower, etc.) also work
 
 ## Parameter Files
 

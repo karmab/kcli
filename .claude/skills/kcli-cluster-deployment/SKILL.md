@@ -13,7 +13,8 @@ description: Guides deployment and management of Kubernetes clusters with kcli. 
 | `okd` | Community OpenShift | Same as openshift |
 | `hypershift` | OpenShift Hosted Control Planes | `kvirt/cluster/hypershift/` |
 | `microshift` | Lightweight edge OpenShift | `kvirt/cluster/microshift/` |
-| `kubeadm` | Standard Kubernetes | `kvirt/cluster/kubeadm/` |
+| `generic` | Generic Kubernetes (alias: `kubernetes`) | `kvirt/cluster/kubernetes/` |
+| `kubeadm` | Standard Kubernetes via kubeadm | `kvirt/cluster/kubeadm/` |
 | `k3s` | Lightweight Kubernetes | `kvirt/cluster/k3s/` |
 | `rke2` | Rancher Kubernetes Engine 2 | `kvirt/cluster/rke2/` |
 | `aks` | Azure Kubernetes Service | `kvirt/cluster/aks/` |
@@ -118,6 +119,21 @@ domain: k3s.local
 image: ubuntu2204
 ```
 
+## RKE2 Deployment
+
+```bash
+kcli create kube rke2 -P ctlplanes=1 -P workers=2 myrke2
+```
+
+### Key Parameters
+```yaml
+ctlplanes: 1
+workers: 2
+version: latest                     # RKE2 version
+domain: rke2.local
+image: ubuntu2204
+```
+
 ## HyperShift (Hosted Control Planes)
 
 ```bash
@@ -133,6 +149,19 @@ pull_secret: ~/pull-secret.json
 management_cluster: mgmt            # Existing cluster name
 nodepool_replicas: 2                # Worker node count
 release_image: ...                  # Specific OCP release
+```
+
+## MicroShift Deployment
+
+```bash
+kcli create kube microshift -P pull_secret=~/pull-secret.json mymicroshift
+```
+
+### Key Parameters
+```yaml
+pull_secret: ~/pull-secret.json
+version: latest                     # MicroShift version
+image: rhel9                        # RHEL-based image required
 ```
 
 ## Cluster Directory Structure
