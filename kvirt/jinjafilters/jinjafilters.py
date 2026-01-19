@@ -219,12 +219,12 @@ def read_file(path):
         return f.read()
 
 
-def min_ocp_version(version1, version2):
-    return version1 if version1 < version2 else version2
-
-
 def max_ocp_version(version1, version2):
-    return version1 if version1 > version2 else version2
+    return max(version1, version2, key=lambda v: tuple(map(int, v.split("."))))
+
+
+def min_ocp_version(version1, version2):
+    return min(version1, version2, key=lambda v: tuple(map(int, v.split("."))))
 
 
 def filter_bgp_peers(peers, num):

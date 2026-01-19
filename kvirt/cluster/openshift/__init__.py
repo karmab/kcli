@@ -1118,6 +1118,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if disconnected_url is not None:
         if disconnected_update and disconnected_url != 'quay.io':
             data['release_tag'] = f'v4.{get_installer_minor(INSTALLER_VERSION)}'
+            data['openshift_version'] = INSTALLER_VERSION
             update_registry(config, plandir, cluster, data)
         key = f"{disconnected_user}:{disconnected_password}"
         key = str(b64encode(key.encode('utf-8')), 'utf-8')
