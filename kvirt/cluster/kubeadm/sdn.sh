@@ -27,7 +27,8 @@ kubectl create -f /root/tigera-custom-resources.yaml
 curl -LO https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz
 tar xzvfC cilium-linux-amd64.tar.gz /usr/local/bin
 rm -f cilium-linux-amd64.tar.gz
-CILIUM_VERSION='{{ "--version %s" % sdn_version if sdn_version != None else "" }}'
-CILIUM_REGISTRY='{{ "--helm-set=image.repository=%s/cilium/cilium --set image.useDigest=false --helm-set=envoy.image.repository=%s/cilium/cilium-envoy --helm-set=envoy.image.tag=latest --helm-set=envoy.image.useDigest=false --helm-set=operator.image.repository=%s/cilium/operator --helm-set=operator.image.useDigest=false" % (disconnected_url, disconnected_url, disconnected_url) if disconnected_url is defined else "" }}'
-cilium install $CILIUM_VERSION $CILIUM_REGISTRY
+CILIUM_VERSION={{ "--version %s" % sdn_version if sdn_version != None else "" }}
+CILIUM_REGISTRY={{ "--helm-set=image.repository=%s/cilium/cilium --helm-set image.useDigest=false --helm-set=envoy.image.repository=%s/cilium/cilium-envoy --helm-set=envoy.image.tag=latest --helm-set=envoy.image.useDigest=false --helm-set=operator.image.repository=%s/cilium/operator --helm-set=operator.image.useDigest=false" % (disconnected_url, disconnected_url, disconnected_url) if disconnected_url is defined else "" }}
+CILIUM_IPV6={{ "--helm-set=ipv6.enabled=true" if ipv6 or dualstack else "" }}
+cilium install $CILIUM_VERSION $CILIUM_REGISTRY $CILIUM_IPV6
 {% endif %}
