@@ -134,7 +134,8 @@ def update_registry(config, plandir, cluster, data):
     patch_oc_mirror(clusterdir)
 
 
-def create_ignition_files(config, plandir, cluster, domain, api_ip=None, bucket_url=None, ignition_version=None):
+def create_ignition_files(config, plandir, cluster, domain, api_ip=None, bucket_url=None, ignition_version=None,
+                          tna=False):
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     ignition_overrides = {'api_ip': api_ip, 'cluster': cluster, 'domain': domain, 'role': 'master'}
     ctlplane_ignition = config.process_inputfile(cluster, f"{plandir}/ignition.j2", overrides=ignition_overrides)
@@ -144,6 +145,12 @@ def create_ignition_files(config, plandir, cluster, domain, api_ip=None, bucket_
     worker_ignition = config.process_inputfile(cluster, f"{plandir}/ignition.j2", overrides=ignition_overrides)
     with open(f"{clusterdir}/worker.ign", 'w') as f:
         f.write(worker_ignition)
+    if tna:
+        ignition_overrides['role'] = 'arbiter'
+        arbiter_ignition = config.process_inputfile(cluster, f"{plandir}/ignition.j2", overrides=ignition_overrides)
+        with open(f"{clusterdir}/arbiter.ign", 'w') as f:
+            f.write(arbiter_ignition)
+        del ignition_overrides['role']
     if bucket_url is not None:
         if config.type == 'openstack':
             ignition_overrides['ca_file'] = config.k.ca_file
@@ -584,7 +591,8 @@ def scale(config, plandir, cluster, overrides):
             return {'result': 'failure', 'reason': "Missing domain..."}
         os.mkdir(clusterdir)
         ignition_version = overrides['ignition_version']
-        create_ignition_files(config, plandir, cluster, domain, api_ip=api_ip, ignition_version=ignition_version)
+        create_ignition_files(config, plandir, cluster, domain, api_ip=api_ip, ignition_version=ignition_version,
+                              tna=overrides.get('tna', False))
     if storedparameters and os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
         with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
             installparam = safe_load(install)
@@ -663,6 +671,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     workers = data['workers']
     if workers < 0:
         return {'result': 'failure', 'reason': f"Invalid number of workers {workers}"}
+    if data.get('tna', False) and ctlplanes != 2:
+        return {'result': 'failure', 'reason': "TNA topology requires exactly 2 control plane nodes"}
     if data['dual_api_ip'] is not None:
         warning("Forcing dualstack")
         data['dualstack'] = True
@@ -1607,7 +1617,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         ignition_version = json.load(f)['ignition']['version']
         installparam['ignition_version'] = ignition_version
     create_ignition_files(config, plandir, cluster, domain, api_ip=api_ip, bucket_url=bucket_url,
-                          ignition_version=ignition_version)
+                          ignition_version=ignition_version, tna=data.get('tna', False))
     backup_paramfile(config.client, installparam, clusterdir, cluster, plan, image, dnsconfig)
     if provider in virt_providers:
         if provider == 'vsphere':
