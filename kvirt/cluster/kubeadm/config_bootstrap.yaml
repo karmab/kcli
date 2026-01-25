@@ -65,22 +65,22 @@ proxy:
 apiServer:
   certSANs:
   - {{ api_fqdn }}
-{% if feature_gates %}
+{% if feature_gates or runtime_config %}
   extraArgs:
 {% if runtime_config %}
-  - name: "runtime-config"
-    value: "{{ runtime_config_string|join(',') }}"
+    runtime-config: "{{ runtime_config_string|join(',') }}"
 {% endif %}
-  - name: "feature-gates"
-    value: "{{ feature_gates_string|join(',') }}"
+{% if feature_gates %}
+    feature-gates: "{{ feature_gates_string|join(',') }}"
+{% endif %}
+{% endif %}
+{% if feature_gates %}
 controllerManager:
   extraArgs:
-  - name: "feature-gates"
-    value: "{{ feature_gates_string|join(',') }}"
+    feature-gates: "{{ feature_gates_string|join(',') }}"
 scheduler:
   extraArgs:
-  - name: "feature-gates"
-    value: "{{ feature_gates_string|join(',') }}"
+    feature-gates: "{{ feature_gates_string|join(',') }}"
 ---
 apiVersion: kubelet.config.k8s.io/v1beta1
 cgroupDriver: systemd

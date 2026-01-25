@@ -243,9 +243,9 @@ def create(config, plandir, cluster, overrides):
                      insecure=True, cmd=urlcmd, vmport=disconnected_vmport)
         disconnected_url = os.popen(urlcmd).read().strip()
         data['disconnected_url'] = disconnected_url
-    feature_gates = data['feature_gates']
-    if feature_gates:
-        data['feature_gates'] = [f"{feature_gate}=true" for feature_gate in feature_gates]
+    # Note: feature_gates is passed as-is to the template.
+    # The template handles formatting for both extraArgs (comma-separated key=true)
+    # and KubeletConfiguration featureGates (YAML map with key: true)
     result = config.plan(plan, inputfile=f'{plandir}/bootstrap.yml', overrides=data)
     if result['result'] != "success":
         return result
