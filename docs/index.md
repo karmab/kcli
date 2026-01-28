@@ -1792,21 +1792,26 @@ Here's the list of typical variables that can be used (you can list them with `k
 |ingress_ip             |None                              ||
 |ctlplanes              |1                                 |number of ctlplane|
 |workers                |0                                 |number of workers|
+|arbiters               |0                                 |number of arbiters (TNA topology, requires ctlplanes=2)|
 |network_type           |OVNKubernetes                     ||
 |pool                   |default                           ||
 |flavor                 |None                              ||
 |flavor_bootstrap       |None                              ||
 |flavor_ctlplane        |None                              ||
 |flavor_worker          |None                              ||
+|flavor_arbiter         |None                              ||
 |numcpus                |4                                 ||
 |bootstrap_numcpus      |None                              ||
 |ctlplane_numcpus       |None                              ||
 |worker_numcpus         |None                              ||
+|arbiter_numcpus        |2                                 ||
 |memory                 |8192                              ||
 |bootstrap_memory       |None                              ||
 |ctlplane_memory        |None                              ||
 |worker_memory          |None                              ||
+|arbiter_memory         |8192                              ||
 |disk_size              |30                                |disk size in Gb for final nodes|
+|arbiter_disk_size      |None                              ||
 |extra_disks            |[]                                ||
 |disconnected_url       |None                              ||
 |disconnected_user      |None                              ||
