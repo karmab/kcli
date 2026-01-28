@@ -1,4 +1,4 @@
-VERSION={{ version or "$(curl -L -s https://dl.k8s.io/release/stable.txt)" }}
+VERSION={{ version or "$(curl -sL https://cdn.dl.k8s.io/release/stable.txt)" }}
 # Ensure the version is in the format v<major>.<minor> regardless of the source
 VERSION=$(echo "v${VERSION#v}" | cut -d. -f1,2)
 
