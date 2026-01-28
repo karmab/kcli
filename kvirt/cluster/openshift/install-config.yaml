@@ -44,10 +44,10 @@ compute:
 controlPlane:
   name: master
   replicas: {{ 1 if sno or sno_vm else ctlplanes }}
-{% if tna %}
+{% if arbiters > 0 %}
 arbiter:
   name: arbiter
-  replicas: 1
+  replicas: {{ arbiters }}
 featureSet: TechPreviewNoUpgrade
 {% elif techpreview %}
 featureSet: TechPreviewNoUpgrade

@@ -26,6 +26,7 @@ api_ip:
 ingress_ip:
 ctlplanes: 3
 workers: 0
+arbiters: 0
 ctlplane_schedulable: false
 fips: false
 cluster: myopenshift
@@ -55,7 +56,6 @@ ctlplane_memory:
 worker_memory:
 arbiter_memory: 8192
 arbiter_disk_size:
-tna: false
 bgp: false
 bgp_peers: []
 bgp_extra_peers: []

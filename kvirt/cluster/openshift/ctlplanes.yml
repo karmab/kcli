@@ -102,9 +102,9 @@
  extra_files: {{ files }}
 {% endif %}
 {% endfor %}
-{% if tna %}
+{% for num in range(0, arbiters|int) %}
 
-{{ cluster }}-arbiter-0:
+{{ cluster }}-arbiter-{{ num }}:
  domain: {{ domain }}
  image: {{ image }}
  pool: {{ pool or config_pool }}
@@ -142,4 +142,4 @@
 {% if files|default([]) %}
  extra_files: {{ files }}
 {% endif %}
-{% endif %}
+{% endfor %}
