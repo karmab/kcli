@@ -14,9 +14,7 @@ metadata:
   labels:
     app: assisted-service
 data:
-{% if not assisted_converged_flow %}
-  ALLOW_CONVERGED_FLOW: "false"
-{% endif %}
+  ALLOW_CONVERGED_FLOW: "true"
   LOG_LEVEL: "debug"
 {% if assisted_disable_validations %}
   DISABLED_HOST_VALIDATIONS: belongs-to-majority-group,belongs-to-machine-cidr,ntp-synced,release-domain-name-resolved-correctly,dns-wildcard-not-configured

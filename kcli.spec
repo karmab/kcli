@@ -1,4 +1,3 @@
-#
 # spec file for kcli package
 #
 # Copyright (c) 2017 Karim Boumedhel

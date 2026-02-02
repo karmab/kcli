@@ -2,7 +2,6 @@ mce_hypershift: true
 mce_ha_config: true
 assisted: false
 assisted_disable_validations: false
-assisted_converged_flow: false
 assisted_download_nic: eth0
 assisted_pvc_size: 20
 disconnected_url:
