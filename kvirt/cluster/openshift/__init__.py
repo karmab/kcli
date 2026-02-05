@@ -1246,7 +1246,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         with open(f"{clusterdir}/manifests/cluster-ingress-02-config.yml", 'w') as f:
             f.write(ingress_sslip_data)
     cron_overrides = {'registry': disconnected_url or 'quay.io'}
-    cron_overrides['version'] = 'v1beta1' if get_installer_minor(INSTALLER_VERSION) < 8 else 'v1'
     autoapproverdata = config.process_inputfile(cluster, f"{plandir}/autoapprovercron.yml", overrides=cron_overrides)
     with open(f"{clusterdir}/autoapprovercron.yml", 'w') as f:
         f.write(autoapproverdata)
