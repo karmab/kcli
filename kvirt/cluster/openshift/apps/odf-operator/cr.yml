@@ -19,7 +19,6 @@ spec:
       cluster: openshift-storage/{{ odf_cluster_network }}
 {% endif %}
 {% endif %}
-  manageNodes: false
   monDataDirHostPath: /var/lib/rook
   storageDeviceSets:
   - count: {{ odf_devicesets }}
