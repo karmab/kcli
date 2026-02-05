@@ -5,7 +5,7 @@ info: |
 cluster: mymicroshift
 domain: karmalabs.corp
 version: stable
-tag: '4.20'
+tag: '4.21'
 image: rhel9
 network: default
 memory: 4096
