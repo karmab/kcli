@@ -179,7 +179,7 @@ class Kvirt(object):
             return False
 
     def get_capabilities(self, arch=None):
-        results = {'kvm': False, 'nestedfeature': None, 'machines': [], 'arch': arch}
+        results = {'kvm': False, 'hvf': False, 'nestedfeature': None, 'machines': [], 'arch': arch}
         capabilitiesxml = self.conn.getCapabilities()
         root = ET.fromstring(capabilitiesxml)
         cpuxml = ''
@@ -200,7 +200,8 @@ class Kvirt(object):
             for domain in list(guest.iter('domain')):
                 if domain.get('type') == 'kvm':
                     results['kvm'] = True
-                    break
+                elif domain.get('type') == 'hvf':
+                    results['hvf'] = True
             for machine in list(guest.iter('machine')):
                 results['machines'].append(machine.text)
         if 'vmx' in cpuxml:
@@ -270,7 +271,7 @@ class Kvirt(object):
         uefi_legacy = overrides.get('uefi_legacy', False) or (uefi and self._rhel_legacy(capabilities['machines']))
         iommu_model = 'smmuv3' if arch == 'aarch64' else 'intel'
         aarch64 = arch == 'aarch64'
-        aarch64_full = aarch64 and capabilities['kvm']
+        aarch64_full = aarch64 and (capabilities['kvm'] or capabilities['hvf'])
         as390x = arch == 's390x'
         if aarch64:
             if custom_emulator is not None:
@@ -946,13 +947,15 @@ class Kvirt(object):
         else:
             cpuxml = f"<cpu mode='custom' match='exact'><model fallback='allow'>{cpumodel}</model>"
         if virttype is None:
-            if not capabilities['kvm']:
+            if capabilities['kvm']:
+                virttype = 'kvm'
+            elif capabilities['hvf']:
+                virttype = 'hvf'
+            else:
                 warning("No acceleration available with this hypervisor")
                 virttype = 'qemu'
                 nested = False
-            else:
-                virttype = 'kvm'
-        elif virttype not in ['qemu', 'kvm', 'xen', 'lxc']:
+        elif virttype not in ['qemu', 'kvm', 'hvf', 'xen', 'lxc']:
             msg = f"Incorrect virttype {virttype}"
             return {'result': 'failure', 'reason': msg}
         nestedfeature = capabilities['nestedfeature']
