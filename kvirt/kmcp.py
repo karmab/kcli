@@ -31,6 +31,9 @@ def _parse_vms_list(_list, overrides={}):
         name = vm.get('name')
         status = vm.get('status')
         ip = vm.get('ip', '')
+        userport = vm.get('userport')
+        if not ip and userport is not None:
+            ip = f'127.0.0.1:{userport}'
         source = vm.get('image', '')
         plan = vm.get('plan', '')
         profile = vm.get('profile', '')
