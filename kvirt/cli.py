@@ -1642,8 +1642,8 @@ def create_vmdisk(args):
     thin = overrides.get('thin', not shareable)
     image = args.image
     interface = overrides.get('diskinterface') or args.interface
-    if interface not in ['virtio', 'ide', 'scsi']:
-        error("Incorrect disk interface. Choose between virtio, scsi or ide...")
+    if interface not in ['virtio', 'ide', 'scsi', 'sata']:
+        error("Incorrect disk interface. Choose between virtio, sata, scsi or ide...")
         sys.exit(1)
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
     k = config.k
