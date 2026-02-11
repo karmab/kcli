@@ -1,0 +1,168 @@
+manifest:
+  version: "0.1.3"
+  schema: https://a2as.org/cert/schema
+  subject:
+    name: karmab/kcli
+    source: https://github.com/karmab/kcli
+    branch: main
+    commit: "a14f2258"
+    scope: [extras/chatbot.py, kvirt/agent/agent/__init__.py]
+  issued:
+    by: A2AS.org
+    at: '2026-02-11T16:30:16Z'
+    url: https://a2as.org/certified/agents/karmab/kcli
+  signatures:
+    digest: sha256:cPXksFGTRU6_hXoCv_98hKZvsJnr1bH80lz6poklaus
+    key: ed25519:SkTLhxcJtWqN7YbN0xhawQkp5TJCiir28kiaRnC9ecM
+    sig: ed25519:aLlbnOgr11E44YL3HJ-NRzSWQLHc2zWGvX5zJBKPsdi_szbmK6l6paq8DPNas6xSP7gMxae7LhMf1fSduwqlDg
+
+agents:
+  root_agent:
+    type: instance
+    models: [gemini-2.5-flash]
+    tools: [tools]
+    mcp: [tools]
+    params:
+      name: kcli_agent
+      description: Manages VMs and Kubernetes clusters using kcli
+      instruction: [You are a helpful assistant that can manage virtual machines and kubernetes cluster on, any virtualization
+          and cloud provider using the provided tools for this purpose.]
+
+models:
+  gemini-2.5-flash:
+    type: literal
+    agents: [root_agent]
+    params:
+      alias: [openai/gemini-2.5-flash]
+
+tools:
+  tools:
+    type: mcp
+    agents: [root_agent]
+    params:
+      class: McpToolset
+      mcp_server: tools
+
+mcp:
+  tools:
+    type: process
+    agents: [root_agent]
+    params:
+      class: McpToolset
+      connection_type: StdioConnectionParams
+      command: python3
+      args: [MCP_PATH]
+      timeout: "120"
+
+imports:
+  Agent: google.adk.agents.llm_agent.Agent
+  AgentCard: a2a.types.AgentCard
+  AgentSkill: a2a.types.AgentSkill
+  ast: ast
+  asyncio: asyncio
+  ChatOpenAI: langchain_openai.ChatOpenAI
+  ClientSession: mcp.ClientSession
+  create_react_agent: langgraph.prebuilt.create_react_agent
+  LiteLlm: google.adk.models.lite_llm.LiteLlm
+  load_mcp_tools: langchain_mcp_adapters.tools.load_mcp_tools
+  McpToolset: google.adk.tools.mcp_tool.mcp_toolset.McpToolset
+  os: os
+  stdio_client: mcp.client.stdio.stdio_client
+  StdioConnectionParams: google.adk.tools.mcp_tool.mcp_session_manager.StdioConnectionParams
+  StdioServerParameters: mcp.StdioServerParameters
+  sys: sys
+  to_a2a: google.adk.a2a.utils.agent_to_a2a.to_a2a
+  uvicorn: uvicorn
+  warnings: warnings
+  which: shutil.which
+
+functions:
+  get_skills:
+    type: sync
+    module: kvirt.agent.agent
+  main:
+    type: sync
+    module: kvirt.agent.agent
+  main_chat:
+    type: async
+    module: extras.chatbot
+
+variables:
+  GOOGLE_API_KEY:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [kvirt.agent.agent]
+  IP:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [kvirt.agent.agent]
+  MODEL:
+    type: env
+    params:
+      caller: [os.getenv, os.environ]
+      path: [kvirt.agent.agent]
+  OLLAMA_API_BASE:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [kvirt.agent.agent]
+  OPENAI_API_BASE:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [kvirt.agent.agent]
+  OPENAI_API_KEY:
+    type: env
+    params:
+      caller: [os.environ]
+  PORT:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [kvirt.agent.agent]
+  VLLM_API_BASE:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [kvirt.agent.agent]
+
+files:
+  MCP_PATH:
+    type: variable
+    actions: [read]
+    params:
+      caller: [open]
+
+processes:
+  kmcp.py:
+    type: mcp
+    actions: [exec]
+    params:
+      caller: [StdioServerParameters]
+      shell: ["False"]
+  python3:
+    type: mcp
+    actions: [exec]
+    params:
+      caller: [StdioServerParameters]
+      shell: ["False"]
+
+networks:
+  "127.0.0.1":
+    type: api
+    actions: [GET]
+    urls: [/v1]
+    protocols: [http]
+    ports: ["4000"]
+    params:
+      links: [base_url]
+  agent_card:
+    type: api
+    actions: [GET]
+    protocols: [http]
+    ports: ["80"]
+    params:
+      caller: [AgentCard]
+      pattern: http://{IP}:{PORT}
