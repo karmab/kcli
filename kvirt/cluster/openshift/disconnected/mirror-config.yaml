@@ -18,8 +18,10 @@ mirror:
 {% else %}
     channels:
     - name: {{ disconnected_channel or ('candidate' if 'rc' in tag else 'stable') }}-{{ release }}
+    {% if openshift_version is defined or disconnected_extra_release is defined %}
       minVersion: {{ (disconnected_extra_release or openshift_version)|min_ocp_version(openshift_version) }}
       maxVersion: {{ (disconnected_extra_release or openshift_version)|max_ocp_version(openshift_version) }}
+    {% endif %}
 {% endif %}
     architectures:
     - amd64

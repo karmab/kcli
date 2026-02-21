@@ -1441,7 +1441,7 @@ class Kbaseconfig:
                 call(cmcmd, shell=True)
         return {'result': 'success'}
 
-    def deploy_ksushy_service(self, port=9000, user=None, password=None, bootonce=False,
+    def deploy_ksushy_service(self, host='::', port=9000, user=None, password=None, bootonce=False,
                               plan=None):
         root = os.getuid() == 0
         if root:
@@ -1453,11 +1453,12 @@ class Kbaseconfig:
         update = os.path.exists(service_file)
         home = os.environ.get('HOME', '/root')
         executable = which('ksushy')
+        host = f"Environment=KSUSHY_HOST={host}\n" if host != '::' else ''
         port = f"Environment=KSUSHY_PORT={port}\n" if port != 9000 else ''
         user = f"Environment=KSUSHY_USER={user}\n" if user is not None else ''
         password = f"Environment=KSUSHY_PASSWORD={password}\n" if password is not None else ''
         bootonce = "Environment=KSUSHY_BOOTONCE=true\n" if bootonce else ''
-        sushydata = kdefaults.KSUSHYSERVICE.format(home=home, port=port, user=user,
+        sushydata = kdefaults.KSUSHYSERVICE.format(home=home, host=host, port=port, user=user,
                                                    password=password, bootonce=bootonce, executable=executable)
         with open(service_file, "w") as f:
             f.write(sushydata)

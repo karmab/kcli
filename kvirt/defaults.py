@@ -232,7 +232,7 @@ StandardOutput=journal
 StandardError=journal
 Environment=HOME={home}
 Environment=PYTHONUNBUFFERED=true
-{port}{user}{password}{bootonce}
+{host}{port}{user}{password}{bootonce}
 [Install]
 WantedBy=multi-user.target"""
 

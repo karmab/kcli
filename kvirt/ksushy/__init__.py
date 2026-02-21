@@ -11,7 +11,7 @@ from datetime import datetime
 import functools
 from tempfile import NamedTemporaryFile
 from wsgiref.simple_server import make_server, WSGIServer
-from socket import AF_INET6
+from socket import AF_INET, AF_INET6
 from socketserver import ThreadingMixIn
 import ssl
 
@@ -44,9 +44,9 @@ class SSLAdapter(ServerAdapter):
         context.set_ciphers('EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH')
 
         class ThreadAdapter(ThreadingMixIn, WSGIServer):
-            address_family = AF_INET6
+            address_family = AF_INET6 if ':' in self.host else AF_INET
             pass
-        ssl_server = make_server('::', self.port, handler, server_class=ThreadAdapter, **self.options)
+        ssl_server = make_server(self.host, self.port, handler, server_class=ThreadAdapter, **self.options)
         ssl_server.socket = context.wrap_socket(ssl_server.socket, server_side=True)
         ssl_server.serve_forever()
 
@@ -330,11 +330,13 @@ class Ksushy():
             return {'client': client, 'name': name}
 
         self.app = app
+        self.host = os.environ.get('KSUSHY_HOST', '::')
         self.port = os.environ.get('KSUSHY_LISTEN_PORT', 9000)
         self.debug = 'KSUSHY_DEBUG' in os.environ
         self.bootonce = 'KSUSHY_BOOTONCE' in os.environ
+        self.address = 'KSUSHY_BOOTONCE' in os.environ
 
     def run(self):
-        data = {'host': '::', 'port': self.port, 'debug': self.debug}
+        data = {'host': self.host, 'port': self.port, 'debug': self.debug}
         data['server'] = SSLAdapter
         self.app.run(**data)
