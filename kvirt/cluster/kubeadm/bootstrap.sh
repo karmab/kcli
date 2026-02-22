@@ -5,6 +5,9 @@ DOMAIN={{ domain }}
 
 echo $(hostname -I) api.$CLUSTER.$DOMAIN >> /etc/hosts
 
+kubeadm config migrate --old-config /root/config.yaml --new-config /root/config.yaml.new
+cmp -s /root/config.yaml /root/config.yaml.new || cp /root/config.yaml.new /root/config.yaml
+rm -f /root/config.yaml.new
 kubeadm init --config=/root/config.yaml --upload-certs
 
 # config cluster credentials
