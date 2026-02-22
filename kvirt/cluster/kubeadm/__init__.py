@@ -189,7 +189,7 @@ def create(config, plandir, cluster, overrides):
             if version is None:
                 msg = f"Invalid version {original_version}"
                 return {'result': 'failure', 'reason': msg}
-    kube_version = version or urlopen('https://cdn.dl.k8s.io/release/stable.txt').read().decode()
+    kube_version = version or urlopen('https://dl.k8s.io/release/stable.txt').read().decode()
     if not kube_version.startswith('v'):
         kube_version = f'v{kube_version}'
     pprint(f"Using version {kube_version}")
