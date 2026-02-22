@@ -1,0 +1,40 @@
+{% for num in range(0, arbiters|int) %}
+{{ cluster }}-arbiter-{{ num }}:
+ domain: {{ domain }}
+ image: {{ image }}
+ pool: {{ pool or config_pool }}
+ enableroot: false
+ notify: false
+ flavor: {{ flavor_arbiter or flavor }}
+ keys: {{ keys }}
+ numcpus: {{ arbiter_numcpus | default(bootstrap_numcpus) }}
+ memory: {{ arbiter_memory | default(bootstrap_memory) }}
+ autostart: {{ autostart }}
+{% if kvm_forcestack %}
+ cmdline: {{ 'ip=dhcp6' if ':' in api_ip else 'ip=dhcp' }}
+{% endif %}
+{% if kubevirt_api_service %}
+ reservedns: true
+{% endif %}
+ nets: {{ [network] + extra_networks }}
+ disks: {{ [arbiter_disk_size | default(disk_size, true)] }}
+{% if coredns or ipv6 %}
+ files:
+{% if coredns %}
+ - path: /etc/NetworkManager/dispatcher.d/99-kcli-forcedns
+   origin: 99-kcli-forcedns
+   mode: 755
+ - path: /etc/kubernetes/manifests/coredns.yml
+   origin: staticpods/coredns.yml
+ - path: /etc/kubernetes/Corefile
+   origin: Corefile
+{% endif %}
+{% if ipv6 %}
+ - path: /etc/NetworkManager/conf.d/kcli-ipv6.conf
+   origin: kcli-ipv6.conf.j2
+{% endif %}
+{% endif %}
+{% if files|default([]) %}
+ extra_files: {{ files }}
+{% endif %}
+{% endfor %}

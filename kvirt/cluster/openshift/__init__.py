@@ -137,13 +137,18 @@ def update_registry(config, plandir, cluster, data):
 def create_ignition_files(config, plandir, cluster, domain, api_ip=None, bucket_url=None, ignition_version=None):
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
     ignition_overrides = {'api_ip': api_ip, 'cluster': cluster, 'domain': domain, 'role': 'master'}
-    ctlplane_ignition = config.process_inputfile(cluster, f"{plandir}/ignition.j2", overrides=ignition_overrides)
+    ctlplane_ignition = config.process_inputfile(cluster, f"{plandir}/ignition.j2",
+                                                 overrides={**ignition_overrides, **{'role': 'master'}})
     with open(f"{clusterdir}/ctlplane.ign", 'w') as f:
         f.write(ctlplane_ignition)
-    del ignition_overrides['role']
-    worker_ignition = config.process_inputfile(cluster, f"{plandir}/ignition.j2", overrides=ignition_overrides)
+    worker_ignition = config.process_inputfile(cluster, f"{plandir}/ignition.j2",
+                                               overrides={**ignition_overrides, **{'role': 'worker'}})
     with open(f"{clusterdir}/worker.ign", 'w') as f:
         f.write(worker_ignition)
+    arbiter_ignition = config.process_inputfile(cluster, f"{plandir}/ignition.j2",
+                                                overrides={**ignition_overrides, **{'role': 'arbiter'}})
+    with open(f"{clusterdir}/arbiter.ign", 'w') as f:
+        f.write(arbiter_ignition)
     if bucket_url is not None:
         if config.type == 'openstack':
             ignition_overrides['ca_file'] = config.k.ca_file
@@ -663,6 +668,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     workers = data['workers']
     if workers < 0:
         return {'result': 'failure', 'reason': f"Invalid number of workers {workers}"}
+    arbiters = data.get('arbiters', 0)
+    if arbiters > 0:
+        if ctlplanes != 2:
+            return {'result': 'failure', 'reason': "TNA topology requires exactly 2 control plane nodes"}
+        if provider in cloud_providers:
+            return {'result': 'failure', 'reason': "TNA topology isnt supported on cloud platforms"}
     if data['dual_api_ip'] is not None:
         warning("Forcing dualstack")
         data['dualstack'] = True
@@ -1630,6 +1641,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if baremetal_hosts:
             overrides['workers'] = overrides['workers'] - len(baremetal_hosts)
         result = config.plan(plan, inputfile=f'{plandir}/ctlplanes.yml', overrides=overrides, threaded=threaded)
+        if result['result'] != 'success':
+            return result
+        pprint("Deploying arbiters")
+        threaded = data['threaded'] or data['ctlplanes_threaded']
+        result = config.plan(plan, inputfile=f'{plandir}/arbiters.yml', overrides=overrides, threaded=threaded)
         if result['result'] != 'success':
             return result
         if dnsconfig is not None and keepalived:
