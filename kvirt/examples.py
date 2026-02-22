@@ -534,6 +534,9 @@ $ kcli scale cluster openshift -P workers=3 myclu
 # Scale ctlplanes
 $ kcli scale cluster openshift -P ctlplanes=3 myclu
 
+# Scale arbiters
+$ kcli scale cluster openshift -P arbiters=2 myclu
+
 # Scale both ctlplanes and workers
 $ kcli scale cluster openshift -P ctlplanes=3 -P workers=2 myclu
 

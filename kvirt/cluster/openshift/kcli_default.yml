@@ -159,6 +159,7 @@ baremetal_web_nic: default
 threaded: false
 ctlplanes_threaded: false
 workers_threaded: false
+arbiters_threaded: false
 tempkey: false
 kubeadmin_password:
 retries: 2

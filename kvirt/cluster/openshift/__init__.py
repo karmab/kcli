@@ -630,7 +630,7 @@ def scale(config, plandir, cluster, overrides):
         if result['result'] != 'success':
             return result
         overrides['workers'] = overrides.get('workers', 0) - len(new_baremetal_hosts)
-    for role in ['ctlplanes', 'workers']:
+    for role in ['ctlplanes', 'workers', 'arbiters']:
         overrides = data.copy()
         threaded = data.get('threaded', False) or data.get(f'{role}_threaded', False)
         if overrides.get(role, 0) <= 0:
@@ -669,11 +669,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     if workers < 0:
         return {'result': 'failure', 'reason': f"Invalid number of workers {workers}"}
     arbiters = data.get('arbiters', 0)
-    if arbiters > 0:
-        if ctlplanes != 2:
-            return {'result': 'failure', 'reason': "TNA topology requires exactly 2 control plane nodes"}
-        if provider in cloud_providers:
-            return {'result': 'failure', 'reason': "TNA topology isnt supported on cloud platforms"}
+    if arbiters > 0 and ctlplanes != 2:
+        ctlplanes = 2
+        data['ctlplanes'] = ctlplanes
+        warning("Forcing ctlplanes number to 2 since arbiters are used")
+    elif arbiters < 0:
+        return {'result': 'failure', 'reason': f"Invalid number of arbiters {arbiters}"}
     if data['dual_api_ip'] is not None:
         warning("Forcing dualstack")
         data['dualstack'] = True
@@ -1643,11 +1644,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         result = config.plan(plan, inputfile=f'{plandir}/ctlplanes.yml', overrides=overrides, threaded=threaded)
         if result['result'] != 'success':
             return result
-        pprint("Deploying arbiters")
-        threaded = data['threaded'] or data['ctlplanes_threaded']
-        result = config.plan(plan, inputfile=f'{plandir}/arbiters.yml', overrides=overrides, threaded=threaded)
-        if result['result'] != 'success':
-            return result
+        if arbiters > 0:
+            pprint("Deploying arbiters")
+            threaded = data['threaded'] or data['arbiters_threaded']
+            result = config.plan(plan, inputfile=f'{plandir}/arbiters.yml', overrides=overrides, threaded=threaded)
+            if result['result'] != 'success':
+                return result
         if dnsconfig is not None and keepalived:
             dns_overrides = {'api_ip': api_ip, 'ingress_ip': ingress_ip, 'cluster': cluster, 'domain': domain}
             result = dnsconfig.plan(plan, inputfile=f'{plandir}/cloud_dns.yml', overrides=dns_overrides)
@@ -1681,6 +1683,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_api.yml', overrides=overrides)
         if result['result'] != 'success':
             return result
+        if arbiters > 0:
+            pprint("Deploying arbiters")
+            threaded = data['threaded'] or data['arbiters_threaded']
+            result = config.plan(plan, inputfile=f'{plandir}/cloud_arbiters.yml', overrides=overrides, threaded=threaded)
+            if result['result'] != 'success':
+                return result
         if workers == 0:
             result = config.plan(plan, inputfile=f'{plandir}/cloud_lb_apps.yml', overrides=overrides)
             if result['result'] != 'success':

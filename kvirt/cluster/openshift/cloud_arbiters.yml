@@ -1,0 +1,34 @@
+{% if flavor_arbiter != None %}
+{% set flavor = flavor_arbiter %}
+{% endif %}
+
+{% for num in range(0, arbiters) %}
+
+{% if flavor_arbiter != None %}
+{% set flavor = flavor_arbiter %}
+{% endif %}
+
+{{ cluster }}-arbiter-{{ num }}:
+ domain: {{ domain if config_type != 'azure' else '' }}
+ image: {{ image }}
+ pool: {{ pool or config_pool }}
+{% if flavor != None %}
+ flavor: {{ flavor }}
+{% endif %}
+ enableroot: false
+ numcpus: {{ arbiter_numcpus | default(numcpus, numcpus) }}
+ memory: {{ arbiter_memory | default(memory, memory) }}
+ nets:
+ - name: {{ network }}
+ disks:
+ - size: {{ disk_size }}
+{% if config_type == 'ibm' %}
+ files:
+  - path: /etc/NetworkManager/dispatcher.d/99-kcli-forcedns
+    origin: 99-kcli-forcedns-ibm
+    mode: 755
+{% endif %}
+{% if cloud_tag != None %}
+ tags: [{{ cloud_tag }}]
+{% endif %}
+{% endfor %}
