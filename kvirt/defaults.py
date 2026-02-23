@@ -40,6 +40,8 @@ CENTOS = 'https://cloud.centos.org/centos'
 DEBIAN = 'https://cdimage.debian.org/cdimage'
 EULER = 'https://mirror.accum.se/mirror/openeuler.org/openEuler'
 FEDORA = 'http://mirror.uv.es/mirror/fedora/linux/releases'
+FEDORA_ARCHIVE = 'http://mirror.uv.es/mirror/fedora/linux/releases'
+FEDORA_ARCHIVE = 'https://archives.fedoraproject.org/pub/archive/fedora/linux/releases'
 GENTOO = 'https://gentoo.osuosl.org/experimental/amd64/openstack'
 RHCOS = 'https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos'
 ROCKY = 'https://dl.rockylinux.org/pub/rocky/'
@@ -59,8 +61,8 @@ IMAGES = {'almalinux8': f'{ALMA}/8/cloud/x86_64/images/AlmaLinux-8-GenericCloud-
           'debian13': f'{DEBIAN}/cloud/trixie/latest/debian-13-generic-amd64.qcow2',
           'fcos': 'https://builds.coreos.fedoraproject.org/streams/stable.json',
           'fedora39': f'{FEDORA}/39/Cloud/x86_64/images/Fedora-Cloud-Base-39-1.5.x86_64.qcow2',
-          'fedora40': f'{FEDORA}/40/Cloud/x86_64/images/Fedora-Cloud-Base-Generic.x86_64-40-1.14.qcow2',
-          'fedora41': f'{FEDORA}/41/Cloud/x86_64/images/Fedora-Cloud-Base-Generic-41-1.4.x86_64.qcow2',
+          'fedora40': f'{FEDORA_ARCHIVE}/40/Cloud/x86_64/images/Fedora-Cloud-Base-Generic.x86_64-40-1.14.qcow2',
+          'fedora41': f'{FEDORA_ARCHIVE}/41/Cloud/x86_64/images/Fedora-Cloud-Base-Generic-41-1.4.x86_64.qcow2',
           'fedora42': f'{FEDORA}/42/Cloud/x86_64/images/Fedora-Cloud-Base-Generic-42-1.1.x86_64.qcow2',
           'fedora43': f'{FEDORA}/43/Cloud/x86_64/images/Fedora-Cloud-Base-Generic-43-1.6.x86_64.qcow2',
           'fedoralatest': 'https://alt.fedoraproject.org/cloud',
