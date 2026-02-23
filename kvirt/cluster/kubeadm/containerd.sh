@@ -5,7 +5,7 @@ apt-get update
 apt-get install -y containerd || apt-get install -y containerd.io
 {% else %}
 TARGET={{ 'fedora' if 'fedora' in image|lower else 'centos' }}
-yum-config-manager --add-repo https://download.docker.com/linux/$TARGET/docker-ce.repo
+curl -L https://download.docker.com/linux/$TARGET/docker-ce.repo > /etc/yum.repos.d/docker-ce.repo
 dnf install -y yum-utils device-mapper-persistent-data lvm2 containerd.io
 {% endif %}
 
