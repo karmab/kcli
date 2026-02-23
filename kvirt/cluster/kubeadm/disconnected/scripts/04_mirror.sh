@@ -24,10 +24,10 @@ gpgcheck=1
 gpgkey=https://download.opensuse.org/repositories/isv:/cri-o:/$PROJECT_PATH/rpm/repodata/repomd.xml.key""" >/etc/yum.repos.d/cri-o.repo
 PACKAGES="cri-o conntrack"
 {% else %}
-yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+TARGET={{ 'fedora' if 'fedora' in image|lower else 'centos' }}
+curl -L https://download.docker.com/linux/$TARGET/docker-ce.repo > /etc/yum.repos.d/docker-ce.repo
 PACKAGES="device-mapper-persistent-data lvm2 containerd.io"
 {% endif %}
-# SYNC PACKAGES
 dnf -y install --setopt=keepcache=1 kubeadm $PACKAGES git kubectl kubelet iptables keepalived
 dnf download --destdir /var/www/html container-selinux selinux-policy selinux-policy-any iptables iptables-libs libnftnl
 mv /var/cache/dnf/*/packages/*.rpm /var/www/html
@@ -35,6 +35,8 @@ createrepo /var/www/html
 restorecon -Frvv /var/www/html
 sed -i "s/Listen 80/Listen 8080/" /etc/httpd/conf/httpd.conf
 systemctl enable --now httpd
+{% else %}
+dnf -y install kubeadm
 {% endif %}
 
 # KUBEADM
