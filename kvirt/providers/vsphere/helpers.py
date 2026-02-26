@@ -263,7 +263,7 @@ def createcdspec():
     return cdspec
 
 
-def createisospec(iso=None):
+def createisospec(iso=None, unit_number=0, controller_key=201, device_key=-1):
     cdspec = vim.vm.device.VirtualDeviceSpec()
     cdspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
     connect = vim.vm.device.VirtualDevice.ConnectInfo()
@@ -276,9 +276,9 @@ def createisospec(iso=None):
     if iso is not None:
         cdbacking.fileName = iso
     cd.backing = cdbacking
-    cd.controllerKey = 201
-    cd.unitNumber = 0
-    cd.key = -1
+    cd.controllerKey = controller_key
+    cd.unitNumber = unit_number
+    cd.key = device_key
     cdspec.device = cd
     return cdspec
 
