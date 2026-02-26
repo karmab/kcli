@@ -491,9 +491,19 @@ class Ksphere:
                 iso = matchingisos[0]
             else:
                 return {'result': 'failure', 'reason': f"Iso {iso} not found"}
+        extra_iso = overrides.get('extra_iso')
+        if extra_iso is not None:
+            matchingisos = [i for i in self._getisos() if i.endswith(extra_iso)]
+            if matchingisos:
+                extra_iso = matchingisos[0]
+            else:
+                return {'result': 'failure', 'reason': f"Extra iso {extra_iso} not found"}
         if need_cdrom:
             cdspec = createcdspec() if iso is None and self.esx else createisospec(iso)
             devconfspec.append(cdspec)
+            if extra_iso is not None:
+                # Second CDROM: other IDE controller (200), unit 0, unique device_key (-2) for same ReconfigSpec
+                devconfspec.append(createisospec(extra_iso, unit_number=0, controller_key=200, device_key=-2))
         serial = overrides.get('serial', self.serial)
         if serial:
             serialdevice = vim.vm.device.VirtualSerialPort()
@@ -909,7 +919,10 @@ class Ksphere:
             if isinstance(dev, vim.vm.device.VirtualCdrom)\
                and hasattr(dev.backing, 'fileName') and dev.backing.fileName is not None\
                and dev.backing.fileName.endswith('.iso'):
-                yamlinfo['iso'] = dev.backing.fileName
+                if 'iso' not in yamlinfo:
+                    yamlinfo['iso'] = dev.backing.fileName
+                else:
+                    yamlinfo['extra_iso'] = dev.backing.fileName
         if obj.snapshot is not None and obj.snapshot.currentSnapshot is not None:
             yamlinfo['snapshot'] = obj.snapshot.rootSnapshotList[0].name
         return yamlinfo

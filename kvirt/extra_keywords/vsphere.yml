@@ -1,4 +1,5 @@
 antipeers: Create anti affinity rules between members
+extra_iso: Extra ISO to plug as second CDROM (same semantics as KVM)
 distributed: Use dvs networks
 force_pool: Relocate vn from one pool to another
 serial: Inject a serial console
