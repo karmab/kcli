@@ -170,7 +170,7 @@ manifests: manifests
 okd: false
 autoscale: false
 calico_version:
-cilium_version:
+cilium_version: 1.15.1
 cloud_lb: true
 cloud_storage: true
 minimal_capability: False
