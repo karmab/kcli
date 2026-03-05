@@ -4,9 +4,6 @@
 {% if mdns %}
     mdns {{ cluster }}.{{ domain }} {{ ctlplanes if 'bootstrap' in name else '0' }} {{ cluster }}
 {% endif %}
-    forward . {{ coredns_nameserver or "NAMESERVER" }}
-    cache 30
-    reload
     hosts {{ cluster }}.{{ domain }} {
         {% if  sno %}
         {{ api_ip }} {{ cluster }}-sno {{ cluster }}-sno.{{ cluster }}.{{ domain }} api-int.{{ cluster }}.{{ domain }} api.{{ cluster }}.{{ domain }}
@@ -18,4 +15,7 @@
     template ANY ANY apps.{{ cluster }}.{{ domain }} {
        answer "{% raw %}{{ .Name }}{% endraw %} {{ 'AAAA' if ipv6 else 'A' }} {{ ingress_ip if ingress_ip != None else api_ip }}"
     }
+    forward . {{ coredns_nameserver or "NAMESERVER" }}
+    cache 30
+    reload
 }
