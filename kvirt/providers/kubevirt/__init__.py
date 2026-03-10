@@ -1829,7 +1829,9 @@ class Kubevirt():
         for entry in _get_all_resources(kubectl, 'storageprofile', debug=self.debug):
             if entry['metadata']['name'] == pool and 'claimPropertySets' in entry['status']:
                 for claimset in entry['status']['claimPropertySets']:
-                    data[claimset['volumeMode']] = claimset['accessModes']
+                    volume_mode = claimset['volumeMode']
+                    access_mode = claimset['accessModes'][0]
+                    data.setdefault(volume_mode, []).append(access_mode)
                 break
         return data
 
