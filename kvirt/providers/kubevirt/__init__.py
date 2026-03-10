@@ -213,8 +213,8 @@ class Kubevirt():
         vm = {'kind': 'VirtualMachine', 'spec': {'runStrategy': run_strategy, 'template':
                                                  {'metadata': {'labels': labels},
                                                   'spec': {'domain': {'resources':
-                                                                      {'requests': {'memory': f'{memory}M'},
-                                                                       'limits': {'memory': f'{memory}M'}},
+                                                                      {'requests': {'memory': f'{memory}Mi'},
+                                                                       'limits': {'memory': f'{memory}Mi'}},
                                                                       'cpu': {'cores': numcpus},
                                                                       'devices': {'disks': []}}, 'volumes': []}}},
               'apiVersion': f'kubevirt.io/{VERSION}', 'metadata': {'name': name, 'namespace': namespace,
