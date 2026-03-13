@@ -1,0 +1,17 @@
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfigPool
+metadata:
+  name: {{ role }}
+  labels:
+    "operator.machineconfiguration.openshift.io/required-for-upgrade": ""
+    "machineconfiguration.openshift.io/mco-built-in": ""
+    "pools.operator.machineconfiguration.openshift.io/{{ role }}": ""
+spec:
+  machineConfigSelector:
+    matchLabels:
+      "machineconfiguration.openshift.io/role": "{{ role }}"
+  nodeSelector:
+    matchLabels:
+      node-role.kubernetes.io/{{ role }}: ""
+  osImageStream:
+    name: rhel-10

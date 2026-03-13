@@ -772,6 +772,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     metal3 = data['metal3']
     autologin = data['autologin']
     dedicated_etcd = data['dedicated_etcd']
+    rhel10 = data['rhel10']
     if not data['coredns']:
         warning("You will need to provide DNS records for api and ingress on your own")
     keepalived = data['keepalived']
@@ -1587,6 +1588,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                                                   overrides=autoscale_overrides)
         with open(f"{clusterdir}/openshift/99-autoscale.yaml", 'w') as f:
             f.write(autoscale_data)
+    if rhel10:
+        for role in ['master', 'worker']:
+            mcpfile = config.process_inputfile(cluster, f"{plandir}/rhel10.yaml",
+                                               overrides={'role': role})
+            with open(f"{clusterdir}/openshift/{role}.machineconfigpool.yaml", 'w') as _f:
+                _f.write(mcpfile)
     run = call(f'openshift-install --dir={clusterdir} --log-level={log_level} create ignition-configs', shell=True)
     if run != 0:
         msg = "Hit issues when generating ignition-config files"

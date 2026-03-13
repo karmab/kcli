@@ -49,7 +49,7 @@ arbiter:
   name: arbiter
   replicas: {{ arbiters }}
 featureSet: TechPreviewNoUpgrade
-{% elif techpreview %}
+{% elif techpreview or rhel10 %}
 featureSet: TechPreviewNoUpgrade
 {% elif ctlplanes == 2 %}
   fencing:
