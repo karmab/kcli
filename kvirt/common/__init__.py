@@ -2566,7 +2566,7 @@ def get_new_vip(network, ipv6=False):
 
 
 def wait_for_nodes(number):
-    timeout = 480
+    timeout = 720
     counter = 0
     while True:
         if len(os.popen("kubectl get node -o name").readlines()) == number:
