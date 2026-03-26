@@ -120,6 +120,7 @@ cloud_tag:
 cloud_internal: false
 virtual_router_id:
 http_proxy:
+https_proxy:
 no_proxy:
 localhost_fix: false
 ctlplane_localhost_fix: false
