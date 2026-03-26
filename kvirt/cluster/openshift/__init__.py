@@ -807,7 +807,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         return {'result': 'failure', 'reason': f"Incorrect version {version}"}
     else:
         pprint(f"Using {version} version")
-        if version == 'nightly':
+        if version in ['ci', 'nightly']:
             os.environ['OPENSHIFT_INSTALL_EXPERIMENTAL_DISABLE_IMAGE_POLICY'] = 'true'
     cluster = data.get('cluster')
     image = data['image']
