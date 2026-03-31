@@ -1926,9 +1926,10 @@ arbiter_memory        8192
 disk_size             30                  disk size in Gb for final nodes
 arbiter_disk_size     None                
 extra_disks           []                  
-disconnected_url      None                
+disconnected_url      None                url for disconnected registry, in the form :math:`HOST:`\ PORT
 disconnected_user     None                
 disconnected_password None                
+disconnected_fqdn     None                optional fqdn for the disconnected vm
 imagecontentsources   []                  
 baremetal             False               Whether to also deploy the metal3 operator, for provisioning physical workers
 cloud_tag             None                
