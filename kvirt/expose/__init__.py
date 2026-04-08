@@ -25,7 +25,7 @@ class Kexposer():
             plan = search.group(1)
             try:
                 fileoverrides = get_overrides(paramfile=paramfile)
-            except:
+            except Exception:
                 continue
             if 'owner' in fileoverrides:
                 owners[plan] = fileoverrides['owner']
@@ -104,7 +104,7 @@ class Kexposer():
                 if pfdata is not None:
                     try:
                         new_parameters = yaml.safe_load(pfdata)
-                    except:
+                    except Exception:
                         new_parameters = {}
                     new_parameters.update(parameters)
                     parameters = new_parameters
@@ -213,7 +213,7 @@ class Kexposer():
                 if pfdata is not None:
                     try:
                         new_parameters = yaml.safe_load(pfdata)
-                    except:
+                    except Exception:
                         new_parameters = {}
                     new_parameters.update(parameters)
                     parameters = new_parameters
