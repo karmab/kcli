@@ -99,7 +99,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
     userdata, metadata, netdata = None, None, None
     default_gateway = gateway
     noname = overrides.get('noname', False)
-    legacy = image is not None and (is_7(image) or is_debian9(image))
+    legacy = image is not None and (is_7(image) or is_debian9(image) or 'rhel10' in image)
     prefix = 'eth'
     if image is not None and (is_ubuntu(image) or is_debian_new(image)):
         if machine == 'pc':
