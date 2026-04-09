@@ -12,9 +12,7 @@ LABEL name="karmab/kcli" \
 
 EXPOSE 9000
 
-ADD kubectl /usr/local/bin/kubectl
-RUN chmod 777 /usr/local/bin/kubectl
-
+RUN ARCH=$(uname -m) && KUBEARCH=$([ "$ARCH" = "x86_64" ] && echo "amd64" || echo "arm64") && curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/$KUBEARCH/kubectl" && chmod +x kubectl && mv kubectl /usr/local/bin/kubectl
 RUN mkdir /root/kcli
 ADD kvirt /root/kcli/kvirt
 COPY setup.py /root/kcli
