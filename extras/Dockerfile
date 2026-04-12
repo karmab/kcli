@@ -12,7 +12,6 @@ LABEL name="karmab/kcli" \
 
 EXPOSE 9000
 
-RUN ARCH=$(uname -m) && KUBEARCH=$([ "$ARCH" = "x86_64" ] && echo "amd64" || echo "arm64") && curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/$KUBEARCH/kubectl" && chmod +x kubectl && mv kubectl /usr/local/bin/kubectl
 RUN mkdir /root/kcli
 ADD kvirt /root/kcli/kvirt
 COPY setup.py /root/kcli
@@ -21,7 +20,7 @@ COPY MANIFEST.in /root/kcli
 ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
 RUN echo 'APT::Install-Recommends "0";' >> /etc/apt/apt.conf && echo 'APT::Install-Suggests "0";' >> /etc/apt/apt.conf && apt-get update && apt-get -y install gcc libvirt0 libvirt-dev genisoimage openssh-client libcurl4-openssl-dev curl libssl-dev libxml2-dev libffi-dev pkg-config xz-utils && pip3 install --no-cache /root/kcli[all] && apt-get -y remove gcc libvirt-dev libcurl4-openssl-dev libssl-dev libxml2-dev libffi-dev pkg-config && apt -y autoremove && apt-get clean all
 ADD extras/i_am_a_container /i_am_a_container
-
+RUN ARCH=$(uname -m) && KUBEARCH=$([ "$ARCH" = "x86_64" ] && echo "amd64" || echo "arm64") && curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/$KUBEARCH/kubectl" && chmod +x kubectl && mv kubectl /usr/local/bin/kubectl
 RUN echo eval \"\$\(register-python-argcomplete kcli\)\" >> /root/.bashrc
 
 ENTRYPOINT ["/usr/local/bin/kcli"]
