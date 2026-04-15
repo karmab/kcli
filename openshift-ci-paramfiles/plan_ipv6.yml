@@ -32,3 +32,4 @@ parameters:
   pull_secret: {{ pull_secret }}
   apps: {{ apps }}
   retries: 4
+  machine_cidr: {{ cidr }}
