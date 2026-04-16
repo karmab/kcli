@@ -13,8 +13,9 @@ fi
 
 if [ "$TAG" == "arm64" ] ; then
   sed -i 's/bookworm/bookworm-arm64/' extras/Dockerfile
+  PLATFORM="--platform=linux/arm64"
 fi
 
 podman login -u $QUAY_USERNAME -p $QUAY_PASSWORD quay.io
-podman build -t quay.io/karmab/kcli:$TAG -f extras/Dockerfile .
+podman build $PLATFORM -t quay.io/karmab/kcli:$TAG -f extras/Dockerfile .
 podman push quay.io/karmab/kcli:$TAG
