@@ -25,7 +25,7 @@ jobs:
        - name: Deploy network if needed
          run: kcli create network -c $NETWORK_CIDR $NETWORK || true
        - name: Deploy Openshift on ipv6
-         run: kcli create cluster openshift -P clusterprofile=$CLUSTERPROFILE -P network=$NETWORK -P pull_secret=$PULLSECRET $EXTRAPARAMS $CLUSTER --force
+         run: kcli create cluster openshift -P clusterprofile=$CLUSTERPROFILE -P network=$NETWORK -P machine_cidr=$NETWORK_CIDR -P pull_secret=$PULLSECRET $EXTRAPARAMS $CLUSTER --force
        - name: Clean everything
          if: always()
          run: kcli delete plan --yes $CLUSTER
