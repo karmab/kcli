@@ -3,13 +3,13 @@ VERSION={{ version or "$(curl -L -s https://dl.k8s.io/release/stable.txt)" }}
 VERSION=$(echo "v${VERSION#v}" | cut -d. -f1,2)
 
 {% if ubuntu|default(False) %}
-PROJECT_PATH={{ engine_version or 'stable:/$VERSION' }}
+PROJECT_PATH=stable:/{{ engine_version or '$VERSION' }}
 curl -fsSL https://download.opensuse.org/repositories/isv:/cri-o:/$PROJECT_PATH/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/cri-o-apt-keyring.gpg
 echo "deb [signed-by=/etc/apt/keyrings/cri-o-apt-keyring.gpg] https://download.opensuse.org/repositories/isv:/cri-o:/$PROJECT_PATH/deb/ /" > /etc/apt/sources.list.d/cri-o.list
 apt-get update
 apt-get -y install cri-o runc software-properties-common
 {% else %}
-PROJECT_PATH={{ engine_version or 'stable:/$VERSION' }}
+PROJECT_PATH=stable:/{{ engine_version or '$VERSION' }}
 echo """[cri-o]
 name=CRI-O
 baseurl=https://download.opensuse.org/repositories/isv:/cri-o:/$PROJECT_PATH/rpm

@@ -204,6 +204,7 @@ def create(config, plandir, cluster, overrides):
         engine_version = data['engine_version'] or kube_version
         if not engine_version.startswith('v'):
             engine_version = f'v{engine_version}'
+        data['engine_version'] = engine_version
         engine_url = f"https://download.opensuse.org/repositories/isv:/cri-o:/stable:/{engine_version}/rpm/repodata/repomd.xml"
         try:
             urlopen(engine_url)
