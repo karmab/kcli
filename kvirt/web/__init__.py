@@ -2,6 +2,7 @@
 
 from ast import literal_eval
 import functools
+import inspect
 from kvirt.bottle import Bottle, request, static_file, jinja2_view, response, redirect
 from kvirt.config import Kconfig
 from kvirt.common import print_info, get_free_port, get_parameters, delete_lastvm
@@ -420,7 +421,10 @@ class Kweb():
             data = request.json or request.forms
             snapshots = data is not None and 'snapshots' in data and bool(data['snapshots'])
             keep_disks = data is not None and 'keep_disks' in data and bool(data['keep_disks'])
-            result = k.delete(name, snapshots=snapshots, keep_disks=keep_disks)
+            delete_kwargs = {'snapshots': snapshots}
+            if 'keep_disks' in inspect.signature(k.delete).parameters:
+                delete_kwargs['keep_disks'] = keep_disks
+            result = k.delete(name, **delete_kwargs)
             delete_lastvm(name, config.client)
             response.status = 200
             return result
