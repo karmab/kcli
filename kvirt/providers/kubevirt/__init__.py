@@ -870,7 +870,10 @@ class Kubevirt():
         elif 'memory' in spectemplate['spec']['domain']:
             memory = spectemplate['spec']['domain']['memory']['guest']
         if memory is not None:
-            memory = int(memory.replace('Gi', '')) * 1024 if memory.endswith('Gi') else int(memory.replace('Mi', ''))
+            if memory.endswith('Gi'):
+                memory = int(memory.replace('Gi', '')) * 1024
+            else:
+                memory = int(memory.replace('Mi', '').replace('i', ''))
             yamlinfo['memory'] = memory
         if 'instancetype' in spec and spec['instancetype']['kind'] == 'virtualmachineclusterinstancetype':
             flavor = spec['instancetype']['name']
