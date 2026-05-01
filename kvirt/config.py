@@ -381,6 +381,9 @@ class Kconfig(Kbaseconfig):
                 from kvirt.providers.web import Kwebclient
                 k = Kwebclient(self.host, port, localkube=localkube, debug=debug)
                 self.type = 'web'
+            elif self.type == 'utm':
+                from kvirt.providers.utm import Kutm
+                k = Kutm(debug=debug)
             elif offline:
                 from kvirt.providers.fake import Kfake
                 k = Kfake()
@@ -2295,6 +2298,8 @@ class Kconfig(Kbaseconfig):
     def download_image(self, pool=None, image=None, url=None, cmds=[], size=None, arch='x86_64',
                        kvm_openstack=True, rhcos_commit=None, rhcos_installer=False, name=None):
         k = self.k
+        if self.type == 'utm':
+            arch = 'aarch64'
         if pool is None:
             pool = self.pool
             pprint(f"Using pool {pool}")
@@ -2323,7 +2328,7 @@ class Kconfig(Kbaseconfig):
                         url = common.get_installer_rhcos(_type=image_type, arch=arch)
                     else:
                         if arch != 'x86_64':
-                            url += f'-{arch}'
+                            url = url.replace('openshift-v4/', f'openshift-v4/{arch}/')
                         url = common.get_latest_rhcos(url, _type=image_type, arch=arch, qemu=not kvm_openstack)
                 if 'fcos' in image:
                     url = common.get_latest_fcos(url, _type=image_type)

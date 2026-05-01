@@ -14,6 +14,7 @@ This tool is meant to provide a unified user experience when interacting with th
 - oVirt
 - Openstack
 - Proxmox
+- UTM
 
 Beyond handling virtual machines, Kubernetes clusters can also be managed for the following types:
 
@@ -687,6 +688,18 @@ Using vm anti affinity rules
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Within a plan, you can set the keyword ``antipeers`` to a list of vms which should never land on the same ESX host. When the last vm from this list gets created, the corresponding anti affinity rule will be created (and Vsphere will relocate the other vms accordingly)
+
+UTM
+~~~
+
+This provider allows you to manage VMs in your MACOSX. It requires UTM to be installed and running
+
+::
+
+   myutm:
+    type: utm
+
+No extra dependencies are needed as instead AppleScript is used via osascript
 
 Web
 ~~~
