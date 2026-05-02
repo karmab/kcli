@@ -8,6 +8,10 @@ NC='\033[0m'
 
 shell=$(basename $SHELL)
 packagefound=false
+if [ -d /Users ] ; then
+  packagefound=true
+  curl https://dl.cloudsmith.io/public/karmab/kcli/raw/files/kcli.pkg > kcli.pkg
+  open kcli.jpg
 if [ "$(which dnf)" != "" ] ; then
   packagefound=true
   echo -e "${BLUE}Installing using copr package${NC}"
