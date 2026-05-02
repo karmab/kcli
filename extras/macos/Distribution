@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<installer-gui-script minSpecVersion="2">
+    <title>kcli</title>
+    <background file="background.png" alignment="bottomleft" scaling="proportional"/>
+    <welcome file="welcome.html"/>
+    <options customize="never" require-scripts="false"/>
+    <domains enable_localSystem="true"/>
+    <choices-outline>
+        <line choice="default">
+            <line choice="com.karmab.kcli"/>
+        </line>
+    </choices-outline>
+    <choice id="default"/>
+    <choice id="com.karmab.kcli" visible="false">
+        <pkg-ref id="com.karmab.kcli"/>
+    </choice>
+    <pkg-ref id="com.karmab.kcli" version="99.0" onConclusion="none">kcli-core.pkg</pkg-ref>
+</installer-gui-script>
