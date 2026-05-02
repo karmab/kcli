@@ -1290,20 +1290,24 @@ def get_installer_rhcos(_type='kvm', region=None, arch='x86_64'):
         return data['architectures'][arch]['artifacts'][key]['formats'][_format]['disk']['location']
 
 
-def get_installer_iso():
+def get_installer_iso(arch=None):
     os.environ["PATH"] += f":{os.getcwd()}"
     if which('openshift-install') is None:
         error("Couldnt find openshift-install in your path")
         sys.exit(0)
+    if arch is None:
+        arch = os.uname().machine
     INSTALLER_COREOS = os.popen('openshift-install coreos print-stream-json 2>/dev/null').read()
     data = json.loads(INSTALLER_COREOS)
-    return data['architectures']['x86_64']['artifacts']['metal']['formats']['iso']['disk']['location']
+    return data['architectures'][arch]['artifacts']['metal']['formats']['iso']['disk']['location']
 
 
-def get_installer_iso_sha():
+def get_installer_iso_sha(arch=None):
+    if arch is None:
+        arch = os.uname().machine
     INSTALLER_COREOS = os.popen('openshift-install coreos print-stream-json 2>/dev/null').read()
     data = json.loads(INSTALLER_COREOS)
-    return data['architectures']['x86_64']['artifacts']['metal']['formats']['iso']['disk']['sha256']
+    return data['architectures'][arch]['artifacts']['metal']['formats']['iso']['disk']['sha256']
 
 
 def get_latest_rhcos_metal(url):
@@ -1934,9 +1938,10 @@ def filter_compression_extension(name):
 
 def generate_rhcos_iso(k, cluster, pool, version='latest', installer=False, arch='x86_64', extra_args=None, url=None):
     if url is not None:
+        baseiso = os.path.basename(url)
         liveiso = url
     elif installer:
-        liveiso = get_installer_iso()
+        liveiso = get_installer_iso(arch=arch)
         baseiso = os.path.basename(liveiso)
     else:
         baseiso = f'rhcos-live.{arch}.iso'
@@ -1977,8 +1982,8 @@ def generate_rhcos_iso(k, cluster, pool, version='latest', installer=False, arch
         k.add_image(liveiso, pool)
     poolpath = k.get_pool_path(pool)
     os.environ["PATH"] += f":{os.getcwd()}"
-    if installer and (k.conn == 'fake' or k.host in ['localhost', '127.0.0.1']):
-        if not correct_sha(f"{poolpath}/{baseiso}", get_installer_iso_sha()):
+    if url is None and installer and (k.conn == 'fake' or k.host in ['localhost', '127.0.0.1']):
+        if not correct_sha(f"{poolpath}/{baseiso}", get_installer_iso_sha(arch=arch)):
             error(f"Corrupted iso {poolpath}/{baseiso}")
             sys.exit(1)
     pprint(f"Creating iso {name}")
