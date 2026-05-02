@@ -216,6 +216,8 @@ end tell'''
                vmuser=None, guestagent=True):
         if self.exists(name):
             return {'result': 'failure', 'reason': f"VM {name} already exists"}
+        uefi = overrides.get('uefi', True)
+        machine = overrides.get('machine', 'virt')
         net_parts = self._build_net_parts(nets)
         if image is not None:
             template = self._find_template(image)
@@ -232,6 +234,19 @@ end tell'''
                 _osascript(script)
             except Exception as e:
                 return {'result': 'failure', 'reason': f"Failed to create VM {name} from template {template}: {e}"}
+            if not vnc:
+                try:
+                    script = f'''tell application "UTM"
+set vm to virtual machine named "{name}"
+set config to configuration of vm
+set displays of config to {{}}
+update configuration of vm with config
+end tell'''
+                    _osascript(script)
+                except Exception:
+                    pass
+            self._patch_vm_plist(name, uefi=uefi, rng=rng, tpm=tpm, machine=machine,
+                                cpumodel=cpumodel, vnc=vnc)
             first_disk_size = self._disk_size(disks[0], disksize)
             existing_qcow2 = set(_find_vm_qcow2_files(name))
             if existing_qcow2 and first_disk_size:
@@ -262,8 +277,9 @@ end tell'''
                     warning(f"ISO {iso} not found at {iso_path}")
             drives_str = '{' + ', '.join(drives_parts) + '}'
             nets_str = '{' + ', '.join(net_parts) + '}'
+            displays_str = '{}' if not vnc else '{{hardware:"virtio-gpu-gl-pci"}}'
             script = f'''tell application "UTM"
-set vm to make new virtual machine with properties {{backend:qemu, configuration:{{name:"{name}", architecture:"aarch64", memory:{memory}, cpu cores:{numcpus}, drives:{drives_str}, network interfaces:{nets_str}, displays:{{{{hardware:"virtio-gpu-gl-pci"}}}}, hypervisor:true}}}}
+set vm to make new virtual machine with properties {{backend:qemu, configuration:{{name:"{name}", architecture:"aarch64", memory:{memory}, cpu cores:{numcpus}, drives:{drives_str}, network interfaces:{nets_str}, displays:{{{displays_str}}}, hypervisor:true}}}}
 end tell'''
             try:
                 if self.debug:
@@ -271,6 +287,8 @@ end tell'''
                 _osascript(script)
             except Exception as e:
                 return {'result': 'failure', 'reason': f"Failed to create VM {name}: {e}"}
+            self._patch_vm_plist(name, uefi=uefi, rng=rng, tpm=tpm, machine=machine,
+                                cpumodel=cpumodel, vnc=vnc)
         vm_metadata = {'plan': plan, 'profile': profile, 'image': image or '', 'user': common.getuser(),
                        'creationdate': common.datetime.now().strftime('%d-%m-%Y %H:%M'), 'domain': domain or '',
                        'tags': tags}
@@ -532,6 +550,20 @@ end tell'''
         yamlinfo['creationdate'] = metadata.get('creationdate', '')
         yamlinfo['domain'] = metadata.get('domain', '')
         yamlinfo['tags'] = metadata.get('tags', [])
+        try:
+            plist_path = os.path.join(UTM_DOCUMENTS_DIR, f"{name}.utm", "config.plist")
+            if os.path.exists(plist_path):
+                with open(plist_path, 'rb') as f:
+                    plist = plistlib.load(f)
+                qemu = plist.get('QEMU', {})
+                system = plist.get('System', {})
+                yamlinfo['uefi'] = qemu.get('UEFIBoot', False)
+                yamlinfo['tpm'] = qemu.get('TPMDevice', False)
+                yamlinfo['rng'] = qemu.get('RNGDevice', False)
+                yamlinfo['machine'] = system.get('Target', '')
+                yamlinfo['cpumodel'] = system.get('CPU', '')
+        except Exception:
+            pass
         if status == 'started':
             try:
                 ip = self.ip(name)
@@ -596,6 +628,14 @@ end tell'''
                         disk_index += 1
         except Exception:
             pass
+        if debug:
+            try:
+                plist_path = os.path.join(UTM_DOCUMENTS_DIR, f"{name}.utm", "config.plist")
+                with open(plist_path, 'rb') as f:
+                    config = plistlib.load(f)
+                yamlinfo['debug'] = plistlib.dumps(config, fmt=plistlib.FMT_XML).decode()
+            except Exception:
+                pass
         if fields:
             fields = fields.split(',') if isinstance(fields, str) else fields
         common.print_info(yamlinfo, output=output, fields=fields, values=values)
@@ -983,7 +1023,29 @@ end tell'''
             with open(plist_path, 'wb') as f:
                 plistlib.dump(config, f)
 
-    def _create_utm_bundle(self, vm_name, qcow2_path):
+    @staticmethod
+    def _patch_vm_plist(vm_name, uefi=True, rng=True, tpm=False, machine='virt',
+                        cpumodel='default', vnc=True):
+        plist_path = os.path.join(UTM_DOCUMENTS_DIR, f"{vm_name}.utm", "config.plist")
+        if not os.path.exists(plist_path):
+            return
+        with open(plist_path, 'rb') as f:
+            config = plistlib.load(f)
+        cpu = 'default' if cpumodel in ('host-model', 'host-passthrough') else cpumodel
+        config.setdefault('QEMU', {})
+        config['QEMU']['UEFIBoot'] = uefi
+        config['QEMU']['RNGDevice'] = rng
+        config['QEMU']['TPMDevice'] = tpm
+        config.setdefault('System', {})
+        config['System']['Target'] = machine
+        config['System']['CPU'] = cpu
+        if not vnc:
+            config['Display'] = []
+        with open(plist_path, 'wb') as f:
+            plistlib.dump(config, f)
+
+    def _create_utm_bundle(self, vm_name, qcow2_path, uefi=True, rng=True, tpm=False,
+                           machine='virt', cpumodel='default', vnc=True):
         utm_dir = os.path.join(UTM_IMAGES_DIR, f"{vm_name}.utm")
         data_dir = os.path.join(utm_dir, "Data")
         os.makedirs(data_dir, exist_ok=True)
@@ -998,12 +1060,15 @@ end tell'''
         else:
             with open(efi_vars, 'wb') as f:
                 f.write(b'\x00' * 329216)
+        cpu = 'default' if cpumodel in ('host-model', 'host-passthrough') else cpumodel
+        display = [] if not vnc else [{'DownscalingFilter': 'Linear', 'DynamicResolution': False,
+                                       'Hardware': 'virtio-gpu-pci', 'NativeResolution': False,
+                                       'UpscalingFilter': 'Nearest'}]
+        share_mode = 'None'
         config = {
             'Backend': 'QEMU',
             'ConfigurationVersion': 4,
-            'Display': [{'DownscalingFilter': 'Linear', 'DynamicResolution': False,
-                         'Hardware': 'virtio-gpu-pci', 'NativeResolution': False,
-                         'UpscalingFilter': 'Nearest'}],
+            'Display': display,
             'Drive': [
                 {'Identifier': str(uuid.uuid4()).upper(), 'ImageType': 'CD',
                  'Interface': 'USB', 'InterfaceVersion': 1, 'ReadOnly': True},
@@ -1017,15 +1082,15 @@ end tell'''
             'Network': [{'Hardware': 'virtio-net-pci', 'IsolateFromHost': False,
                          'MacAddress': common.gen_mac(), 'Mode': 'Shared', 'PortForward': []}],
             'QEMU': {'AdditionalArguments': ['-smbios', 'type=1,serial=ds=nocloud'], 'BalloonDevice': False, 'DebugLog': False,
-                     'Hypervisor': True, 'PS2Controller': False, 'RNGDevice': True,
-                     'RTCLocalTime': False, 'TPMDevice': False, 'TSO': False, 'UEFIBoot': True},
+                     'Hypervisor': True, 'PS2Controller': False, 'RNGDevice': rng,
+                     'RTCLocalTime': False, 'TPMDevice': tpm, 'TSO': False, 'UEFIBoot': uefi},
             'Serial': [{'Mode': 'Ptty', 'Target': 'Auto'}],
-            'Sharing': {'ClipboardSharing': False, 'DirectoryShareMode': 'None',
+            'Sharing': {'ClipboardSharing': False, 'DirectoryShareMode': share_mode,
                         'DirectoryShareReadOnly': False},
             'Sound': [{'Hardware': 'intel-hda'}],
-            'System': {'Architecture': 'aarch64', 'CPU': 'default', 'CPUCount': 0,
+            'System': {'Architecture': 'aarch64', 'CPU': cpu, 'CPUCount': 0,
                        'CPUFlagsAdd': [], 'CPUFlagsRemove': [], 'ForceMulticore': False,
-                       'JITCacheSize': 0, 'MemorySize': 4096, 'Target': 'virt'}
+                       'JITCacheSize': 0, 'MemorySize': 4096, 'Target': machine}
         }
         plist_path = os.path.join(utm_dir, "config.plist")
         with open(plist_path, 'wb') as f:
