@@ -12,7 +12,7 @@ if [ -d /Users ] ; then
   packagefound=true
   curl https://dl.cloudsmith.io/public/karmab/kcli/raw/files/kcli.pkg > kcli.pkg
   open kcli.jpg
-if [ "$(which dnf)" != "" ] ; then
+elif [ "$(which dnf)" != "" ] ; then
   packagefound=true
   echo -e "${BLUE}Installing using copr package${NC}"
   sudo dnf -y copr enable karmab/kcli
