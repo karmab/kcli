@@ -323,6 +323,27 @@ end tell'''
                         self._attach_iso(name, cloudinitiso)
                     except Exception as e:
                         warning(f"Could not attach cloud-init ISO to {name}: {e}")
+        if sharedfolders:
+            try:
+                script = f'''tell application "UTM"
+set vm to virtual machine named "{name}"
+set config to configuration of vm
+set directory share mode of config to virtfs
+update configuration of vm with config
+end tell'''
+                _osascript(script)
+            except Exception as e:
+                warning(f"Could not set directory share mode for {name}: {e}")
+            for folder in sharedfolders:
+                os.makedirs(folder, exist_ok=True)
+                try:
+                    script = f'''tell application "UTM"
+set vm to virtual machine named "{name}"
+update registry of vm with POSIX file "{folder}"
+end tell'''
+                    _osascript(script)
+                except Exception as e:
+                    warning(f"Could not set shared folder {folder} for {name}: {e}")
         if start:
             self.start(name)
         return {'result': 'success'}
