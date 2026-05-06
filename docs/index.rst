@@ -2617,6 +2617,19 @@ You can set the variable yamlinventory to True at default, host or profile level
 AI support
 ==========
 
+SKILLS
+------
+
+Different skills are available below skills directory
+
+- kcli
+- kcli-cluster-deployment
+- kcli-configuration
+- kcli-plan-authoring
+- kcli-provider-development
+- kcli-testing
+- kcli-vm-operations
+
 MCP
 ---
 
@@ -2624,18 +2637,7 @@ an mcp server is available to be used with chat apps such as ChatGpt, Claude Des
 
 It accepts a repeatble *-e* flag to enable additional tools, namely baremetal and cloud support
 
-For STDIO transport, Include the following configuration snippet In VSCode or Claude Desktop:
-
-.. code:: json
-
-   "mcpServers": {
-       "kcli": {
-         "command": "python3",
-         "args": ["$PATH_TO_YOUR_KCLI_INSTALL/kvirt/kmcp.py", "-e", "cloud"]
-           }
-       }
-
-For Streamable HTTP, first start the server in a terminal:
+First start the server in a terminal:
 
 ::
 

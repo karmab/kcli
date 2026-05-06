@@ -663,14 +663,13 @@ def main():
     parser = argparse.ArgumentParser(description="kclimcp")
     parser.add_argument('-e', '--enable', action='append', help='enable additional tools. Can be used multiple times',
                         choices=["baremetal", "cloud"], default=[])
-    parser.add_argument("--http", action='store_true')
     args = parser.parse_args()
     for tool in args.enable:
         if tool == 'cloud':
             asyncio.run(core.import_server(cloud))
         else:
             asyncio.run(core.import_server(baremetal))
-    params = {'transport': 'http', 'host': '0.0.0.0', 'port': args.port} if args.http else {'transport': 'stdio'}
+    params = {'transport': 'http', 'host': '0.0.0.0', 'port': args.port}
     core.run(**params)
 
 
