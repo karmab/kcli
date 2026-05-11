@@ -231,7 +231,7 @@ def has_internet():
 def offline_image(version='stable', tag=OPENSHIFT_TAG, pull_secret='openshift_pull.json'):
     tag = str(tag).split(':')[-1]
     for arch in ['x86_64', 'amd64', 'arm64', 'ppc64le', 's390x', 'x86_64']:
-        tag.replace(f'-{arch}', '')
+        tag = tag.replace(f'-{arch}', '')
     offline = 'xxx'
     if version in ['ci', 'nightly']:
         if version == "nightly" and str(tag).count('.') == 1:
