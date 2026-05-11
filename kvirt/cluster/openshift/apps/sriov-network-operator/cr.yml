@@ -10,15 +10,6 @@ spec:
   logLevel: 2
 ---
 {% if sriov_kvm %}
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: supported-nic-ids
-  namespace: openshift-sriov-network-operator
-data:
-  Intel_ixgbe_10G_X550: "8086 1563 1565"
-  Intel_ixgbe_82576: "8086 10c9 10ca"
----
 apiVersion: sriovnetwork.openshift.io/v1
 kind: SriovNetworkNodePolicy
 metadata:
