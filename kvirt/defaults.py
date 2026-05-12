@@ -33,7 +33,7 @@ TUNNELPORT = 22
 VMUSER = None
 VMPORT = None
 OPENSHIFT_TAG = '4.21'
-ALMA = 'https://repo.ifca.es/almalinux'
+ALMA = 'https://repo.almalinux.org/almalinux'
 BSD = 'https://object-storage.public.mtl1.vexxhost.net/swift/v1/1dbafeefbd4f4c80864414a441e72dd2'
 BSD += '/bsd-cloud-image.org/images/dragonflybsd'
 CENTOS = 'https://cloud.centos.org/centos'
@@ -49,6 +49,7 @@ SUSE = 'https://download.opensuse.org'
 UBUNTU = 'https://cloud-images.ubuntu.com/releases'
 IMAGES = {'almalinux8': f'{ALMA}/8/cloud/x86_64/images/AlmaLinux-8-GenericCloud-latest.x86_64.qcow2',
           'almalinux9': f'{ALMA}/9/cloud/x86_64/images/AlmaLinux-9-GenericCloud-latest.x86_64.qcow2',
+          'almalinux10': f'{ALMA}/10/cloud/x86_64/images/AlmaLinux-10-GenericCloud-latest.x86_64.qcow2',
           'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-image-bootstrap.qcow2',
           'centos7': f'{CENTOS}/7/images/CentOS-7-x86_64-GenericCloud.qcow2',
           'centos8stream': f'{CENTOS}/8-stream/x86_64/images/CentOS-Stream-GenericCloud-8-latest.x86_64.qcow2',
