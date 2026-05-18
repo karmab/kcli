@@ -139,10 +139,23 @@ class Khcloud():
                             disksize = disk.get('size', '10')
 
                         diskname = f"{name}-disk{index}"
-                        volumeresponse = self.conn.volumes.get_by_name(diskname)
-                        if volumeresponse is None:
-                            volumeresponse = self.conn.volumes.create(disksize, diskname, location=location,
-                                                                      labels={"kcli-managed": "volume"})
+                        existing_volume = self.conn.volumes.get_by_name(diskname)
+                        if existing_volume is not None:
+                            attached = (f"attached to server {existing_volume.server.name!r}"
+                                        if existing_volume.server is not None
+                                        else "detached (orphan)")
+                            reason = (
+                                f"hcloud volume {diskname!r} already exists and is {attached}. "
+                                f"This usually means a previous create for {name!r} failed and "
+                                f"left a volume behind. Refusing to silently reuse it. "
+                                f"Remove it (e.g. `kcli delete disk -n -y {diskname}` or "
+                                f"`hcloud volume delete {diskname}`) and retry."
+                            )
+                            return {'result': 'failure', 'reason': reason}
+                        volumeresponse = self.conn.volumes.create(
+                            disksize, diskname, location=location,
+                            labels={"kcli-managed": "volume"},
+                        )
                         volumeresponses.append(volumeresponse)
 
                     created_vm.action.wait_until_finished(300)
