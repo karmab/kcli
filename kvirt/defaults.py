@@ -81,6 +81,7 @@ IMAGES = {'almalinux8': f'{ALMA}/8/cloud/x86_64/images/AlmaLinux-8-GenericCloud-
           'openeuler2409': f'{EULER}-24.09/virtual_machine_img/x86_64/openEuler-24.09-x86_64.qcow2.xz',
           'opensuse155': f'{SUSE}/repositories/Cloud:/Images:/Leap_15.5/images/openSUSE-Leap-15.5.x86_64-NoCloud.qcow2',
           'opensuse156': f'{SUSE}/repositories/Cloud:/Images:/Leap_15.6/images/openSUSE-Leap-15.6.x86_64-NoCloud.qcow2',
+          'opensuse160': f'{SUSE}/distribution/leap/16.0/appliances/Leap-16.0-Minimal-VM.x86_64-Cloud.qcow2',
           'rhcos410': f'{RHCOS}/4.10',
           'rhcos411': f'{RHCOS}/4.11',
           'rhcos412': f'{RHCOS}/4.12',
@@ -109,7 +110,7 @@ IMAGES = {'almalinux8': f'{ALMA}/8/cloud/x86_64/images/AlmaLinux-8-GenericCloud-
           'ubuntu2404': f'{UBUNTU}/24.04/release/ubuntu-24.04-server-cloudimg-amd64.img',
           'ubuntu2410': f'{UBUNTU}/24.10/release/ubuntu-24.10-server-cloudimg-amd64.img',
           'ubuntu2504': f'{UBUNTU}/24.04/release/ubuntu-25.04-server-cloudimg-amd64.img',
-          'ubuntu2510': f'{UBUNTU}/24.10/release/ubuntu-25.10-server-cloudimg-amd64.img',
+          'ubuntu2510': f'{UBUNTU}/25.10/release/ubuntu-25.10-server-cloudimg-amd64.img',
           'ubuntu2604': f'{UBUNTU}/26.04/release/ubuntu-26.04-server-cloudimg-amd64.img'}
 
 IMAGESCOMMANDS = {'debian8': 'echo datasource_list: [NoCloud, ConfigDrive, Openstack, Ec2] > /etc/cloud/cloud.cfg.d/'
