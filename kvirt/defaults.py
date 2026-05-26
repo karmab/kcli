@@ -81,6 +81,7 @@ IMAGES = {'almalinux8': f'{ALMA}/8/cloud/x86_64/images/AlmaLinux-8-GenericCloud-
           'openeuler2409': f'{EULER}-24.09/virtual_machine_img/x86_64/openEuler-24.09-x86_64.qcow2.xz',
           'opensuse155': f'{SUSE}/repositories/Cloud:/Images:/Leap_15.5/images/openSUSE-Leap-15.5.x86_64-NoCloud.qcow2',
           'opensuse156': f'{SUSE}/repositories/Cloud:/Images:/Leap_15.6/images/openSUSE-Leap-15.6.x86_64-NoCloud.qcow2',
+          'opensuse160': f'{SUSE}/distribution/leap/16.0/appliances/Leap-16.0-Minimal-VM.x86_64-Cloud.qcow2',
           'rhcos410': f'{RHCOS}/4.10',
           'rhcos411': f'{RHCOS}/4.11',
           'rhcos412': f'{RHCOS}/4.12',
