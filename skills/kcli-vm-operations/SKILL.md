@@ -3,6 +3,8 @@ name: kcli-vm-operations
 description: Guides VM lifecycle operations with kcli. Use when creating, managing, or troubleshooting virtual machines across providers.
 ---
 
+> **Important**: Before creating a VM, always run `kcli create vm -h` to check the latest available flags and examples.
+
 # kcli VM Operations
 
 ## VM Lifecycle Commands
@@ -17,6 +19,21 @@ kcli create vm -i centos9stream -P memory=4096 -P numcpus=4 -P disks=[20,50] myv
 
 # From profile
 kcli create vm -p myprofile myvm
+
+# Create multiple VMs at once with -c (count)
+kcli create vm -c 3 myvm
+
+# Create 3 VMs to emulate baremetal
+kcli create vm -P start=false -P memory=20480 -P numcpus=16 -P disks=[200] -P uefi=true -P nets=[default] -c 3 myvm
+
+# Create a VM with a static IP
+kcli create vm -i centos9stream -P nets=['{"name":"default","ip":"192.168.122.250","netmask":"24","gateway":"192.168.122.1"}'] myvm
+
+# Create a VM with a DNS reservation
+kcli create vm -i centos9stream -P nets=['{"name":"default","reservedns":"true"}'] myvm
+
+# Create a VM with a DHCP reservation
+kcli create vm -i centos9stream -P nets=['{"name":"default","ip":"192.168.122.250","reserveip":"true"}'] myvm
 ```
 
 ### List VMs

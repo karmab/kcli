@@ -7,6 +7,19 @@ description: Comprehensive guide for kcli usage. Use when creating VMs, deployin
 
 kcli is a unified CLI for managing virtual infrastructure across multiple providers (Libvirt/KVM, AWS, GCP, Azure, vSphere, KubeVirt, OpenStack, oVirt, Proxmox, Hetzner, IBM Cloud).
 
+## Remote Host Optimization
+
+When the user asks to run a kcli command against a specific host that is **not** defined as a client in `~/.kcli/config.yml`, run the command directly on that host via SSH instead of trying to use `-C`:
+
+```bash
+# Host not in config — run via SSH
+ssh root@myhost "kcli create vm -i centos9stream myvm"
+ssh root@myhost "kcli list vm"
+ssh root@myhost "kcli create plan -f plan.yml myplan"
+```
+
+This is both faster (libvirt calls stay local on the host) and avoids needing to add a client entry.
+
 ## Quick Reference
 
 ```bash

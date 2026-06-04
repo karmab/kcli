@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from concurrent.futures import ThreadPoolExecutor
 from getpass import getuser
 from kvirt.defaults import IMAGES, METADATA_FIELDS, UBUNTUS
 from kvirt import common
@@ -1727,13 +1728,11 @@ class Kvirt(object):
         return status[vm.isActive()]
 
     def list(self):
-        vms = []
         conn = self.conn
-        for vm in conn.listAllDomains(0):
-            try:
-                vms.append(self.info(vm.name(), vm=vm))
-            except:
-                continue
+        domains = conn.listAllDomains(0)
+        with ThreadPoolExecutor(max_workers=len(domains) or 1) as executor:
+            futures = {executor.submit(self.info, vm.name(), vm=vm): vm for vm in domains}
+            vms = [f.result() for f in futures if f.exception() is None]
         return sorted(vms, key=lambda x: x['name'])
 
     def console(self, name, tunnel=False, tunnelhost=None, tunnelport=22, tunneluser='root', web=False):
