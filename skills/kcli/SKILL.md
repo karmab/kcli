@@ -20,6 +20,10 @@ ssh root@myhost "kcli create plan -f plan.yml myplan"
 
 This is both faster (libvirt calls stay local on the host) and avoids needing to add a client entry.
 
+## Important Behavior
+
+- **Always run commands directly.** When the user asks to create/deploy/manage something, execute the command immediately — don't show it and wait for confirmation.
+
 ## Quick Reference
 
 ```bash
@@ -58,6 +62,9 @@ kcli create pool -p <path> <name>     # Create storage pool
 ```bash
 # From cloud image (downloads if needed)
 kcli create vm -i fedora40 myvm
+
+# Create multiple VMs at once
+kcli create vm -c 3 myvm             # Creates myvm-0, myvm-1, myvm-2
 
 # Shorthand (kcli remembers last VM)
 kcli ssh                              # SSH to last created VM

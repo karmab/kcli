@@ -1137,6 +1137,9 @@ class Kaws(object):
         vpcargs['CidrBlock'] = subnet_cidr or cidr
         if 'AmazonProvidedIpv6CidrBlock' in vpcargs:
             del vpcargs['AmazonProvidedIpv6CidrBlock']
+        az = overrides.get('az') or overrides.get('availability_zone') or overrides.get('zone') or self.zone
+        if az is not None:
+            vpcargs['AvailabilityZone'] = az
         subnet = conn.create_subnet(**vpcargs)
         subnet_id = subnet['Subnet']['SubnetId']
         subnet_tags = [{"Key": "Name", "Value": f"{name}-subnet1"}, {"Key": "Plan", "Value": plan},
