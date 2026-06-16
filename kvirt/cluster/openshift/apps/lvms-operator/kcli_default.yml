@@ -4,3 +4,4 @@ lvms_default_storageclass: true
 lvms_thinpool_percent: 90
 lvms_thinpool_overprovisionratio: 10
 lvms_devices: []
+lvms_chunksize_calculation_policy: Static
