@@ -96,6 +96,7 @@ def fetch(url, path):
 def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, files=[], enableroot=True,
               overrides={}, fqdn=False, storemetadata=True, image=None, ipv6=[],
               machine='pc', vmuser=None):
+    hostname = overrides.get('hostname', name)
     userdata, metadata, netdata = None, None, None
     default_gateway = gateway
     noname = overrides.get('noname', False)
@@ -257,7 +258,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                 targetfamily = 'dhcp6' if netname in ipv6 else 'dhcp4'
                 netdata[nicname] = {targetfamily: False}
     if domain is not None:
-        localhostname = f"{name}.{domain}"
+        localhostname = f"{hostname}.{domain}"
     else:
         localhostname = name
     metadata = {"instance-id": localhostname, "local-hostname": localhostname} if not noname else {}
@@ -300,7 +301,7 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
         userdata = '#cloud-config\n'
         userdata += 'final_message: kcli boot finished, up $UPTIME seconds\n'
         if not noname:
-            userdata += f'hostname: {name}\n'
+            userdata += f'hostname: {hostname}\n'
             userdata += 'create_hostname_file: true\n'
             if fqdn:
                 fqdn = f"{name}.{domain}" if domain is not None else name
@@ -1045,6 +1046,7 @@ def get_cloudinitfile(image):
 def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=None, files=[], enableroot=True,
              overrides={}, iso=True, fqdn=False, version='3.1.0', plan=None, compact=False, removetls=False, ipv6=[],
              image=None, vmuser=None):
+    hostname = overrides.get('hostname', name)
     noname = overrides.get('noname', False)
     nokeys = overrides.get('nokeys', False)
     separators = (',', ':') if compact else (',', ': ')
@@ -1054,9 +1056,9 @@ def ignition(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=Non
     storage = {"files": [], "links": []}
     systemd = {"units": []}
     if domain is not None:
-        localhostname = f"{name}.{domain}"
+        localhostname = f"{hostname}.{domain}"
     else:
-        localhostname = name
+        localhostname = hostname
     if not nokeys:
         if keys:
             for key in list(set(keys)):
