@@ -23,6 +23,19 @@ staticf = {'t2.nano': {'cpus': 1, 'memory': 512}, 't2.micro': {'cpus': 1, 'memor
            }
 
 
+def is_fqdn(hostname: str):
+    hostname = hostname.rstrip(".")
+    if len(hostname) > 253 or "." not in hostname:
+        return False
+    return all(
+        0 < len(label) <= 63 and
+        label[0] != "-" and
+        label[-1] != "-" and
+        label.replace("-", "").isalnum()
+        for label in hostname.split(".")
+    )
+
+
 def tag_name(obj):
     for tag in obj.get('Tags', []):
         if tag['Key'] == 'Name':
@@ -1396,8 +1409,9 @@ class Kaws(object):
             error(f"Couldn't assign DNS for {name}")
             return
         dnsip = internalip or ip
+        entry_type = 'CNAME' if is_fqdn(dnsip) else 'A'
         changes = [{'Action': 'CREATE', 'ResourceRecordSet':
-                   {'Name': entry, 'Type': 'A', 'TTL': 300, 'ResourceRecords': [{'Value': dnsip}]}}]
+                   {'Name': entry, 'Type': entry_type, 'TTL': 300, 'ResourceRecords': [{'Value': dnsip}]}}]
         if alias:
             for a in alias:
                 if a == '*':
@@ -1406,7 +1420,7 @@ class Kaws(object):
                     else:
                         new = f'*.{name}.{domain}.'
                     changes.append({'Action': 'CREATE', 'ResourceRecordSet':
-                                    {'Name': new, 'Type': 'A', 'TTL': 300, 'ResourceRecords': [{'Value': ip}]}})
+                                    {'Name': new, 'Type': entry_type, 'TTL': 300, 'ResourceRecords': [{'Value': ip}]}})
                 else:
                     new = f'{a}.{domain}.' if '.' not in a else f'{a}.'
                     changes.append({'Action': 'CREATE', 'ResourceRecordSet':
