@@ -796,8 +796,9 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     version = data['version']
     tag = data['tag']
     if isinstance(tag, float) and str(tag).count('.') == 1 and len(str(tag).split('.')[1]) == 1:
-        tag = f'{tag}0'
-        data['tag'] = tag
+        if str(tag).split('.')[1] != '0':
+            tag = f'{tag}0'
+            data['tag'] = tag
     version = overrides.get('version') or detect_openshift_version(tag, OPENSHIFT_TAG)
     data['version'] = version
     if os.path.exists('coreos-installer'):
