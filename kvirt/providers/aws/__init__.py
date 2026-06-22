@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from base64 import b64encode
-from ipaddress import ip_network
+from ipaddress import ip_address, ip_network
 from kvirt import common
 from kvirt.common import pprint, error, warning, get_ssh_pub_key
 from kvirt.defaults import IMAGES, METADATA_FIELDS
@@ -23,17 +23,12 @@ staticf = {'t2.nano': {'cpus': 1, 'memory': 512}, 't2.micro': {'cpus': 1, 'memor
            }
 
 
-def is_fqdn(hostname: str):
-    hostname = hostname.rstrip(".")
-    if len(hostname) > 253 or "." not in hostname:
+def is_ip(ip):
+    try:
+        ip_address(ip)
+        return True
+    except ValueError:
         return False
-    return all(
-        0 < len(label) <= 63 and
-        label[0] != "-" and
-        label[-1] != "-" and
-        label.replace("-", "").isalnum()
-        for label in hostname.split(".")
-    )
 
 
 def tag_name(obj):
@@ -1132,7 +1127,9 @@ class Kaws(object):
             if default_network:
                 msg = f"network {default_network[0]} is already default"
                 return {'result': 'failure', 'reason': msg}
-            vpc = conn.create_default_vpc(**vpcargs)
+            if 'CidrBlock' in vpcargs:
+                warning("Ignoring specified cidr as VPC is to be default")
+            vpc = conn.create_default_vpc()
             vpc_id = vpc['Vpc']['VpcId']
             conn.create_tags(Resources=[vpc_id], Tags=Tags)
             return {'result': 'success'}
@@ -1409,7 +1406,7 @@ class Kaws(object):
             error(f"Couldn't assign DNS for {name}")
             return
         dnsip = internalip or ip
-        entry_type = 'CNAME' if is_fqdn(dnsip) else 'A'
+        entry_type = 'CNAME' if not is_ip(dnsip) else 'A'
         changes = [{'Action': 'CREATE', 'ResourceRecordSet':
                    {'Name': entry, 'Type': entry_type, 'TTL': 300, 'ResourceRecords': [{'Value': dnsip}]}}]
         if alias:

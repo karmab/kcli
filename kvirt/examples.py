@@ -19,7 +19,7 @@ $ kcli create dns -d karmalabs.corp -i 192.168.122.253 api.jhendrix
 $ kcli create dns -n network2 -d karmalabs.corp -i 192.168.122.253 api.jhendrix
 
 # Do the same with an extra wildcard alias
-$ kcli create dns -d karmalabs.corp -i 104n.197.157.226 -a '*' api.jhendrix
+$ kcli create dns -d karmalabs.corp -i 104.197.157.226 -a '*' api.jhendrix
 """
 
 hostcreate = """# Add a KVM host
@@ -767,7 +767,7 @@ $ kcli create network -P ovs=true br-ex
 $ kcli create network -P ovs=true br0
 
 # Create a network on AWS and make it default vpc
-$ kcli create network -c 10.0.0.0/24 -P default=true my-default-vpc
+$ kcli create network -P default=true my-default-vpc
 
 # Create a network on GCP with an alias/secondary network and a specific name
 $ kcli create network -P cidr=192.168.123.0/24 -P secondary_cidr=192.168.124.0/24 -P secondary_name=podnetwork mynetwork
