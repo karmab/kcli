@@ -130,11 +130,13 @@ class Kazure(object):
         if publisher is not None:
             try:
                 images = compute_client.virtual_machine_images.list(self.location, publisher, offer, sku)
-                plan_id = os.path.basename(images[0].id)
-                image_info = compute_client.virtual_machine_images.get(self.location, publisher, offer, sku, plan_id)
-                if image_info.plan is not None:
-                    need_agreement = True
-                    image_product, image_plan = image_info.plan.product, image_info.plan.name
+                if images:
+                    plan_id = os.path.basename(images[0].id)
+                    image_info = compute_client.virtual_machine_images.get(self.location, publisher, offer, sku,
+                                                                           plan_id)
+                    if image_info.plan is not None:
+                        need_agreement = True
+                        image_product, image_plan = image_info.plan.product, image_info.plan.name
             except Exception as e:
                 return {'result': 'failure', 'reason': f'Hit {e}'}
         if need_agreement:
