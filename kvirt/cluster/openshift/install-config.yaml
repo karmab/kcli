@@ -46,13 +46,13 @@ compute:
 controlPlane:
   name: master
   replicas: {{ 1 if sno or sno_vm else ctlplanes }}
+{% if techpreview or rhel10 %}
+featureSet: TechPreviewNoUpgrade
+{% endif %}
 {% if arbiters > 0 %}
 arbiter:
   name: arbiter
   replicas: {{ arbiters }}
-featureSet: TechPreviewNoUpgrade
-{% elif techpreview or rhel10 %}
-featureSet: TechPreviewNoUpgrade
 {% elif ctlplanes == 2 %}
   fencing:
     credentials:
@@ -63,7 +63,6 @@ featureSet: TechPreviewNoUpgrade
       password: {{ bmc_password|default('dummy') }}
       certificateVerification: Disabled
 {% endfor %}
-featureSet: DevPreviewNoUpgrade
 {% endif %}
 metadata:
   name: {{ cluster }}
