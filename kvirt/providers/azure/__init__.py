@@ -101,14 +101,15 @@ class Kazure(object):
                pcidevices=[], tpm=False, rng=False, metadata={}, securitygroups=[], vmuser=None, guestagent=True):
         if self.exists(name):
             return {'result': 'failure', 'reason': f"VM {name} already exists"}
+        all_flavors = self.list_flavors()
         if flavor is None:
-            matching = [f for f in self.list_flavors() if f[1] >= numcpus and f[2] >= memory]
+            matching = [f for f in all_flavors if f[1] >= numcpus and f[2] >= memory]
             if matching:
                 flavor = matching[0][0]
                 pprint(f"Using flavor {flavor}")
             else:
                 return {'result': 'failure', 'reason': 'Couldnt find flavor matching requirements'}
-        elif flavor not in [f[0] for f in self.list_flavors()]:
+        elif flavor not in [f[0] for f in all_flavors]:
             return {'result': 'failure', 'reason': f'Flavor {flavor} not found'}
         compute_client = self.compute_client
         network_client = self.network_client
@@ -190,10 +191,10 @@ class Kazure(object):
         sg = sg.result()
         openshift_node = 'kubetype' in metadata and metadata['kubetype'] == "openshift"
         if openshift_node:
+            cluster = metadata['kube']
+            if cluster not in self.list_security_groups():
+                self.create_security_group(f"{cluster}-nsg")
             for index, port in enumerate([80, 443, 2379, 2380, 4789, 8080, 5443, 6081, 6443, 8443, 22624]):
-                cluster = metadata['kube']
-                if cluster not in self.list_security_groups():
-                    self.create_security_group(f"{cluster}-nsg")
                 rule_data = SecurityRule(protocol='Tcp', source_address_prefix='*',
                                          destination_address_prefix='*', access='Allow',
                                          direction='Inbound', description=f'tcp {port}',
