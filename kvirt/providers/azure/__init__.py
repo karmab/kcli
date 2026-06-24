@@ -200,56 +200,56 @@ class Kazure(object):
                                          source_port_range='*', destination_port_ranges=[f"{port}"],
                                          priority=101 + index, name=f"tcp-{port}")
                 network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-nsg",
-                                                                     f"tcp-{port}", rule_data)
+                                                                     f"tcp-{port}", rule_data).result()
             rule_data = SecurityRule(protocol='Udp', source_address_prefix='*',
                                      destination_address_prefix='*', access='Allow',
                                      direction='Inbound', description='udp 4789',
                                      source_port_range='*', destination_port_ranges=["4789"],
                                      priority=112, name="udp-4789")
             network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-nsg",
-                                                                 "udp-4789", rule_data)
+                                                                 "udp-4789", rule_data).result()
             rule_data = SecurityRule(protocol='Udp', source_address_prefix='*',
                                      destination_address_prefix='*', access='Allow',
                                      direction='Inbound', description='udp 6081',
                                      source_port_range='*', destination_port_ranges=["6081"],
                                      priority=113, name="udp-6081")
             network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-nsg",
-                                                                 "udp-6081", rule_data)
+                                                                 "udp-6081", rule_data).result()
             rule_data = SecurityRule(protocol='Tcp', source_address_prefix='*',
                                      destination_address_prefix='*', access='Allow',
                                      direction='Inbound', description='tcp 30000-32767',
                                      source_port_range='*', destination_port_ranges=["30000", "32767"],
                                      priority=114, name="tcp-30000-32767")
             network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-nsg",
-                                                                 "tcp-30000-32767", rule_data)
+                                                                 "tcp-30000-32767", rule_data).result()
             rule_data = SecurityRule(protocol='Udp', source_address_prefix='*',
                                      destination_address_prefix='*', access='Allow',
                                      direction='Inbound', description='udp 30000-32767',
                                      source_port_range='*', destination_port_ranges=["30000", "32767"],
                                      priority=115, name="udp-30000-32767")
             network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-nsg",
-                                                                 "udp-30000-32767", rule_data)
+                                                                 "udp-30000-32767", rule_data).result()
             rule_data = SecurityRule(protocol='Tcp', source_address_prefix='*',
                                      destination_address_prefix='*', access='Allow',
                                      direction='Inbound', description='udp 10250-10259',
                                      source_port_range='*', destination_port_ranges=["10250", "10259"],
                                      priority=116, name="tcp-10250-10259")
             network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-nsg",
-                                                                 "tcp-10250-10259", rule_data)
+                                                                 "tcp-10250-10259", rule_data).result()
             rule_data = SecurityRule(protocol='Tcp', source_address_prefix='*',
                                      destination_address_prefix='*', access='Allow',
                                      direction='Inbound', description='tcp 9000-9999',
                                      source_port_range='*', destination_port_ranges=["9000", "9999"],
                                      priority=117, name="tcp-9000-9999")
             network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-nsg",
-                                                                 "tcp-9000-9999", rule_data)
+                                                                 "tcp-9000-9999", rule_data).result()
             rule_data = SecurityRule(protocol='Udp', source_address_prefix='*',
                                      destination_address_prefix='*', access='Allow',
                                      direction='Inbound', description='udp 9000-9999',
                                      source_port_range='*', destination_port_ranges=["9000", "9999"],
                                      priority=118, name="udp-9000-9999")
             network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-nsg",
-                                                                 "udp-9000-9999", rule_data)
+                                                                 "udp-9000-9999", rule_data).result()
             msi_client = self.msi_client
             auth_client = self.auth_client
             identities = [i.name for i in msi_client.user_assigned_identities.list_by_subscription()]
