@@ -180,6 +180,7 @@ class Kazure(object):
                 'tags': tags,
                 'hardware_profile': {'vm_size': flavor},
                 'diagnostics_profile': {'boot_diagnostics': {'enabled': True, 'storage_uri': None}},
+                'require_guest_provision_signal': False,
                 'storage_profile': storage_profile}
         zone = overrides.get('az') or overrides.get('availability_zone') or overrides.get('zone')
         if zone is not None:
