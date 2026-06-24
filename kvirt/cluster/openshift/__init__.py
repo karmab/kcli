@@ -427,6 +427,8 @@ def process_apps(config, clusterdir, apps, overrides):
                 continue
             app_data = {'name': name, 'catalog': catalog, 'channel': channel, 'namespace': namespace, 'csv': csv}
             app_data.update(base_data)
+            if 'csv' in base_data:
+                app_data['installplan'] = 'Manual'
         pprint(f"Adding app {name}")
         result = config.create_app_openshift(name, app_data)
         if result != 0:

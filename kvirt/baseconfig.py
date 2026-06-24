@@ -939,6 +939,8 @@ class Kbaseconfig:
                 namespace = overrides['namespace']
             app_data = {'catalog': catalog, 'channel': channel, 'namespace': namespace, 'csv': csv}
             app_data.update(overrides)
+            if 'csv' in overrides:
+                app_data['installplan'] = 'Manual'
             return common.create_app_openshift(self, app, appdir, app_data, outputdir)
 
     def delete_app(self, app, overrides={}):

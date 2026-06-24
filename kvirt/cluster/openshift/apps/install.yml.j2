@@ -28,10 +28,8 @@ spec:
   sourceNamespace: openshift-marketplace
 {% if csv is defined %}
   startingCSV: {{ csv }}
-  installPlanApproval: Manual
-{% elif installplan is defined %}
-  installPlanApproval: {{ installplan }}
 {% endif %}
+  installPlanApproval: {{ installplan|default('Automatic') }}
 {% if name == 'sriov-network-operator' and devmode is defined and devmode %}
   config:
    env:

@@ -1814,9 +1814,6 @@ def create_app_openshift(config, appname, appdir, overrides={}, outputdir=None):
         with open(default_parameter_file, 'r') as entries:
             appdefault = yaml.safe_load(entries)
             appdata.update(appdefault)
-            if 'namespace' in appdefault and 'namespace' in overrides:
-                warning(f"Forcing namespace to {appdefault['namespace']}")
-                del overrides['namespace']
     appdata.update(overrides)
     cluster = appdata['cluster']
     with TemporaryDirectory() as tmpdir:
@@ -1838,6 +1835,10 @@ def create_app_openshift(config, appname, appdir, overrides={}, outputdir=None):
             f.write("oc create -f install.yml\n")
             if os.path.exists(f"{appdir}/{appname}/pre.sh"):
                 f.write("bash pre.sh\n")
+            if overrides.get('installplan', 'Automatic') == 'Manual':
+                rendered = config.process_inputfile(cluster, f"{appdir}/approve.sh",
+                                                    overrides={'csv': overrides.get('csv')})
+                f.write(rendered)
             if install_cr and os.path.exists(f"{appdir}/{appname}/cr.yml"):
                 namespace = appdefault.get('namespace') or overrides.get('namespace')
                 cr_overrides = {'csv': overrides.get('csv'), 'namespace': namespace}
@@ -2033,7 +2034,6 @@ def olm_app(package, overrides={}):
     catalog = status['catalogSource']
     defaultchannel = status['defaultChannel']
     channels = []
-    own = True
     for channel in status['channels']:
         channels.append(channel['name'])
         if channel['name'] == defaultchannel:
@@ -2043,11 +2043,10 @@ def olm_app(package, overrides={}):
             for mode in installmodes:
                 if mode['type'] == 'OwnNamespace' and not mode['supported']:
                     target_namespace = 'openshift-operators'
-                    own = False
                     break
             csvdesc = channel['currentCSVDesc']
             csvdescannotations = csvdesc['annotations']
-            if own and 'operatorframework.io/suggested-namespace' in csvdescannotations:
+            if 'operatorframework.io/suggested-namespace' in csvdescannotations:
                 target_namespace = csvdescannotations['operatorframework.io/suggested-namespace']
             crds = []
             if 'customresourcedefinitions' in csvdesc and 'owned' in csvdesc['customresourcedefinitions']:
