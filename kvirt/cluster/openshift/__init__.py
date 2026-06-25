@@ -421,14 +421,12 @@ def process_apps(config, clusterdir, apps, overrides):
             name = appname
             app_data = base_data
         else:
-            name, catalog, channel, csv, description, namespace, channels, crds = olm_app(appname, base_data)
+            name, catalog, channel, csv, description, namespace, own, channels, crds = olm_app(appname, base_data)
             if name is None:
                 error(f"Couldn't find any app matching {app}. Skipping...")
                 continue
-            app_data = {'name': name, 'catalog': catalog, 'channel': channel, 'namespace': namespace, 'csv': csv}
+            app_data = {'name': name, 'catalog': catalog, 'channel': channel, 'namespace': namespace, 'own': own}
             app_data.update(base_data)
-            if 'csv' in base_data:
-                app_data['installplan'] = 'Manual'
         pprint(f"Adding app {name}")
         result = config.create_app_openshift(name, app_data)
         if result != 0:

@@ -1835,7 +1835,7 @@ def create_app_openshift(config, appname, appdir, overrides={}, outputdir=None):
             f.write("oc create -f install.yml\n")
             if os.path.exists(f"{appdir}/{appname}/pre.sh"):
                 f.write("bash pre.sh\n")
-            if overrides.get('installplan', 'Automatic') == 'Manual':
+            if appdata.get('installplan', 'Automatic') == 'Manual':
                 rendered = config.process_inputfile(cluster, f"{appdir}/approve.sh",
                                                     overrides={'csv': overrides.get('csv')})
                 f.write(rendered)
@@ -2027,12 +2027,13 @@ def olm_app(package, overrides={}):
     if data is None:
         if specific_catalog is not None:
             warning(f"App not found in {specific_catalog}")
-        return None, None, None, None, None, None, None, []
+        return None, None, None, None, None, None, False, None, []
     name = data['metadata']['name']
-    target_namespace = name.split('-operator')[0]
+    namespace = name.split('-operator')[0]
     status = data['status']
     catalog = status['catalogSource']
     defaultchannel = status['defaultChannel']
+    own = False
     channels = []
     for channel in status['channels']:
         channels.append(channel['name'])
@@ -2040,19 +2041,18 @@ def olm_app(package, overrides={}):
             csv = channel['currentCSV']
             description = channel['currentCSVDesc']['description']
             installmodes = channel['currentCSVDesc']['installModes']
-            for mode in installmodes:
-                if mode['type'] == 'OwnNamespace' and not mode['supported']:
-                    target_namespace = 'openshift-operators'
-                    break
             csvdesc = channel['currentCSVDesc']
             csvdescannotations = csvdesc['annotations']
             if 'operatorframework.io/suggested-namespace' in csvdescannotations:
-                target_namespace = csvdescannotations['operatorframework.io/suggested-namespace']
+                namespace = csvdescannotations['operatorframework.io/suggested-namespace']
+            for mode in installmodes:
+                if mode['type'] == 'OwnNamespace' and mode['supported']:
+                    own = True
             crds = []
             if 'customresourcedefinitions' in csvdesc and 'owned' in csvdesc['customresourcedefinitions']:
                 for crd in csvdesc['customresourcedefinitions']['owned']:
                     crds.append(crd['name'])
-    return name, catalog, defaultchannel, csv, description, target_namespace, channels, crds
+    return name, catalog, defaultchannel, csv, description, namespace, own, channels, crds
 
 
 def need_fake():
