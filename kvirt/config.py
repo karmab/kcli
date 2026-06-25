@@ -2749,9 +2749,9 @@ class Kconfig(Kbaseconfig):
             if self.type == 'gcp' and kubetype == 'openshift' and os.path.exists(f'{clusterdir}/metadata.json'):
                 cluster_id = yaml.safe_load(open(f'{clusterdir}/metadata.json'))['infraID']
                 k.delete_service_accounts(cluster_id)
-            if self.type in ['aws', 'gcp']:
+            if self.type in ['aws', 'azure', 'gcp']:
                 try:
-                    self.k.delete_security_group(cluster)
+                    self.k.delete_security_group(f'{cluster}-nsg' if self.type == 'azure' else cluster)
                 except:
                     pass
             if self.type == 'azure':

@@ -187,71 +187,18 @@ class Kazure(object):
             data['zones'] = [str(zone)]
         if need_agreement:
             data['plan'] = {'publisher': publisher, 'name': offer, 'product': sku}
-        sg_data = {'id': f"{name}-nsg", 'location': self.location}
-        sg = network_client.network_security_groups.begin_create_or_update(self.resource_group, f"{name}-nsg", sg_data)
-        sg = sg.result()
         openshift_node = 'kubetype' in metadata and metadata['kubetype'] == "openshift"
         if openshift_node:
             cluster = metadata['kube']
-            if cluster not in self.list_security_groups():
-                self.create_security_group(f"{cluster}-nsg")
-            for index, port in enumerate([80, 443, 2379, 2380, 4789, 8080, 5443, 6081, 6443, 8443, 22624]):
-                rule_data = SecurityRule(protocol='Tcp', source_address_prefix='*',
-                                         destination_address_prefix='*', access='Allow',
-                                         direction='Inbound', description=f'tcp {port}',
-                                         source_port_range='*', destination_port_ranges=[f"{port}"],
-                                         priority=101 + index, name=f"tcp-{port}")
-                network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-nsg",
-                                                                     f"tcp-{port}", rule_data).result()
-            rule_data = SecurityRule(protocol='Udp', source_address_prefix='*',
-                                     destination_address_prefix='*', access='Allow',
-                                     direction='Inbound', description='udp 4789',
-                                     source_port_range='*', destination_port_ranges=["4789"],
-                                     priority=112, name="udp-4789")
-            network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-nsg",
-                                                                 "udp-4789", rule_data).result()
-            rule_data = SecurityRule(protocol='Udp', source_address_prefix='*',
-                                     destination_address_prefix='*', access='Allow',
-                                     direction='Inbound', description='udp 6081',
-                                     source_port_range='*', destination_port_ranges=["6081"],
-                                     priority=113, name="udp-6081")
-            network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-nsg",
-                                                                 "udp-6081", rule_data).result()
-            rule_data = SecurityRule(protocol='Tcp', source_address_prefix='*',
-                                     destination_address_prefix='*', access='Allow',
-                                     direction='Inbound', description='tcp 30000-32767',
-                                     source_port_range='*', destination_port_ranges=["30000", "32767"],
-                                     priority=114, name="tcp-30000-32767")
-            network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-nsg",
-                                                                 "tcp-30000-32767", rule_data).result()
-            rule_data = SecurityRule(protocol='Udp', source_address_prefix='*',
-                                     destination_address_prefix='*', access='Allow',
-                                     direction='Inbound', description='udp 30000-32767',
-                                     source_port_range='*', destination_port_ranges=["30000", "32767"],
-                                     priority=115, name="udp-30000-32767")
-            network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-nsg",
-                                                                 "udp-30000-32767", rule_data).result()
-            rule_data = SecurityRule(protocol='Tcp', source_address_prefix='*',
-                                     destination_address_prefix='*', access='Allow',
-                                     direction='Inbound', description='udp 10250-10259',
-                                     source_port_range='*', destination_port_ranges=["10250", "10259"],
-                                     priority=116, name="tcp-10250-10259")
-            network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-nsg",
-                                                                 "tcp-10250-10259", rule_data).result()
-            rule_data = SecurityRule(protocol='Tcp', source_address_prefix='*',
-                                     destination_address_prefix='*', access='Allow',
-                                     direction='Inbound', description='tcp 9000-9999',
-                                     source_port_range='*', destination_port_ranges=["9000", "9999"],
-                                     priority=117, name="tcp-9000-9999")
-            network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-nsg",
-                                                                 "tcp-9000-9999", rule_data).result()
-            rule_data = SecurityRule(protocol='Udp', source_address_prefix='*',
-                                     destination_address_prefix='*', access='Allow',
-                                     direction='Inbound', description='udp 9000-9999',
-                                     source_port_range='*', destination_port_ranges=["9000", "9999"],
-                                     priority=118, name="udp-9000-9999")
-            network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-nsg",
-                                                                 "udp-9000-9999", rule_data).result()
+            sg_name = f"{cluster}-nsg"
+            if sg_name not in self.list_security_groups():
+                ports = [22, 80, 443, 2379, 2380, 4789, 8080, 5443, 6081, 6443, 8443, 22624,
+                         {'protocol': 'udp', 'to': 4789}, {'protocol': 'udp', 'to': 6081},
+                         {'protocol': 'tcp', 'to': '30000-32767'}, {'protocol': 'udp', 'to': '30000-32767'},
+                         {'protocol': 'tcp', 'to': '10250-10259'},
+                         {'protocol': 'tcp', 'to': '9000-9999'}, {'protocol': 'udp', 'to': '9000-9999'}]
+                self.create_security_group(sg_name, overrides={'ports': ports})
+            sg = network_client.network_security_groups.get(self.resource_group, sg_name)
             msi_client = self.msi_client
             auth_client = self.auth_client
             identities = [i.name for i in msi_client.user_assigned_identities.list_by_subscription()]
@@ -268,6 +215,11 @@ class Kazure(object):
             identity = f'/subscriptions/{self.subscription_id}/resourceGroups/{self.resource_group}/providers/'
             identity += f'Microsoft.ManagedIdentity/userAssignedIdentities/kcli-{cluster}'
             data['identity'] = {'type': 'userAssigned', 'userAssignedIdentities': {identity: {}}}
+        else:
+            sg_name = f"{name}-nsg"
+            sg_data = {'id': sg_name, 'location': self.location}
+            sg = network_client.network_security_groups.begin_create_or_update(self.resource_group, sg_name,
+                                                                               sg_data).result()
         network_interfaces = []
         subnets = self.list_subnets()
         for index, net in enumerate(nets):
@@ -312,7 +264,7 @@ class Kazure(object):
                                                  destination_address_prefix='*', access='Allow',
                                                  direction='Inbound', description='tcp 22', source_port_range='*',
                                                  destination_port_ranges=["22"], priority=100, name="tcp-22")
-                        network_client.security_rules.begin_create_or_update(self.resource_group, f"{name}-nsg",
+                        network_client.security_rules.begin_create_or_update(self.resource_group, sg_name,
                                                                              "tcp-22", rule_data)
                         nic_data['ip_configurations'][0]['public_ip_address'] = {"id": public_ip.id,
                                                                                  'delete_option': 'Delete'}
@@ -1414,17 +1366,20 @@ class Kazure(object):
         try:
             vm = self.compute_client.virtual_machines.get(self.resource_group, name)
         except:
-            error("VM {name} not found")
+            error(f"VM {name} not found")
             return {'result': 'success'}
         device = os.path.basename(vm.network_profile.network_interfaces[0].id)
         nic_data = self.network_client.network_interfaces.get(self.resource_group, device)
-        nic_data.ip_configurations[0].load_balancer_backend_address_pools = [{'id': backend_id}]
+        existing_pools = nic_data.ip_configurations[0].load_balancer_backend_address_pools or []
+        existing_pools.append({'id': backend_id})
+        nic_data.ip_configurations[0].load_balancer_backend_address_pools = existing_pools
         if backend_id_dual is not None:
             nic_data.ip_configurations[1].load_balancer_backend_address_pools = [{'id': backend_id_dual}]
         result = self.network_client.network_interfaces.begin_create_or_update(self.resource_group, device, nic_data)
         result.wait()
-        ports = [22] + ports
-        self.create_security_group(f'{name}-nsg', overrides={'ports': ports})
+        if nic_data.network_security_group is None:
+            ports = [22] + ports
+            self.create_security_group(f'{name}-nsg', overrides={'ports': ports})
         return {'result': 'success'}
 
     def create_subnet(self, name, cidr, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
