@@ -1839,6 +1839,7 @@ def create_app_openshift(config, appname, appdir, overrides={}, outputdir=None):
                 rendered = config.process_inputfile(cluster, f"{appdir}/approve.sh",
                                                     overrides={'csv': overrides.get('csv')})
                 f.write(rendered)
+                f.write('\n')
             if install_cr and os.path.exists(f"{appdir}/{appname}/cr.yml"):
                 namespace = appdefault.get('namespace') or overrides.get('namespace')
                 cr_overrides = {'csv': overrides.get('csv'), 'namespace': namespace}
