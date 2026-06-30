@@ -16,7 +16,7 @@ class KcliInventory(object):
     def __init__(self):
         self.inventory = {}
         self.read_cli_args()
-        config = Kconfig(quiet=True)
+        config = Kconfig(client=self.args.client, quiet=True)
         self.host = config.host
         self.port = config.port
         self.user = config.user
@@ -40,6 +40,7 @@ class KcliInventory(object):
     # Read the command line args passed to the script.
     def read_cli_args(self):
         parser = argparse.ArgumentParser()
+        parser.add_argument('-C', '-c', '--client', help='Client to use')
         parser.add_argument('--list', action='store_true')
         parser.add_argument('--host', action='store')
         self.args = parser.parse_args()
