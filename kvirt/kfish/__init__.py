@@ -93,10 +93,56 @@ class Redfish(object):
         self.baseurl = f"{p.scheme}://{p.netloc}"
         self.manager_url = None
         self.legacy = False
+        # Dell iDRAC version detection
+        self.idrac_version = None
+        # Dell iDRAC9+ (R770): VirtualMedia moved from Manager to System path
+        self.idrac_system_path = False
+        self.dell_vm_url = None
         if self.model == 'supermicro':
             info = self.info()
             if 'VirtualMedia' not in info or info['VirtualMedia']['@odata.id'] != '/redfish/v1/Managers/1/VirtualMedia':
                 self.legacy = True
+        elif self.model == 'dell':
+            self._detect_dell_idrac_version()
+            self._detect_dell_virtualmedia_path()
+
+    def _detect_dell_idrac_version(self):
+        """Detect Dell iDRAC version from Manager Model (12G/13G=iDRAC8, 14G-16G=iDRAC9, 17G+=iDRAC10)."""
+        try:
+            manager_url = f"{self.baseurl}/redfish/v1/Managers/iDRAC.Embedded.1"
+            request = Request(manager_url, headers=self.headers)
+            manager_info = json.loads(urlopen(request, context=self.context).read())
+            model = manager_info.get('Model', '')
+            if self.debug:
+                pprint(f"Dell Manager Model: {model}")
+            if "12" in model or "13" in model:
+                self.idrac_version = 8
+            elif "14" in model or "15" in model or "16" in model:
+                self.idrac_version = 9
+            else:
+                self.idrac_version = 10
+            if self.debug:
+                pprint(f"Dell iDRAC version: {self.idrac_version}")
+        except Exception as e:
+            if self.debug:
+                pprint(f"Dell: Could not detect iDRAC version: {e}")
+            self.idrac_version = 10
+
+    def _detect_dell_virtualmedia_path(self):
+        """Detect if Dell VirtualMedia is at System path (iDRAC9+) or Manager path."""
+        try:
+            info = self.info()
+            if 'VirtualMedia' in info:
+                self.idrac_system_path = True
+                self.dell_vm_url = info['VirtualMedia']['@odata.id']
+            elif 'Links' in info and 'VirtualMedia' in info.get('Links', {}):
+                self.idrac_system_path = True
+                self.dell_vm_url = info['Links']['VirtualMedia']['@odata.id']
+            if self.debug and self.dell_vm_url:
+                pprint(f"Dell: VirtualMedia at {self.dell_vm_url}")
+        except Exception as e:
+            if self.debug:
+                pprint(f"Dell: Error detecting VirtualMedia path: {e}")
 
     def get_manager_url(self):
         request = Request(self.url, headers=self.headers)
@@ -110,10 +156,17 @@ class Redfish(object):
         manager_url = self.get_manager_url()
         request = Request(f'{manager_url}', headers=self.headers)
         results = json.loads(urlopen(request, context=self.context).read())
-        if 'VirtualMedia' in results:
+
+        virtual_media_url = None
+        # Dell iDRAC9+: VirtualMedia is under System, not Manager
+        if self.model == 'dell' and self.idrac_system_path and self.dell_vm_url:
+            virtual_media_url = self.dell_vm_url
+        elif 'VirtualMedia' in results:
             virtual_media_url = results['VirtualMedia']['@odata.id']
-        else:
-            virtual_media_url = results['Status']['VirtualMedia']['@odata.id']
+        elif 'Status' in results and isinstance(results.get('Status'), dict):
+            virtual_media_url = results['Status'].get('VirtualMedia', {}).get('@odata.id')
+        if virtual_media_url is None:
+            virtual_media_url = f"{manager_url.replace(self.baseurl, '')}/VirtualMedia"
         request = Request(f'{self.baseurl}{virtual_media_url}', headers=self.headers)
         results = json.loads(urlopen(request, context=self.context).read())
         if 'Oem' in results:
@@ -187,6 +240,65 @@ class Redfish(object):
             request = Request(eject_url, headers=headers, method='POST', data=data)
             if self.debug:
                 pprint(f"Sending POST to {eject_url} with empty data")
+        result = urlopen(request, context=self.context)
+
+        # Dell fallback: Also try ejecting from Managers endpoint if media is inserted there
+        if self.model == 'dell':
+            try:
+                inserted, _ = self._get_dell_manager_vm_status()
+                if inserted:
+                    if self.debug:
+                        pprint("Dell: Media still inserted at Managers endpoint, ejecting from there")
+                    self._eject_iso_via_dell_manager()
+            except Exception as e:
+                if self.debug:
+                    pprint(f"Dell: Fallback eject check failed: {e}")
+
+        return result
+
+    def _get_dell_manager_vm_status(self):
+        """Check VirtualMedia status at Dell Managers endpoint."""
+        try:
+            manager_url = self.get_manager_url()
+            vm_url = f"{manager_url}/VirtualMedia/CD"
+            if self.debug:
+                pprint(f"Checking VirtualMedia status at {vm_url}")
+            request = Request(vm_url, headers=self.headers)
+            response = json.loads(urlopen(request, context=self.context).read())
+            inserted = response.get("Inserted", False)
+            image = response.get("Image", "")
+            if self.debug:
+                pprint(f"Manager VirtualMedia status - Inserted: {inserted}, Image: {image}")
+            return inserted, image
+        except Exception as e:
+            if self.debug:
+                pprint(f"Failed to check Manager VirtualMedia status: {e}")
+            return False, ""
+
+    def _insert_iso_via_dell_manager(self, iso_url):
+        """Insert ISO via Dell Managers endpoint (fallback for NFS)."""
+        manager_url = self.get_manager_url()
+        insert_url = f"{manager_url}/VirtualMedia/CD/Actions/VirtualMedia.InsertMedia"
+        if iso_url.startswith('http://'):
+            data = {"Image": iso_url, "TransferProtocolType": "HTTP"}
+        elif iso_url.startswith('https://'):
+            data = {"Image": iso_url, "TransferProtocolType": "HTTPS"}
+        else:
+            data = {"Image": iso_url}
+        if self.debug:
+            pprint(f"Fallback: Sending POST to {insert_url} with data {data}")
+        data = json.dumps(data).encode('utf-8')
+        request = Request(insert_url, data=data, headers=self.headers)
+        return urlopen(request, context=self.context)
+
+    def _eject_iso_via_dell_manager(self):
+        """Eject ISO via Dell Managers endpoint."""
+        manager_url = self.get_manager_url()
+        eject_url = f"{manager_url}/VirtualMedia/CD/Actions/VirtualMedia.EjectMedia"
+        if self.debug:
+            pprint(f"Fallback: Sending POST to {eject_url}")
+        data = json.dumps({}).encode('utf-8')
+        request = Request(eject_url, headers=self.headers, method='POST', data=data)
         return urlopen(request, context=self.context)
 
     def insert_iso(self, iso_url):
@@ -206,6 +318,14 @@ class Redfish(object):
             iso_url = iso_url.replace(":", "")
             nfs_iso_url = f"nfs://{iso_url}"
             data = {"Image": nfs_iso_url, "TransferProtocolType": "NFS"}
+        elif self.model == 'dell':
+            # Dell iDRAC9+/iDRAC10: don't include "Inserted: True"
+            if iso_url.startswith('http://'):
+                data = {"Image": iso_url, "TransferProtocolType": "HTTP"}
+            elif iso_url.startswith('https://'):
+                data = {"Image": iso_url, "TransferProtocolType": "HTTPS"}
+            else:
+                data = {"Image": iso_url}
         else:
             data = {"Image": iso_url, "Inserted": True}
         insert_url = self.get_iso_insert_url()
@@ -218,18 +338,47 @@ class Redfish(object):
             request = Request(insert_url, data=data, headers=headers)
             if self.debug:
                 pprint(f"Sending POST to {insert_url} with data {data}")
-        return urlopen(request, context=self.context)
+        result = urlopen(request, context=self.context)
+
+        # Dell fallback: If insertion via System endpoint didn't work, try Managers endpoint
+        if self.model == 'dell':
+            try:
+                inserted, _ = self._get_dell_manager_vm_status()
+                if not inserted:
+                    if self.debug:
+                        pprint("Dell: Media not inserted via System endpoint, trying Managers endpoint")
+                    result = self._insert_iso_via_dell_manager(iso_url)
+                    # Verify the fallback worked
+                    inserted, _ = self._get_dell_manager_vm_status()
+                    if not inserted:
+                        error("Dell: Failed to insert ISO via both System and Managers endpoints")
+            except Exception as e:
+                if self.debug:
+                    pprint(f"Dell: Fallback check failed: {e}")
+
+        return result
 
     def set_iso_once(self):
+        """Set one-time boot to CD/DVD (Virtual Media)."""
+        if self.model == 'dell' and self.idrac_version and self.idrac_version >= 10:
+            return self._set_iso_once_dell_idrac10()
+        return self._set_iso_once_standard()
+
+    def _set_iso_once_standard(self):
+        """Standard Redfish boot override for iDRAC9 and other vendors."""
         request = Request(self.url, headers=self.headers)
         response = json.loads(urlopen(request, context=self.context).read())
         currentboot = response['Boot']
         newboot = {}
-        if currentboot['BootSourceOverrideEnabled'] != 'Once':
+        if currentboot.get('BootSourceOverrideEnabled') != 'Once':
             newboot['BootSourceOverrideEnabled'] = 'Once'
-        if currentboot['BootSourceOverrideTarget'] != 'Cd':
+        if currentboot.get('BootSourceOverrideTarget') != 'Cd':
             newboot['BootSourceOverrideTarget'] = 'Cd'
-        if self.model == 'senao' or ('BootSourceOverrideMode' not in currentboot):
+        # Dell iDRAC9: may require BootSourceOverrideMode
+        if self.model == 'dell' and self.idrac_system_path:
+            if currentboot.get('BootSourceOverrideMode') != 'UEFI':
+                newboot['BootSourceOverrideMode'] = 'UEFI'
+        elif self.model == 'senao' or ('BootSourceOverrideMode' not in currentboot):
             newboot['BootSourceOverrideMode'] = 'UEFI'
 
         # No new boot params override required
@@ -244,6 +393,51 @@ class Redfish(object):
         data = json.dumps(data).encode('utf-8')
         request = Request(self.url, data=data, headers=self.headers, method='PATCH')
         return urlopen(request, context=self.context)
+
+    def _set_iso_once_dell_idrac10(self):
+        """Dell iDRAC10 boot override using /Settings endpoint or iDRAC attributes."""
+        settings_url = f"{self.url}/Settings"
+        try:
+            request = Request(settings_url, headers=self.headers)
+            response = json.loads(urlopen(request, context=self.context).read())
+            currentboot = response.get('Boot', {})
+            if self.debug:
+                pprint(f"Dell iDRAC10: Boot from /Settings: {currentboot.get('BootSourceOverrideTarget')}")
+        except Exception as e:
+            if self.debug:
+                pprint(f"Dell iDRAC10: /Settings failed ({e}), trying iDRAC attributes")
+            return self._set_iso_once_dell_idrac_attributes()
+
+        data = {"Boot": {"BootSourceOverrideTarget": "Cd"}}
+        if self.debug:
+            pprint(f"Dell iDRAC10: PATCH to {settings_url}")
+        data_bytes = json.dumps(data).encode('utf-8')
+        request = Request(settings_url, data=data_bytes, headers=self.headers, method='PATCH')
+        try:
+            result = urlopen(request, context=self.context)
+            pprint("Dell iDRAC10: Boot override set via /Settings")
+            return result
+        except Exception as e:
+            if self.debug:
+                pprint(f"Dell iDRAC10: /Settings PATCH failed, trying iDRAC attributes")
+            return self._set_iso_once_dell_idrac_attributes()
+
+    def _set_iso_once_dell_idrac_attributes(self):
+        """Dell iDRAC10 fallback: Use iDRAC ServerBoot attributes."""
+        idrac_url = f"{self.baseurl}/redfish/v1/Managers/iDRAC.Embedded.1/Oem/Dell/DellAttributes/iDRAC.Embedded.1"
+        for device in ['VCD-DVD', 'vCD-DVD', 'Cd']:
+            data = {"Attributes": {"ServerBoot.1.BootOnce": "Enabled", "ServerBoot.1.FirstBootDevice": device}}
+            if self.debug:
+                pprint(f"Dell iDRAC10: PATCH {idrac_url} with device={device}")
+            try:
+                data_bytes = json.dumps(data).encode('utf-8')
+                request = Request(idrac_url, data=data_bytes, headers=self.headers, method='PATCH')
+                result = urlopen(request, context=self.context)
+                pprint(f"Dell iDRAC10: Boot set via iDRAC attributes (device={device})")
+                return result
+            except:
+                continue
+        raise Exception("Dell iDRAC10: All boot device attempts failed")
 
     def restart(self):
         request = Request(self.url, headers=self.headers)
