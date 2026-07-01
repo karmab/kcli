@@ -2551,6 +2551,19 @@ klist.py is provided as a dynamic inventory for ansible.
 
 The script uses sames conf as kcli (and as such defaults to local if no configuration file is found).
 
+You can target a specific client with ``-c``, ``-C`` or ``--client``, as with the main kcli command:
+
+.. code:: shell
+
+   klist.py -c myremote --list
+
+Ansible only passes ``--list`` or ``--host`` to inventory scripts, so to use a non-default client with ansible, create a thin wrapper:
+
+::
+
+   #!/bin/bash
+   exec klist.py -c myremote "$@"
+
 vms will be grouped by plan, or put in the kvirt group if they dont belong to any plan.
 
 Try it with:
