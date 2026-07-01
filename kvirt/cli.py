@@ -3853,8 +3853,7 @@ def cli():
 
     plansnapshotcreate_desc = 'Create Plan Snapshot'
     plansnapshotcreate_parser = create_subparsers.add_parser('plan-snapshot', description=plansnapshotcreate_desc,
-                                                             help=plansnapshotcreate_desc)
-
+                                                             help=plansnapshotcreate_desc, aliases=['cluster'])
     plansnapshotcreate_parser.add_argument('plan', metavar='PLAN')
     plansnapshotcreate_parser.add_argument('snapshot', metavar='SNAPSHOT')
     plansnapshotcreate_parser.set_defaults(func=create_snapshot_plan)
@@ -4234,7 +4233,7 @@ def cli():
 
     plansnapshotdelete_desc = 'Delete Plan Snapshot'
     plansnapshotdelete_parser = delete_subparsers.add_parser('plan-snapshot', description=plansnapshotdelete_desc,
-                                                             help=plansnapshotdelete_desc)
+                                                             help=plansnapshotdelete_desc, aliases=['cluster'])
     plansnapshotdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     plansnapshotdelete_parser.add_argument('plan', metavar='PLAN')
     plansnapshotdelete_parser.add_argument('snapshot', metavar='SNAPSHOT')
@@ -4879,7 +4878,8 @@ def cli():
     containerrestart_parser.set_defaults(func=restart_container)
 
     planrestart_desc = 'Restart Plan'
-    planrestart_parser = restart_subparsers.add_parser('plan', description=planrestart_desc, help=planrestart_desc)
+    planrestart_parser = restart_subparsers.add_parser('plan', description=planrestart_desc, help=planrestart_desc,
+                                                       aliases=['cluster'])
     planrestart_parser.add_argument('-s', '--soft', action='store_true', help='Do a soft stop')
     planrestart_parser.add_argument('plans', metavar='PLAN', nargs='*')
     planrestart_parser.set_defaults(func=restart_plan)
@@ -4911,7 +4911,7 @@ def cli():
 
     planrevert_desc = 'Revert Snapshot Of Plan'
     planrevert_parser = revert_subparsers.add_parser('plan-snapshot', description=planrevert_desc, help=planrevert_desc,
-                                                     aliases=['plan'])
+                                                     aliases=['cluster', 'plan'])
     planrevert_parser.add_argument('plan', metavar='PLAN')
     planrevert_parser.add_argument('snapshot', metavar='SNAPSHOT')
     planrevert_parser.set_defaults(func=revert_snapshot_plan)
@@ -5054,7 +5054,8 @@ def cli():
     containerstart_parser.set_defaults(func=start_container)
 
     planstart_desc = 'Start Plan'
-    planstart_parser = start_subparsers.add_parser('plan', description=planstart_desc, help=planstart_desc)
+    planstart_parser = start_subparsers.add_parser('plan', description=planstart_desc, help=planstart_desc,
+                                                   aliases=['cluster'])
     planstart_parser.add_argument('plans', metavar='PLAN', nargs='*')
     planstart_parser.set_defaults(func=start_plan)
 
@@ -5086,7 +5087,8 @@ def cli():
     containerstop_parser.set_defaults(func=stop_container)
 
     planstop_desc = 'Stop Plan'
-    planstop_parser = stop_subparsers.add_parser('plan', description=planstop_desc, help=planstop_desc)
+    planstop_parser = stop_subparsers.add_parser('plan', description=planstop_desc, help=planstop_desc,
+                                                 aliases=['cluster'])
     planstop_parser.add_argument('-s', '--soft', action='store_true', help='Do a soft stop')
     planstop_parser.add_argument('plans', metavar='PLAN', nargs='*')
     planstop_parser.set_defaults(func=stop_plan)
