@@ -94,6 +94,7 @@ IMAGES = {'almalinux8': f'{ALMA}/8/cloud/x86_64/images/AlmaLinux-8-GenericCloud-
           'rhcos419': f'{RHCOS}/4.19',
           'rhcos420': f'{RHCOS}/4.20',
           'rhcos421': f'{RHCOS}/4.21',
+          'rhcos422': f'{RHCOS}/4.22',
           'rhcoslatest': f'{RHCOS}/{OPENSHIFT_TAG}',
           'rhel7': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7',
           'rhel8': 'https://access.redhat.com/downloads/content/479/ver=/rhel---8',
