@@ -3853,7 +3853,8 @@ def cli():
 
     plansnapshotcreate_desc = 'Create Plan Snapshot'
     plansnapshotcreate_parser = create_subparsers.add_parser('plan-snapshot', description=plansnapshotcreate_desc,
-                                                             help=plansnapshotcreate_desc, aliases=['cluster'])
+                                                             help=plansnapshotcreate_desc,
+                                                             aliases=['cluster-snapshot'])
     plansnapshotcreate_parser.add_argument('plan', metavar='PLAN')
     plansnapshotcreate_parser.add_argument('snapshot', metavar='SNAPSHOT')
     plansnapshotcreate_parser.set_defaults(func=create_snapshot_plan)
@@ -4233,7 +4234,8 @@ def cli():
 
     plansnapshotdelete_desc = 'Delete Plan Snapshot'
     plansnapshotdelete_parser = delete_subparsers.add_parser('plan-snapshot', description=plansnapshotdelete_desc,
-                                                             help=plansnapshotdelete_desc, aliases=['cluster'])
+                                                             help=plansnapshotdelete_desc,
+                                                             aliases=['cluster-snapshot'])
     plansnapshotdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     plansnapshotdelete_parser.add_argument('plan', metavar='PLAN')
     plansnapshotdelete_parser.add_argument('snapshot', metavar='SNAPSHOT')
