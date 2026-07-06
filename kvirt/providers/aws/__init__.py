@@ -8,7 +8,6 @@ from kvirt.defaults import IMAGES, METADATA_FIELDS
 import boto3
 import os
 import sys
-from socket import gethostbyname
 from string import ascii_lowercase
 from tempfile import TemporaryDirectory
 from time import sleep
@@ -1587,16 +1586,9 @@ class Kaws(object):
                 elb.register_instances_with_load_balancer(LoadBalancerName=clean_name, Instances=Instances)
         if domain is not None:
             lb_dns_name = lb['DNSName']
-            while True:
-                try:
-                    ip = gethostbyname(lb_dns_name)
-                    break
-                except:
-                    pprint(f"Waiting 10s for {lb_dns_name} to resolve")
-                    sleep(10)
             if dnsclient is not None:
-                return ip
-            self.reserve_dns(name, ip=ip, domain=domain, alias=alias)
+                return lb_dns_name
+            self.reserve_dns(name, ip=lb_dns_name, domain=domain, alias=alias)
 
     def delete_loadbalancer(self, name):
         domain = None
