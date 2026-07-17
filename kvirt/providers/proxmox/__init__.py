@@ -354,6 +354,7 @@ class Kproxmox(Kbase):
         nets=[],
         iso=None,
         vnc=True,
+        vncpassword=None,
         cloudinit=True,
         reserveip=False,
         reservedns=False,

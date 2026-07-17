@@ -214,12 +214,12 @@ class Kvirt(object):
     def create(self, name, virttype=None, profile='kvirt', flavor=None, plan='kvirt', cpumodel='host-model',
                cpuflags=[], cpupinning=[], numcpus=2, memory=512, guestid='guestrhel764', pool='default', image=None,
                disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None,
-               vnc=True, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=[],
-               cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
-               files=[], enableroot=True, overrides={}, tags=[], storemetadata=False, sharedfolders=[],
-               cmdline=None, placement=[], autostart=False, cpuhotplug=False,
-               memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False, metadata={},
-               securitygroups=[], vmuser=None, guestagent=True):
+               vnc=True, vncpassword=None, cloudinit=True, reserveip=False, reservedns=False, reservehost=False,
+               start=True, keys=[], cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None,
+               tunnel=False, files=[], enableroot=True, overrides={}, tags=[], storemetadata=False, sharedfolders=[],
+               cmdline=None, placement=[], autostart=False, cpuhotplug=False, memoryhotplug=False, numamode=None,
+               numa=[], pcidevices=[], tpm=False, rng=False, metadata={}, securitygroups=[], vmuser=None,
+               guestagent=True):
         bootdev = 1
         namespace = ''
         ignition = False
@@ -928,13 +928,20 @@ class Kvirt(object):
                         msg = open(f'{tmpdir}/error.log').read()
                         return {'result': 'failure', 'reason': msg}
                     self._uploadimage(name, pool=default_storagepool, origin=tmpdir)
-        listen = '0.0.0.0' if self.host not in ['localhost', '127.0.0.1'] else '127.0.0.1'
+        listen = '0.0.0.0' if self.host not in ['localhost', '127.0.0.1'] and not tunnel else '127.0.0.1'
         if not vnc:
             displayxml = ''
         else:
             displayxml = """<input type='mouse' bus='virtio'/>"""
             vncviewerpath = '/Applications/VNC Viewer.app'
-            passwd = "passwd='kcli'" if os.path.exists('/Applications') and not os.path.exists(vncviewerpath) else ''
+            if os.path.exists('/Applications') and not os.path.exists(vncviewerpath):
+                passwd = vncpassword or 'kcli'
+                passwd = f"passwd='{passwd}'"
+            elif vncpassword is not None:
+                passwd = f"passwd='{vncpassword}'"
+            else:
+                passwd = ''
+
             displayxml += """<graphics type='vnc' port='-1' autoport='yes' listen='%s' %s>
 <listen type='address' address='%s'/>
 </graphics>
@@ -1771,7 +1778,7 @@ class Kvirt(object):
                     consolecommand += "ssh %s -o LogLevel=QUIET -f -p %s -L %s:127.0.0.1:%s %s@%s sleep 10;"\
                         % (self.identitycommand, self.port, localport, port, self.user, self.host)
                     host = '127.0.0.1'
-                if passwd is not None:
+                if passwd is not None and protocol == 'vnc' and not os.path.exists('/Applications/VNC Viewer.app'):
                     url = f"{protocol}://kcli:{passwd}@{host}:{localport}"
                 else:
                     url = f"{protocol}://{host}:{localport}"

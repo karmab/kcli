@@ -562,6 +562,7 @@ class Kconfig(Kbaseconfig):
         guestid = profile.get('guestid', self.guestid)
         iso = profile.get('iso', self.iso)
         vnc = profile.get('vnc', self.vnc)
+        vncpassword = profile.get('vncpassword', self.vncpassword)
         cloudinit = profile.get('cloudinit', self.cloudinit)
         if cloudinit and self.type == 'kvm' and\
                 which('mkisofs') is None and which('genisoimage') and which('xorrisofs') is None:
@@ -908,14 +909,15 @@ class Kconfig(Kbaseconfig):
                           cpumodel=cpumodel, cpuflags=cpuflags, cpupinning=cpupinning, numamode=numamode, numa=numa,
                           numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool,
                           image=image, disks=disks, disksize=disksize, diskthin=diskthin,
-                          diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit),
-                          reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost),
-                          start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns,
-                          domain=domain, nested=bool(nested), tunnel=tunnel, files=files, enableroot=enableroot,
-                          overrides=overrides, tags=tags, storemetadata=storemetadata,
-                          sharedfolders=sharedfolders, cmdline=cmdline, placement=placement, autostart=autostart,
-                          cpuhotplug=cpuhotplug, memoryhotplug=memoryhotplug, pcidevices=pcidevices, tpm=tpm, rng=rng,
-                          metadata=metadata, securitygroups=securitygroups, vmuser=vmuser, guestagent=guestagent)
+                          diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), vncpassword=vncpassword,
+                          cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns),
+                          reservehost=bool(reservehost), start=bool(start), keys=keys, cmds=cmds, ips=ips,
+                          netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=bool(nested),
+                          tunnel=tunnel, files=files, enableroot=enableroot, overrides=overrides, tags=tags,
+                          storemetadata=storemetadata, sharedfolders=sharedfolders, cmdline=cmdline,
+                          placement=placement, autostart=autostart, cpuhotplug=cpuhotplug, memoryhotplug=memoryhotplug,
+                          pcidevices=pcidevices, tpm=tpm, rng=rng, metadata=metadata, securitygroups=securitygroups,
+                          vmuser=vmuser, guestagent=guestagent)
         if result['result'] != 'success':
             return result
         if reservedns and dnsclient is not None and domain is not None:

@@ -17,6 +17,7 @@ DISKSIZE = 10
 DISKS = [{'size': DISKSIZE, 'default': True}]
 GUESTID = 'guestrhel764'
 VNC = True
+VNCPASSWORD = None
 CLOUDINIT = True
 GUESTAGENT = True
 RESERVEIP = False

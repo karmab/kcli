@@ -208,9 +208,9 @@ end tell'''
     def create(self, name, virttype=None, profile='', flavor=None, plan='kvirt', cpumodel='host-model',
                cpuflags=[], cpupinning=[], numcpus=2, memory=512, guestid='guestrhel764', pool='default', image=None,
                disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None,
-               vnc=True, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=[],
-               cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
-               files=[], enableroot=True, overrides={}, tags=[], storemetadata=False, sharedfolders=[],
+               vnc=True, vncpassword=None, cloudinit=True, reserveip=False, reservedns=False, reservehost=False,
+               start=True, keys=[], cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None,
+               tunnel=False, files=[], enableroot=True, overrides={}, tags=[], storemetadata=False, sharedfolders=[],
                cmdline=None, placement=[], autostart=False, cpuhotplug=False, memoryhotplug=False,
                numamode=None, numa=[], pcidevices=[], tpm=False, rng=False, metadata={}, securitygroups=[],
                vmuser=None, guestagent=True):
@@ -245,8 +245,7 @@ end tell'''
                     _osascript(script)
                 except Exception:
                     pass
-            self._patch_vm_plist(name, uefi=uefi, rng=rng, tpm=tpm, machine=machine,
-                                cpumodel=cpumodel, vnc=vnc)
+            self._patch_vm_plist(name, uefi=uefi, rng=rng, tpm=tpm, machine=machine, cpumodel=cpumodel, vnc=vnc)
             first_disk_size = self._disk_size(disks[0], disksize)
             existing_qcow2 = set(_find_vm_qcow2_files(name))
             if existing_qcow2 and first_disk_size:
@@ -287,8 +286,7 @@ end tell'''
                 _osascript(script)
             except Exception as e:
                 return {'result': 'failure', 'reason': f"Failed to create VM {name}: {e}"}
-            self._patch_vm_plist(name, uefi=uefi, rng=rng, tpm=tpm, machine=machine,
-                                cpumodel=cpumodel, vnc=vnc)
+            self._patch_vm_plist(name, uefi=uefi, rng=rng, tpm=tpm, machine=machine, cpumodel=cpumodel, vnc=vnc)
         vm_metadata = {'plan': plan, 'profile': profile, 'image': image or '', 'user': common.getuser(),
                        'creationdate': common.datetime.now().strftime('%d-%m-%Y %H:%M'), 'domain': domain or '',
                        'tags': tags}
