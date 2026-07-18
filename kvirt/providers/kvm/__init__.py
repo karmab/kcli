@@ -2,11 +2,11 @@
 
 from concurrent.futures import ThreadPoolExecutor
 from getpass import getuser
+from ipaddress import ip_address, ip_network
 from kvirt.defaults import IMAGES, METADATA_FIELDS, UBUNTUS
 from kvirt import common
 from kvirt.common import error, pprint, warning, get_ssh_pub_key, success
 from kvirt.providers.kvm.helpers import DHCPKEYWORDS
-from ipaddress import ip_address, ip_network
 from libvirt import open as libvirtopen, registerErrorHandler, libvirtError
 from libvirt import VIR_DOMAIN_AFFECT_LIVE, VIR_DOMAIN_AFFECT_CONFIG
 from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_AGENT as vir_src_agent
@@ -16,18 +16,16 @@ from libvirt import (VIR_DOMAIN_NOSTATE, VIR_DOMAIN_RUNNING, VIR_DOMAIN_BLOCKED,
 from libvirt import VIR_CONNECT_LIST_STORAGE_POOLS_ACTIVE
 from libvirt import VIR_DOMAIN_SNAPSHOT_CREATE_DISK_ONLY, VIR_DOMAIN_SNAPSHOT_CREATE_ATOMIC
 from libvirt import VIR_DOMAIN_BLOCK_COMMIT_ACTIVE, VIR_DOMAIN_BLOCK_JOB_ABORT_PIVOT
-try:
-    from libvirt import VIR_DOMAIN_UNDEFINE_KEEP_NVRAM
-except:
-    pass
+from libvirt import VIR_DOMAIN_UNDEFINE_KEEP_NVRAM
 from pwd import getpwuid
 import json
 import os
-from subprocess import call
+from random import choices
 import re
-import string
+from string import ascii_lowercase
 import sys
 from shutil import which
+from subprocess import call
 from tempfile import TemporaryDirectory
 import time
 from uuid import UUID
@@ -935,7 +933,7 @@ class Kvirt(object):
             displayxml = """<input type='mouse' bus='virtio'/>"""
             vncviewerpath = '/Applications/VNC Viewer.app'
             if os.path.exists('/Applications') and not os.path.exists(vncviewerpath):
-                passwd = vncpassword or 'kcli'
+                passwd = vncpassword or ''.join(choices(ascii_lowercase, k=6))
                 passwd = f"passwd='{passwd}'"
             elif vncpassword is not None:
                 passwd = f"passwd='{vncpassword}'"
@@ -2983,11 +2981,11 @@ class Kvirt(object):
         else:
             diskindex = currentdisk
         if interface == 'scsi':
-            diskdev = f"sd{string.ascii_lowercase[scsi_index]}"
+            diskdev = f"sd{ascii_lowercase[scsi_index]}"
         elif interface == 'ide':
-            diskdev = f"hd{string.ascii_lowercase[ide_index]}"
+            diskdev = f"hd{ascii_lowercase[ide_index]}"
         else:
-            diskdev = f"vd{string.ascii_lowercase[virtio_index]}"
+            diskdev = f"vd{ascii_lowercase[virtio_index]}"
         if existing is None:
             storagename = f"{name}_{diskindex}.img"
             diskpath = self.create_disk(name=storagename, size=size, pool=pool, thin=thin, image=image)
