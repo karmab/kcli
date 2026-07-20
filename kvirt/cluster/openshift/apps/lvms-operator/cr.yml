@@ -12,6 +12,9 @@ spec:
         sizePercent: {{ lvms_thinpool_percent }}
         overprovisionRatio: {{ lvms_thinpool_overprovisionratio }}
         chunkSizeCalculationPolicy: {{ lvms_chunksize_calculation_policy }}
+{% if lvms_default_storageclass %}
+      default: true
+{% endif %}
 {% if lvms_devices|default([]) %}
       deviceSelector:
         paths:

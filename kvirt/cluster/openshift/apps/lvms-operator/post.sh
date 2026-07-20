@@ -4,10 +4,8 @@ while true; do
   echo "Waiting for the storageclass to be created"
   sleep 5
 done
-{% if lvms_default_storageclass %}
- oc patch storageclass lvms-{{ lvms_vg }} -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
-{% else %}
+{% if not lvms_default_storageclass %}
 echo Run the following command to make localstorage the default storage class
-echo oc patch storageclass lvms-{{ lvms_vg }} -p \'{\"metadata\": {\"annotations\":{\"storageclass.kubernetes.io/is-default-class\":\"true\"}}}\'
+echo "oc patch lvmcluster lvmcluster -n openshift-lvm-storage --type json -p '[{\"op\":\"add\",\"path\":\"/spec/storage/deviceClasses/0/default\",\"value\":true}]'"
 {% endif %}
 {% endif %}
