@@ -6,6 +6,7 @@ from kvirt import common
 from kvirt.common import pprint, error, warning, get_ssh_pub_key
 from kvirt.defaults import IMAGES, METADATA_FIELDS
 import boto3
+from botocore.exceptions import ClientError, WaiterError
 import os
 import sys
 from string import ascii_lowercase
@@ -455,8 +456,17 @@ class Kaws(object):
         except:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         instanceid = vm['InstanceId']
-        conn.start_instances(InstanceIds=[instanceid])
-        return {'result': 'success'}
+        try:
+            conn.start_instances(InstanceIds=[instanceid])
+        except ClientError as e:
+            if e.response['Error']['Code'] != 'InsufficientInstanceCapacity':
+                return {'result': 'failure', 'reason': str(e)}
+        waiter = conn.get_waiter('instance_running')
+        try:
+            waiter.wait(InstanceIds=[instanceid], WaiterConfig={'Delay': 5, 'MaxAttempts': 24})
+            return {'result': 'success'}
+        except WaiterError:
+            return {'result': 'failure', 'reason': 'Instance did not reach running state'}
 
     def stop(self, name, soft=False):
         conn = self.conn
