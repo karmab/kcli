@@ -2688,8 +2688,11 @@ class Kconfig(Kbaseconfig):
         if hypershift:
             oc = which('kubectl') or which('oc')
             kubeconfigmgmt = f"{clusterdir}/kubeconfig.mgmt"
+            kubeconfigguest = f"{clusterdir}/auth/kubeconfig"
             if os.path.exists(f'{clusterdir}/bmcs.yml'):
                 call(f'KUBECONFIG={kubeconfigmgmt} {oc} delete -f {clusterdir}/bmcs.yml', shell=True)
+            call(f'KUBECONFIG={kubeconfigguest} {oc} delete pdb -n openshift-kube-storage-version-migrator migrator',
+                 shell=True)
             call(f'KUBECONFIG={kubeconfigmgmt} {oc} delete -f {clusterdir}/autoapprovercron.yml', shell=True)
             call(f'KUBECONFIG={kubeconfigmgmt} {oc} delete -f {clusterdir}/nodepools.yaml', shell=True)
             call(f'KUBECONFIG={kubeconfigmgmt} {oc} delete -f {clusterdir}/hostedcluster.yaml', shell=True)
