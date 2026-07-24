@@ -709,8 +709,9 @@ class Kconfig(Kbaseconfig):
                 elif image.startswith('rhel-server-7') or image == 'rhel7':
                     rhncommands.append('subscription-manager repos --enable=rhel-7-server-rpms')
             elif rhnuser is not None and rhnpassword is not None:
-                rhncommands.append('subscription-manager register --serverurl=%s --force --username=%s --password=\'%s\''
-                                   % (rhnserver, rhnuser, rhnpassword))
+                command = f'subscription-manager register --serverurl={rhnserver} --force --username={rhnuser}'
+                command += f' --password=\'{rhnpassword}\''
+                rhncommands.append(command)
                 if rhnpool is not None:
                     rhncommands.append(f'subscription-manager attach --pool={rhnpool}')
                 else:
@@ -2688,11 +2689,8 @@ class Kconfig(Kbaseconfig):
         if hypershift:
             oc = which('kubectl') or which('oc')
             kubeconfigmgmt = f"{clusterdir}/kubeconfig.mgmt"
-            kubeconfigguest = f"{clusterdir}/auth/kubeconfig"
             if os.path.exists(f'{clusterdir}/bmcs.yml'):
                 call(f'KUBECONFIG={kubeconfigmgmt} {oc} delete -f {clusterdir}/bmcs.yml', shell=True)
-            call(f'KUBECONFIG={kubeconfigguest} {oc} delete pdb -n openshift-kube-storage-version-migrator migrator',
-                 shell=True)
             call(f'KUBECONFIG={kubeconfigmgmt} {oc} delete -f {clusterdir}/autoapprovercron.yml', shell=True)
             call(f'KUBECONFIG={kubeconfigmgmt} {oc} delete -f {clusterdir}/nodepools.yaml', shell=True)
             call(f'KUBECONFIG={kubeconfigmgmt} {oc} delete -f {clusterdir}/hostedcluster.yaml', shell=True)
@@ -2702,6 +2700,13 @@ class Kconfig(Kbaseconfig):
             ingress_ip = clusterdata.get('ingress_ip')
             if self.type == 'kubevirt' and clusterdata.get('platform') is None and ingress_ip is None:
                 call(f'KUBECONFIG={kubeconfigmgmt} {oc} -n {k.namespace} delete route {cluster}-ingress', shell=True)
+            call(f'KUBECONFIG={kubeconfigmgmt} {oc} delete -f {clusterdir}/autoapprovercron.yml', shell=True)
+            result = run(f'KUBECONFIG={kubeconfigmgmt} {oc} get machines -n clusters-{cluster} -o name',
+                         shell=True, stdout=PIPE, stderr=PIPE)
+            for machine in result.stdout.decode().split():
+                patch = '\'{"metadata":{"finalizers":null}}\''
+                call(f'KUBECONFIG={kubeconfigmgmt} {oc} patch {machine} -n clusters-{cluster} --type=merge -p {patch}',
+                     shell=True)
         for hypervisor in deleteclients:
             c = deleteclients[hypervisor]
             for vm in sorted(c.list(), key=lambda x: x['name']):
