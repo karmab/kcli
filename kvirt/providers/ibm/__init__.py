@@ -216,22 +216,20 @@ class Kibm(object):
             volume_attachment = {'delete_volume_on_instance_delete': True, 'volume': volume_by_capacity}
             volume_attachments.append(vpc_v1.VolumeAttachmentPrototypeInstanceContext.from_dict(volume_attachment))
         try:
-            result_create = self.conn.create_instance(
-                vpc_v1.InstancePrototypeInstanceByImage(
-                    image=vpc_v1.ImageIdentityById(id=image_id),
-                    primary_network_interface=net_list[0],
-                    zone=vpc_v1.ZoneIdentityByHref(get_zone_href(self.region, self.zone)),
-                    keys=[vpc_v1.KeyIdentityById(id=x) for x in key_list],
-                    name=name,
-                    network_interfaces=net_list[1:],
-                    profile=vpc_v1.InstanceProfileIdentityByName(
-                        name=flavor),
-                    resource_group=vpc_v1.ResourceGroupIdentityById(id=resource_group_id),
-                    volume_attachments=volume_attachments,
-                    vpc=vpc_v1.VPCIdentityById(id=vpc_id),
-                    user_data=userdata
-                )
-            ).result
+            instance = {
+                "name": name,
+                "image": {"id": image_id},
+                "zone": {"href": get_zone_href(self.region, self.zone)},
+                "profile": {"name": flavor},
+                "vpc": {"id": vpc_id},
+                "resource_group": {"id": resource_group_id},
+                "keys": [{"id": x} for x in key_list],
+                "primary_network_interface": net_list[0].to_dict(),
+                "network_interfaces": [n.to_dict() for n in net_list[1:]],
+                "volume_attachments": [v.to_dict() for v in volume_attachments],
+                "user_data": userdata,
+            }
+            result_create = self.conn.create_instance(instance).result
         except ApiException as e:
             return {'result': 'failure', 'reason': f'Unable to create VM {name}. Hit {e}'}
 
@@ -245,14 +243,13 @@ class Kibm(object):
         except ApiException as e:
             return {'result': 'failure', 'reason': f'Unable to attach tags. Hit {e}'}
         try:
-            result_ip = self.conn.create_floating_ip(vpc_v1.FloatingIPPrototypeFloatingIPByTarget(
-                target=vpc_v1.FloatingIPByTargetNetworkInterfaceIdentityNetworkInterfaceIdentityById(
-                    id=result_create['network_interfaces'][0]['id']
-                ),
-                name=name,
-                resource_group=vpc_v1.ResourceGroupIdentityById(
-                    id=resource_group_id),
-            )).result
+            result_ip = self.conn.create_floating_ip({
+                "name": name,
+                "resource_group": {"id": resource_group_id},
+                "target": {
+                    "id": result_create["network_interfaces"][0]["id"]
+                }
+            }).result
         except ApiException as e:
             return {'result': 'failure', 'reason': f'Unable to create floating ip. Hit {e}'}
         try:
@@ -477,7 +474,7 @@ class Kibm(object):
         for interface in vm['network_interfaces']:
             network = interface['subnet']['name']
             device = interface['name']
-            private_ip = interface['primary_ipv4_address']
+            private_ip = interface['primary_ip']['address']
             nets.append({'device': device, 'net': network, 'type': private_ip, 'mac': 'N/A'})
             yamlinfo['private_ip'] = private_ip
         if nets:
