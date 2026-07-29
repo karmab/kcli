@@ -1461,7 +1461,7 @@ class Kibm(object):
         return {'result': 'success'}
 
     def list_dns_zones(self):
-        return [d['name'] for d in self.dns.list_zones().get_result()['result']]
+        return [d['name'] for d in self.list_zones().get_result()['result']]
 
     def detach_disks(self, name):
         print("not implemented")

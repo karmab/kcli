@@ -467,7 +467,7 @@ class Kazure(object):
         yamlinfo['nets'] = nets
         if len(ips) > 1:
             yamlinfo['ips'] = ips
-        for key in vm.tags:
+        for key in vm.tags or {}:
             if key in METADATA_FIELDS:
                 yamlinfo[key] = vm.tags[key]
         storage_profile = vm.storage_profile
