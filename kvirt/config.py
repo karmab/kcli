@@ -52,7 +52,8 @@ def dependency_error(provider, exception=None):
 
 
 class Kconfig(Kbaseconfig):
-    def __init__(self, client=None, debug=False, quiet=False, region=None, zone=None, namespace=None, offline=False):
+    def __init__(self, client=None, debug=False, quiet=False, region=None, zone=None, namespace=None, offline=False,
+                 resource_group=None):
         Kbaseconfig.__init__(self, client=client, debug=debug, quiet=quiet, offline=offline)
         options = self.options
         if not self.enabled:
@@ -145,9 +146,9 @@ class Kconfig(Kbaseconfig):
                 admin_user = options.get('admin_user', AZURE['admin_user'])
                 admin_password = options.get('admin_password')
                 location = options.get('location', AZURE['location'])
-                resource_group = options.get('resource_group', AZURE['resource_group'])
+                resource_group = resource_group or options.get('resource_group', AZURE['resource_group'])
                 mail = options.get('mail')
-                storage_account = options.get('storage_account')
+                storage_account = None if resource_group is not None else options.get('storage_account')
                 subscription_id = options.get('subscription_id')
                 if subscription_id is None:
                     error("Missing subscription_id in the configuration. Leaving")

@@ -247,7 +247,8 @@ def update_baremetal_host(args):
 
 
 def start_vm(args):
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
     k = config.k
     codes = []
@@ -270,7 +271,8 @@ def start_container(args):
 
 def stop_vm(args):
     soft = args.soft
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
     if config.extraclients:
         ks = config.extraclients
@@ -305,7 +307,8 @@ def stop_container(args):
 
 def restart_vm(args):
     hard = args.hard
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
     k = config.k
     codes = []
@@ -335,7 +338,8 @@ def restart_container(args):
 def console_vm(args):
     serial = args.serial
     web = args.web
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     name = common.get_lastvm(config.client) if not args.name else args.name
     k = config.k
     tunnel = config.tunnel
@@ -366,7 +370,8 @@ def delete_vm(args):
     snapshots = args.force
     keep_disks = args.keep
     count = args.count
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     if config.extraclients:
         allclients = config.extraclients.copy()
         allclients.update({config.client: config.k})
@@ -509,7 +514,8 @@ def download_image(args):
             sys.exit(1)
     rhcos_installer = overrides.get('installer', False)
     kvm_openstack = not overrides.get('qemu', False)
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     pool = overrides.get('pool') or config.pool
     result = config.download_image(pool=pool, image=image, cmds=cmds, url=url, size=size, arch=arch,
                                    kvm_openstack=kvm_openstack, rhcos_installer=rhcos_installer, name=name)
@@ -523,7 +529,8 @@ def download_iso(args):
         error("An url needs to be specified")
         sys.exit(1)
     iso = args.iso or os.path.basename(url)
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     pool = overrides.get('pool') or config.pool
     result = config.download_image(pool=pool, image=iso, url=url)
     sys.exit(0 if result['result'] == 'success' else 1)
@@ -533,7 +540,8 @@ def delete_image(args):
     yes = args.yes
     yes_top = args.yes_top
     images = args.images
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     if config.extraclients:
         allclients = config.extraclients.copy()
         allclients.update({config.client: config.k})
@@ -681,7 +689,8 @@ def info_vm(args):
     fields = args.fields.split(',') if args.fields is not None else []
     values = args.values
     config = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     names = [common.get_lastvm(config.client, quiet=common_quiet)] if not args.names else args.names
     vm_found = False
     for name in names:
@@ -808,7 +817,7 @@ def list_vms(args):
         for client in args.client.split(','):
             config = Kbaseconfig(client=client, debug=args.debug, quiet=True)
             config = Kconfig(client=client, debug=args.debug, region=args.region,
-                             zone=args.zone, namespace=args.namespace)
+                             zone=args.zone, namespace=args.namespace, resource_group=args.resource_group)
             _list = _filter_list(config.k.list(), overrides=overrides)
             if output is not None:
                 _list_output(_list, output)
@@ -829,7 +838,7 @@ def list_vms(args):
         vmstable = PrettyTable(["Name", "Status", "Ip", "Source", "Plan", "Profile"])
         config = Kbaseconfig(client=args.client, debug=args.debug, quiet=True)
         config = Kconfig(client=args.client, debug=args.debug, region=args.region,
-                         zone=args.zone, namespace=args.namespace)
+                         zone=args.zone, namespace=args.namespace, resource_group=args.resource_group)
         if config.type == 'gcp' and config.k.zone is None:
             vmstable.add_column(['Zone'])
         _list = _filter_list(config.k.list(), overrides=overrides)
@@ -968,7 +977,8 @@ def list_kubeconfigs(args):
 
 def list_lbs(args):
     short = args.short
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     lbs = config.list_loadbalancers()
     output = args.global_output or args.output
     if output is not None:
@@ -1063,7 +1073,8 @@ def list_dns_entries(args):
     if domain is None:
         pprint("Listing zones as no domain was specified")
         return list_dns_zones(args)
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     k = config.k
     entries = k.list_dns(domain)
     output = args.global_output or args.output
@@ -1083,7 +1094,8 @@ def list_dns_entries(args):
 
 
 def list_dns_zones(args):
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     k = config.k
     zones = k.list_dns_zones()
     output = args.global_output or args.output
@@ -1187,7 +1199,8 @@ def list_isos(args):
 
 def list_networks(args):
     short = args.short
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     if config.client != 'all':
         k = config.k
     networks = k.list_networks()
@@ -1216,7 +1229,8 @@ def list_networks(args):
 
 
 def list_plans(args):
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     if config.extraclients:
         allclients = config.extraclients.copy()
         allclients.update({config.client: config.k})
@@ -1226,7 +1240,7 @@ def list_plans(args):
         planstable = PrettyTable(["Plan", "Host", "Vms"])
         for cli in sorted(allclients):
             currentconfig = Kconfig(client=cli, debug=args.debug, region=args.region, zone=args.zone,
-                                    namespace=args.namespace)
+                                    namespace=args.namespace, resource_group=args.resource_group)
             for plan in currentconfig.list_plans():
                 planname = plan[0]
                 planvms = plan[1]
@@ -1253,7 +1267,8 @@ def list_plantypes(args):
 
 def list_subnets(args):
     short = args.short
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     if config.client != 'all':
         k = config.k
     subnets = k.list_subnets()
@@ -1348,14 +1363,15 @@ def list_apps(args):
 
 
 def list_clusters(args):
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     if config.extraclients:
         kubestable = PrettyTable(["Cluster", "Type", "Plan", "Host", "Vms"])
         allclients = config.extraclients.copy()
         allclients.update({config.client: config.k})
         for cli in sorted(allclients):
             currentconfig = Kconfig(client=cli, debug=args.debug, region=args.region, zone=args.zone,
-                                    namespace=args.namespace)
+                                    namespace=args.namespace, resource_group=args.resource_group)
             kubes = currentconfig.list_kubes()
             output = args.global_output or args.output
             if output is not None:
@@ -1404,7 +1420,8 @@ def list_pools(args):
 
 
 def list_vmdisks(args):
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     k = config.k
     pprint("Listing disks...")
     diskstable = PrettyTable(["Name", "Pool", "Path"])
@@ -1428,7 +1445,8 @@ def create_kubeadm_registry(args):
     overrides = handle_parameters(args.param, args.paramfile)
     if 'cluster' not in overrides:
         overrides['cluster'] = plan
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     config.create_kubeadm_registry(plan, overrides=overrides)
 
 
@@ -1440,7 +1458,7 @@ def create_openshift_iso(args):
     client = overrides.get('client') or args.client
     offline = client == 'fake' or common.need_fake()
     config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
-                     offline=offline)
+                     offline=offline, resource_group=args.resource_group)
     config.create_openshift_iso(cluster, overrides=overrides, ignitionfile=ignitionfile, direct=direct)
 
 
@@ -1452,7 +1470,8 @@ def create_openshift_registry(args):
     overrides = handle_parameters(args.param, args.paramfile)
     if 'cluster' not in overrides:
         overrides['cluster'] = plan
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     config.create_openshift_registry(plan, overrides=overrides)
 
 
@@ -1481,7 +1500,8 @@ def create_vm(args):
     region = overrides.get('region', args.region)
     zone = overrides.get('zone', args.zone)
     confpool = overrides.get('namepool') or overrides.get('confpool')
-    config = Kconfig(client=client, debug=args.debug, region=region, zone=zone, namespace=args.namespace)
+    config = Kconfig(client=client, debug=args.debug, region=region, zone=zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     for key in overrides:
         if key in vars(config) and vars(config)[key] is not None and type(overrides[key]) != type(vars(config)[key]):
             key_type = str(type(vars(config)[key]))
@@ -1624,7 +1644,8 @@ def clone_vm(args):
 
 def update_vm(args):
     overrides = handle_parameters(args.param, args.paramfile)
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     names = [common.get_lastvm(config.client)] if not args.names else args.names
     for name in names:
         config.update_vm(name, overrides)
@@ -1645,7 +1666,8 @@ def create_vmdisk(args):
     if interface not in ['virtio', 'ide', 'scsi', 'sata']:
         error("Incorrect disk interface. Choose between virtio, sata, scsi or ide...")
         sys.exit(1)
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     k = config.k
     if size is None:
         error("Missing size. Leaving...")
@@ -1680,7 +1702,8 @@ def delete_vmdisk(args):
     disknames = args.disknames
     novm = args.novm
     pool = args.pool
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     k = config.k
     for diskname in disknames:
         pprint(f"Deleting disk {diskname}")
@@ -1695,7 +1718,8 @@ def create_dns(args):
     alias = args.alias
     if alias is None:
         alias = []
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     k = config.k
     name = names[0]
     if len(names) > 1:
@@ -1714,7 +1738,8 @@ def delete_dns(args):
     net = args.net
     allentries = args.all
     domain = args.domain or net
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     k = config.k
     for name in names:
         pprint(f"Deleting Dns entry for {name}")
@@ -1750,7 +1775,8 @@ def create_lb(args):
     vms = overrides.get('vms', [])
     nets = overrides.get('nets', ['default'])
     name = args.name or get_random_name().replace('_', '-')
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     config.create_loadbalancer(name, nets=nets, ports=ports, checkpath=checkpath, vms=vms, domain=domain,
                                checkport=checkport, internal=internal, ip=ip)
 
@@ -1760,7 +1786,8 @@ def delete_lb(args):
     yes_top = args.yes_top
     if not yes and not yes_top:
         common.confirm("Are you sure?")
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     for name in args.names:
         config.delete_loadbalancer(name)
 
@@ -1800,7 +1827,7 @@ def create_kube(args):
     sno_vm = overrides.get('sno_vm', False)
     offline = sno and not sno_vm and (client == 'fake' or common.need_fake())
     config = Kconfig(client=client, debug=args.debug, region=region, zone=zone, namespace=args.namespace,
-                     offline=offline)
+                     offline=offline, resource_group=args.resource_group)
     if overrides.get('force', args.force):
         overrides['kubetype'] = kubetype
         config.delete_kube(cluster, overrides=overrides)
@@ -1886,7 +1913,8 @@ def delete_kube(args):
     overrides = handle_parameters(args.param, args.paramfile)
     if args.client is not None:
         overrides['client'] = args.client
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     clusters = [c for c in config.list_kubes()] if args.all else args.cluster
     for cluster in clusters:
         config.delete_kube(cluster, overrides=overrides)
@@ -1896,7 +1924,8 @@ def scale_kube(args):
     kubetype = args.type
     overrides = handle_parameters(args.param, args.paramfile)
     cluster = overrides.get('cluster', args.cluster)
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     if args.ctlplanes is not None:
         overrides['ctlplanes'] = args.ctlplanes
     if args.workers is not None:
@@ -2005,7 +2034,8 @@ def update_kube(args):
     data['basedir'] = '/workdir' if container_mode() else '.'
     if plan is None:
         plan = cluster
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     config.update_kube(plan, _type, overrides=data)
 
 
@@ -2013,7 +2043,8 @@ def create_vmnic(args):
     name = args.name
     network = args.network
     model = args.model
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     k = config.k
     if network is None:
         error("Missing network. Leaving...")
@@ -2029,7 +2060,8 @@ def delete_vmnic(args):
         common.confirm("Are you sure?")
     name = args.name
     interface = args.interface
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     k = config.k
     pprint(f"Deleting nic from vm {name}...")
     k.delete_nic(name, interface)
@@ -2087,7 +2119,7 @@ def create_plan(args):
     zone = overrides.get('zone', args.zone)
     offline = overrides.get('offline', False)
     config = Kconfig(client=client, debug=args.debug, region=region, zone=zone, namespace=args.namespace,
-                     offline=offline)
+                     offline=offline, resource_group=args.resource_group)
     _type = config.ini[config.client].get('type', 'kvm')
     overrides.update({'type': _type})
     plan = overrides.get('plan', args.plan)
@@ -2119,7 +2151,8 @@ def update_plan(args):
     inputfile = overrides.get('inputfile') or args.inputfile or 'kcli_plan.yml'
     if container_mode():
         inputfile = f"/workdir/{inputfile}"
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     if autostart or noautostart:
         if config.type != 'kvm':
             error("Changing autostart of vms only apply to kvm")
@@ -2137,7 +2170,8 @@ def delete_plan(args):
     if not yes and not yes_top:
         common.confirm("Are you sure?")
     codes = []
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     plans = [p[0] for p in config.list_plans()] if args.all else args.plans
     for plan in plans:
         result = config.delete_plan(plan, unregister=config.rhnunregister)
@@ -2190,7 +2224,8 @@ def expose_plan(args):
 def start_plan(args):
     plans = args.plans
     codes = []
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     for plan in plans:
         result = config.start_plan(plan)
         if 'result' in result and result['result'] == 'success':
@@ -2204,7 +2239,8 @@ def stop_plan(args):
     plans = args.plans
     codes = []
     soft = args.soft
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     for plan in plans:
         result = config.stop_plan(plan, soft=soft)
         if 'result' in result and result['result'] == 'success':
@@ -2218,7 +2254,8 @@ def restart_plan(args):
     soft = args.soft
     plans = args.plans
     codes = []
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     for plan in plans:
         result1 = config.stop_plan(plan, soft=soft)
         result2 = config.start_plan(plan)
@@ -2257,7 +2294,7 @@ def info_plan(args):
         inputfile = f"/workdir/{inputfile}"
     if args.plan is not None:
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
-                         namespace=args.namespace)
+                         namespace=args.namespace, resource_group=args.resource_group)
         _list = config.info_specific_plan(args.plan, quiet=quiet)
         if overrides:
             _list = filter_info_plan(_list, overrides)
@@ -2270,7 +2307,7 @@ def info_plan(args):
         baseconfig.info_plan(inputfile, quiet=quiet, doc=doc)
     else:
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
-                         namespace=args.namespace)
+                         namespace=args.namespace, resource_group=args.resource_group)
         config.plan('info', url=url, path=path, inputfile=inputfile, info=True, quiet=quiet, doc=doc)
 
 
@@ -2283,7 +2320,7 @@ def info_kube(args):
     openshift = kubetype == 'openshift'
     if kubetype in ['aks', 'eks', 'gke']:
         baseconfig = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
-                             namespace=args.namespace)
+                             namespace=args.namespace, resource_group=args.resource_group)
     else:
         baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
     if args.cluster is not None:
@@ -2332,7 +2369,8 @@ def info_kube(args):
 
 def info_web_kube(args):
     output = args.global_output or args.output
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     status = config.k.info_specific_kube(args.cluster)
     if status is None or not status:
         return
@@ -2401,7 +2439,8 @@ def info_rke2_kube(args):
 def info_network(args):
     output = args.global_output or args.output
     name = args.name
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     networkinfo = config.k.info_network(name)
     if networkinfo:
         if output is not None:
@@ -2429,7 +2468,8 @@ def info_plantype(args):
 def info_subnet(args):
     name = args.name
     pprint(f"Providing information about subnet {name}...")
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     networkinfo = config.k.info_subnet(name)
     if networkinfo:
         common.pretty_print(networkinfo)
@@ -2443,7 +2483,8 @@ def download_plan(args):
     if plan is None:
         plan = get_random_name()
         pprint(f"Using {plan} as name of the plan")
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     config.plan(plan, url=url, download=True)
 
 
@@ -2659,7 +2700,7 @@ def ssh_vm(args):
     sshcommand = None
     if sshcommand is None:
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
-                         namespace=args.namespace)
+                         namespace=args.namespace, resource_group=args.resource_group)
         k = config.k
         u, ip, vmport = common._ssh_credentials(k, name)
         if tunnel and tunnelhost is None and config.type == 'kubevirt':
@@ -2725,7 +2766,7 @@ def scp_vm(args):
     scpcommand = None
     if scpcommand is None:
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
-                         namespace=args.namespace)
+                         namespace=args.namespace, resource_group=args.resource_group)
         k = config.k
         u, ip, vmport = common._ssh_credentials(k, name)
         if ip is None:
@@ -2759,7 +2800,8 @@ def create_network(args):
     nodhcp = not dhcp if dhcp is not None else args.nodhcp
     domain = overrides.get('domain') or args.domain
     plan = overrides.get('plan', 'kvirt')
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     k = config.k
     if name is None:
         error("Missing Network")
@@ -2780,7 +2822,8 @@ def delete_network(args):
     if not yes and not yes_top:
         common.confirm("Are you sure?")
     names = args.names
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     k = config.k
     for name in names:
         result = k.delete_network(name=name, force=args.force)
@@ -2794,7 +2837,8 @@ def update_network(args):
     dhcp = False if 'nodhcp' in args else overrides.get('dhcp')
     domain = overrides.get('domain', args.domain)
     plan = overrides.get('plan')
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     k = config.k
     result = k.update_network(name=name, dhcp=dhcp, nat=nat, domain=domain, overrides=overrides, plan=plan)
     common.handle_response(result, name, element='Network', action='updated')
@@ -3091,7 +3135,8 @@ def list_plansnapshots(args):
 def create_bucket(args):
     buckets = args.buckets
     public = args.public
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     k = config.k
     for bucket in buckets:
         pprint(f"Creating bucket {bucket}...")
@@ -3104,7 +3149,8 @@ def delete_bucket(args):
     if not yes and not yes_top:
         common.confirm("Are you sure?")
     buckets = args.buckets
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     k = config.k
     for bucket in buckets:
         pprint(f"Deleting bucket {bucket}...")
@@ -3113,7 +3159,8 @@ def delete_bucket(args):
 
 def list_buckets(args):
     pprint("Listing buckets...")
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     k = config.k
     buckets = k.list_buckets()
     output = args.global_output or args.output
@@ -3129,7 +3176,8 @@ def list_buckets(args):
 def list_bucketfiles(args):
     bucket = args.bucket
     pprint(f"Listing bucket files of bucket {bucket}...")
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     k = config.k
     bucketfiles = k.list_bucketfiles(bucket)
     output = args.global_output or args.output
@@ -3147,7 +3195,8 @@ def create_bucketfile(args):
     temp_url = args.temp
     public = args.public
     path = args.path
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     k = config.k
     pprint(f"Uploading file {path} to bucket {bucket}...")
     result = k.upload_to_bucket(bucket, path, temp_url=temp_url, public=public)
@@ -3162,7 +3211,8 @@ def delete_bucketfile(args):
         common.confirm("Are you sure?")
     bucket = args.bucket
     path = args.path
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     k = config.k
     pprint(f"Deleting file {path} to bucket {bucket}...")
     k.delete_from_bucket(bucket, path)
@@ -3171,7 +3221,8 @@ def delete_bucketfile(args):
 def download_bucketfile(args):
     bucket = args.bucket
     path = args.path
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     k = config.k
     pprint(f"Downloading file {path} from bucket {bucket}...")
     k.download_from_bucket(bucket, path)
@@ -3200,7 +3251,8 @@ def info_baremetal_host(args):
 
 def info_host(args):
     client = args.host or args.client
-    config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     k = config.k
     common.pretty_print(k.info_host(), width=100)
 
@@ -3281,7 +3333,7 @@ def create_workflow(args):
             hostname = target
         if '.' not in hostname and ':' not in hostname:
             config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
-                             namespace=args.namespace)
+                             namespace=args.namespace, resource_group=args.resource_group)
             vmuser, vmip, vmport = _ssh_credentials(config.k, hostname)
             if vmip is not None:
                 overrides['target'] = {'user': user or vmuser, 'port': vmport, 'ip': vmip, 'hostname': hostname}
@@ -3295,7 +3347,8 @@ def create_workflow(args):
 def create_securitygroup(args):
     securitygroup = args.securitygroup
     overrides = handle_parameters(args.param, args.paramfile)
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     k = config.k
     pprint(f"Creating securitygroup {securitygroup}...")
     k.create_security_group(securitygroup, overrides)
@@ -3307,7 +3360,8 @@ def delete_securitygroup(args):
     if not yes and not yes_top:
         common.confirm("Are you sure?")
     securitygroups = args.securitygroups
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     k = config.k
     for securitygroup in securitygroups:
         pprint(f"Deleting securitygroup {securitygroup}...")
@@ -3316,7 +3370,8 @@ def delete_securitygroup(args):
 
 def list_securitygroups(args):
     pprint("Listing securitygroups...")
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     k = config.k
     securitygroups = k.list_security_groups(network=args.network)
     output = args.global_output or args.output
@@ -3333,7 +3388,8 @@ def update_securitygroup(args):
     securitygroup = args.name
     pprint(f"Updating securitygroup {securitygroup}...")
     overrides = handle_parameters(args.param, args.paramfile)
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     result = config.k.update_security_group(name=securitygroup, overrides=overrides)
     common.handle_response(result, securitygroup, element='SecurityGroup', action='updated')
 
@@ -3366,7 +3422,8 @@ def create_subnet(args):
     nodhcp = not dhcp if dhcp is not None else args.nodhcp
     domain = overrides.get('domain') or args.domain
     plan = overrides.get('plan', 'kvirt')
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     k = config.k
     if name is None:
         error("Missing Subnet name")
@@ -3387,7 +3444,8 @@ def delete_subnet(args):
     if not yes and not yes_top:
         common.confirm("Are you sure?")
     names = args.names
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     k = config.k
     for name in names:
         result = k.delete_subnet(name=name, force=args.force)
@@ -3397,7 +3455,8 @@ def delete_subnet(args):
 def update_subnet(args):
     name = args.name
     overrides = handle_parameters(args.param, args.paramfile)
-    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace)
+    config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
+                     resource_group=args.resource_group)
     result = config.k.update_subnet(name=name, overrides=overrides)
     common.handle_response(result, name, element='Subnet', action='updated')
 
@@ -3416,6 +3475,7 @@ def cli():
     parser.add_argument('--containerclient', help='Containerclient to use')
     parser.add_argument('--dnsclient', help='Dnsclient to use')
     parser.add_argument('-d', '-D', '--debug', action='store_true')
+    parser.add_argument('-g', '-G', '--resource_group', help='Resource group to use. specific to azure')
     parser.add_argument('-n', '-N', '--namespace', help='Namespace to use. specific to kubevirt')
     parser.add_argument('-o', '-O', '--output', choices=['json', 'jsoncompact', 'name', 'yaml'],
                         help='Format of the output', dest='global_output')
