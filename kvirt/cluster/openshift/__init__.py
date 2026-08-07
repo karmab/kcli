@@ -186,7 +186,8 @@ def update_openshift_etc_hosts(cluster, domain, host_ip, ingress_ip=None):
         if not correct:
             entries = [f"api.{cluster}.{domain}"]
             ingress_entries = [f"{x}.{cluster}.{domain}" for x in ['console-openshift-console.apps',
-                               'oauth-openshift.apps', 'prometheus-k8s-openshift-monitoring.apps']]
+                               'oauth-openshift.apps', 'prometheus-k8s-openshift-monitoring.apps', 'maas.apps',
+                                                                   'rh-ai']]
             if ingress_ip is None:
                 entries.extend(ingress_entries)
             entries = ' '.join(entries)
@@ -197,7 +198,7 @@ def update_openshift_etc_hosts(cluster, domain, host_ip, ingress_ip=None):
     else:
         entries = [f"api.{cluster}.{domain}"]
         ingress_entries = [f"{x}.{cluster}.{domain}" for x in ['console-openshift-console.apps',
-                                                               'oauth-openshift.apps',
+                                                               'oauth-openshift.apps', 'maas.apps', 'rh-ai',
                                                                'prometheus-k8s-openshift-monitoring.apps']]
         if ingress_ip is None:
             entries.extend(ingress_entries)
@@ -1543,7 +1544,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         elif sno_dns:
             warning("Add the following entry in /etc/hosts if needed")
             dnsentries = ['api', 'console-openshift-console.apps', 'oauth-openshift.apps',
-                          'prometheus-k8s-openshift-monitoring.apps']
+                          'prometheus-k8s-openshift-monitoring.apps', 'maas.apps', 'rh-ai']
             dnsentry = ' '.join([f"{entry}.{cluster}.{domain}" for entry in dnsentries])
             warning(f"$your_node_ip {dnsentry}")
         if baremetal_hosts:
@@ -1699,7 +1700,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if arbiters > 0:
             pprint("Deploying arbiters")
             threaded = data['threaded'] or data['arbiters_threaded']
-            result = config.plan(plan, inputfile=f'{plandir}/cloud_arbiters.yml', overrides=overrides, threaded=threaded)
+            result = config.plan(plan, inputfile=f'{plandir}/cloud_arbiters.yml', overrides=overrides,
+                                 threaded=threaded)
             if result['result'] != 'success':
                 return result
         if workers == 0:
