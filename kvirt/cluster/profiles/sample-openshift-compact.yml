@@ -1,11 +1,13 @@
 sslip: true
 ctlplanes: 3
 workers: 0
-numcpus: 16
+numcpus: 32
+bootstrap_memory: 8192
 memory: 32768
 extra_disks:
 - 100
 apps:
 - local-storage-operator
 - odf-operator
+- kubevirt-hyperconverged
 - users
