@@ -1048,12 +1048,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             msg = f"Missing {image}. Indicate correct image in your parameters file..."
             return {'result': 'failure', 'reason': msg}
     base_url = 'quay.io/okd/scos-release' if okd else 'quay.io/openshift-release-dev/ocp-release'
-    if provider in virt_providers and platform.machine() != arch:
-        pprint(f"Forcing release image to {arch}")
-        os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = f'{base_url}:{INSTALLER_VERSION}-{arch}'
-    elif provider in cloud_providers and platform.machine() != 'x86_64':
-        pprint("Forcing release image to x86_64")
-        os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = f'{base_url}:{INSTALLER_VERSION}-x86_64'
+    onprem_arch_diff = provider in virt_providers and platform.machine() != arch
+    cloud_arch_diff = provider in cloud_providers and platform.machine() != 'x86_64'
+    if (onprem_arch_diff or cloud_arch_diff) and not okd:
+        dest_arch = 'x86_64' if provider in cloud_providers else arch
+        pprint(f"Forcing release image to {dest_arch}")
+        os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = f'{base_url}:{INSTALLER_VERSION}-{dest_arch}'
     overrides['image'] = image
     static_networking_ctlplane, static_networking_worker = False, False
     macentries = []
