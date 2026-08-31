@@ -73,8 +73,12 @@ For rhel based OS (*fedora*/*rhel or centos*), you can run this:
 
 ```
 sudo dnf -y copr enable karmab/kcli
+uname -r | grep -q el9_ && sudo sed -i 's@epel@centos-stream@g' '/etc/yum.repos.d/_copr:copr.fedorainfracloud.org:karmab:kcli.repo'
 sudo dnf -y install kcli
 ```
+
+WARNING: On rhel9/centos9, an existing issue with copr requires to use the centos-stream repo instead of epel
+
 
 If using a debian based distribution, use this instead:
 
