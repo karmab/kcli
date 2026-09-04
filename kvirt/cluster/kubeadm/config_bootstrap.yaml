@@ -28,7 +28,7 @@
 {% set service_networks = [service_network_ipv4] + [service_network_ipv6] if dualstack|default(False) else [service_network_ipv6] if ipv6 else [service_network_ipv4] %}
 {% endif %}
 
-apiVersion: kubeadm.k8s.io/v1beta3
+apiVersion: kubeadm.k8s.io/v1beta4
 kind: InitConfiguration
 bootstrapTokens:
 - token: "{{ token }}"
@@ -38,7 +38,7 @@ localAPIEndpoint:
   bindPort: 6443
 certificateKey: "{{ cert_key }}"
 ---
-apiVersion: kubeadm.k8s.io/v1beta3
+apiVersion: kubeadm.k8s.io/v1beta4
 kind: ClusterConfiguration
 clusterName: "{{ cluster }}"
 {% if minor_version is defined %}
@@ -68,19 +68,23 @@ apiServer:
 {% if feature_gates or runtime_config %}
   extraArgs:
 {% if runtime_config %}
-    runtime-config: "{{ runtime_config_string|join(',') }}"
+  - name: runtime-config
+    value: "{{ runtime_config_string|join(',') }}"
 {% endif %}
 {% if feature_gates %}
-    feature-gates: "{{ feature_gates_string|join(',') }}"
+  - name: feature-gates
+    value: "{{ feature_gates_string|join(',') }}"
 {% endif %}
 {% endif %}
 {% if feature_gates %}
 controllerManager:
   extraArgs:
-    feature-gates: "{{ feature_gates_string|join(',') }}"
+  - name: feature-gates
+    value: "{{ feature_gates_string|join(',') }}"
 scheduler:
   extraArgs:
-    feature-gates: "{{ feature_gates_string|join(',') }}"
+  - name: feature-gates
+    value: "{{ feature_gates_string|join(',') }}"
 ---
 apiVersion: kubelet.config.k8s.io/v1beta1
 cgroupDriver: systemd
