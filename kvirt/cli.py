@@ -369,6 +369,7 @@ def delete_vm(args):
     yes_top = args.yes_top
     snapshots = args.force
     keep_disks = args.keep
+    skip_kube = args.skip
     count = args.count
     config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone, namespace=args.namespace,
                      resource_group=args.resource_group)
@@ -417,7 +418,7 @@ def delete_vm(args):
             match = re.match(r'(.*)-(ctlplane|worker)-[0-9]', name)
             cluster = match.group(1) if match is not None else None
             clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
-            if cluster is not None and os.path.exists(clusterdir):
+            if not skip_kube and cluster is not None and os.path.exists(clusterdir):
                 os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
                 if os.path.exists(f"{clusterdir}/kcli_parameters.yml"):
                     with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
@@ -4334,6 +4335,7 @@ def cli():
     vmdelete_parser.add_argument('-c', '--count', help='How many vms to delete', type=int, default=0, metavar='COUNT')
     vmdelete_parser.add_argument('-f', '--force', action='store_true', help='Remove snapshots if needed')
     vmdelete_parser.add_argument('-k', '--keep', action='store_true', help='Keep non primary disks')
+    vmdelete_parser.add_argument('-s', '--skip', action='store_true', help='Skip Kube deletion')
     vmdelete_parser.add_argument('-y', '--yes', action='store_true', help='Dont ask for confirmation')
     vmdelete_parser.add_argument('names', metavar='VMNAMES', nargs='*')
     vmdelete_parser.set_defaults(func=delete_vm)
