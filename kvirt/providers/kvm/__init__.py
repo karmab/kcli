@@ -1168,7 +1168,8 @@ class Kvirt(object):
 {freeformxml}
 {nvmexml}
 {slirpxml}
-</qemu:commandline>""".format(ignitionxml=ignitionxml, macosxml=macosxml, freeformxml=freeformxml, nvmexml=nvmexml, slirpxml=slirpxml)
+</qemu:commandline>""".format(ignitionxml=ignitionxml, macosxml=macosxml, freeformxml=freeformxml, nvmexml=nvmexml,
+                              slirpxml=slirpxml)
         sharedxml = ""
         if sharedfolders:
             for folder in sharedfolders:
@@ -3515,10 +3516,15 @@ class Kvirt(object):
             return {'result': 'failure', 'reason': f"Invalid Cidr {cidr}"}
         if cidr in cidrs:
             return {'result': 'failure', 'reason': f"Cidr {cidr} already exists"}
-        gateway = str(cidr_range[1])
+        gateway_index = overrides.get('gateway_index')
+        if gateway_index is not None and isinstance(gateway_index, int):
+            gateway_index = int(gateway_index)
+        else:
+            gateway_index = cidr_range[1]
+        gateway = str(gateway_index)
         family = 'ipv6' if ':' in gateway else 'ipv4'
         if dhcp:
-            start = overrides.get('dhcp_start') or str(cidr_range[2])
+            start = overrides.get('dhcp_start') or str(gateway_index + 1)
             end = overrides.get('dhcp_end') or str(cidr_range[65535 if family == 'ipv6' else -2])
             dhcpxml = f"<dhcp><range start='{start}' end='{end}'/>"
             if 'pxe' in overrides:
