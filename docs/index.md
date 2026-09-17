@@ -73,7 +73,7 @@ For rhel based OS (*fedora*/*rhel or centos*), you can run this:
 
 ```
 sudo dnf -y copr enable karmab/kcli
-uname -r | grep -q el9_ && sudo sed -i 's@epel@centos-stream@g' '/etc/yum.repos.d/_copr:copr.fedorainfracloud.org:karmab:kcli.repo'
+uname -r | grep -q el9 && sudo sed -i 's@epel@centos-stream@g' '/etc/yum.repos.d/_copr:copr.fedorainfracloud.org:karmab:kcli.repo'
 sudo dnf -y install kcli
 ```
 
