@@ -1898,6 +1898,9 @@ class Kvirt(object):
             e = element.find('{kvirt}redfish_iso')
             if e is not None:
                 yamlinfo['redfish_iso'] = e.text
+            e = element.find('{kvirt}redfish_refresh')
+            if e is not None:
+                yamlinfo['redfish_refresh'] = e.text
             e = element.find('{kvirt}user')
             if e is not None:
                 yamlinfo['user'] = e.text

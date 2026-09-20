@@ -831,6 +831,8 @@ class Kconfig(Kbaseconfig):
             metadata['owner'] = profile.get('owner') or overrides.get('owner')
         if 'redfish_iso' in profile or 'redfish_iso' in overrides:
             metadata['redfish_iso'] = profile.get('redfish_iso') or overrides.get('redfish_iso')
+        if 'redfish_refresh' in profile or 'redfish_refresh' in overrides:
+            metadata['redfish_refresh'] = profile.get('redfish_refresh') or overrides.get('redfish_refresh')
         vmuser = profile.get('vmuser') or overrides.get('vmuser') or profile.get('user') or overrides.get('user')
         if vmuser is not None:
             metadata['user'] = vmuser
