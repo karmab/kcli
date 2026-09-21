@@ -238,7 +238,7 @@ def offline_image(version='stable', tag=OPENSHIFT_TAG, pull_secret='openshift_pu
         if version == "nightly" and str(tag).count('.') == 1:
             nightly_url = f"https://amd64.ocp.releases.ci.openshift.org/api/v1/releasestream/{tag}.0-0.nightly/latest"
             tag = json.loads(urlopen(nightly_url).read())['name']
-        cmd = f"oc adm release info registry.ci.openshift.org/ocp/release:{tag} -a {pull_secret}"
+        cmd = f"oc adm release info registry.ci.openshift.org/ocp/{ocp_release_repo(tag)}:{tag} -a {pull_secret}"
         for line in os.popen(cmd).readlines():
             if 'Pull From: ' in str(line):
                 offline = line.replace('Pull From: ', '').strip()
@@ -287,6 +287,22 @@ def get_installer_minor(installer_version):
     if '.' not in installer_version:
         return 100
     return int(installer_version.split('.')[1])
+
+
+def ocp_release_repo(tag):
+    """Return the app.ci imagestream name backing the ocp release payload for tag.
+
+    Historically all ocp release payloads lived in the ocp/release imagestream
+    regardless of minor version. Starting with OpenShift 5, each major version
+    got its own ocp/release-<major> imagestream instead (e.g. release-5 for
+    5.y), so release/nightly/ci tags need to target that imagestream instead
+    of the original one once the major version goes beyond 4.
+    """
+    try:
+        major = int(str(tag).split('.')[0])
+    except ValueError:
+        major = 4
+    return 'release' if major <= 4 else f'release-{major}'
 
 
 def get_release_image():
@@ -391,7 +407,7 @@ def get_ci_installer(pull_secret, tag=None, macosx=False, debug=False, nightly=F
             tag = f'registry.ci.openshift.org/ocp-arm64/release-arm64:{tag}'
         else:
             basetag = 'ocp'
-            tag = f'registry.ci.openshift.org/{basetag}/release:{tag}'
+            tag = f'registry.ci.openshift.org/{basetag}/{ocp_release_repo(tag)}:{tag}'
     os.environ['OPENSHIFT_RELEASE_IMAGE'] = tag
     pprint(f'Downloading openshift-install {tag} in current directory')
     binary = 'openshift-baremetal-install' if baremetal else 'openshift-install'
@@ -956,7 +972,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 tag = f'registry.ci.openshift.org/ocp-arm64/release-arm64:{tag}'
             else:
                 basetag = 'ocp'
-                tag = f'registry.ci.openshift.org/{basetag}/release:{tag}'
+                tag = f'registry.ci.openshift.org/{basetag}/{ocp_release_repo(tag)}:{tag}'
     which_openshift = which('openshift-install')
     openshift_dir = os.path.dirname(which_openshift) if which_openshift is not None else '.'
     if which_openshift is None:
