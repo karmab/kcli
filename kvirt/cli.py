@@ -3739,8 +3739,11 @@ def cli():
     kubeekscreate_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
     kubeekscreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubeekscreate_parser.set_defaults(func=create_eks_kube)
-    kubecreate_subparsers.add_parser('eks', parents=[kubeekscreate_parser], description=kubeekscreate_desc,
-                                     help=kubeekscreate_desc, epilog=kubeekscreate_epilog,
+    kubecreate_subparsers.add_parser('eks',
+                                     parents=[kubeekscreate_parser],
+                                     description=kubeekscreate_desc,
+                                     help=kubeekscreate_desc,
+                                     epilog=kubeekscreate_epilog,
                                      formatter_class=rawhelp)
 
     kubegenericcreate_desc = 'Create Generic Kube'
@@ -3750,7 +3753,8 @@ def cli():
     kubegenericcreate_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
     kubegenericcreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubegenericcreate_parser.set_defaults(func=create_generic_kube)
-    kubecreate_subparsers.add_parser('generic', parents=[kubegenericcreate_parser],
+    kubecreate_subparsers.add_parser('generic',
+                                     parents=[kubegenericcreate_parser],
                                      description=kubegenericcreate_desc,
                                      help=kubegenericcreate_desc,
                                      epilog=kubegenericcreate_epilog,
@@ -3763,8 +3767,11 @@ def cli():
     kubegkecreate_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
     kubegkecreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubegkecreate_parser.set_defaults(func=create_gke_kube)
-    kubecreate_subparsers.add_parser('gke', parents=[kubegkecreate_parser], description=kubegkecreate_desc,
-                                     help=kubegkecreate_desc, epilog=kubegkecreate_epilog,
+    kubecreate_subparsers.add_parser('gke',
+                                     parents=[kubegkecreate_parser],
+                                     description=kubegkecreate_desc,
+                                     help=kubegkecreate_desc,
+                                     epilog=kubegkecreate_epilog,
                                      formatter_class=rawhelp)
 
     kubehypershiftcreate_desc = 'Create Hypershift Kube'
@@ -3774,11 +3781,13 @@ def cli():
     kubehypershiftcreate_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
     kubehypershiftcreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubehypershiftcreate_parser.set_defaults(func=create_hypershift_kube)
-    kubecreate_subparsers.add_parser('hypershift', parents=[kubehypershiftcreate_parser],
+    kubecreate_subparsers.add_parser('hypershift',
+                                     parents=[kubehypershiftcreate_parser],
                                      description=kubehypershiftcreate_desc,
                                      help=kubehypershiftcreate_desc,
                                      epilog=kubehypershiftcreate_epilog,
-                                     formatter_class=rawhelp)
+                                     formatter_class=rawhelp,
+                                     aliases=['hcp'])
 
     kubek3screate_desc = 'Create K3s Kube'
     kubek3screate_epilog = f"Examples:\n\n{examples.kubek3screate}"
@@ -3787,7 +3796,8 @@ def cli():
     kubek3screate_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
     kubek3screate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubek3screate_parser.set_defaults(func=create_k3s_kube)
-    kubecreate_subparsers.add_parser('k3s', parents=[kubek3screate_parser],
+    kubecreate_subparsers.add_parser('k3s',
+                                     parents=[kubek3screate_parser],
                                      description=kubek3screate_desc,
                                      help=kubek3screate_desc,
                                      epilog=kubek3screate_epilog,
@@ -3800,7 +3810,8 @@ def cli():
     kubemicroshiftcreate_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
     kubemicroshiftcreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubemicroshiftcreate_parser.set_defaults(func=create_microshift_kube)
-    kubecreate_subparsers.add_parser('microshift', parents=[kubemicroshiftcreate_parser],
+    kubecreate_subparsers.add_parser('microshift',
+                                     parents=[kubemicroshiftcreate_parser],
                                      description=kubemicroshiftcreate_desc,
                                      help=kubemicroshiftcreate_desc,
                                      epilog=kubemicroshiftcreate_epilog,
@@ -3813,7 +3824,8 @@ def cli():
     kubeopenshiftcreate_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
     kubeopenshiftcreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubeopenshiftcreate_parser.set_defaults(func=create_openshift_kube)
-    kubecreate_subparsers.add_parser('openshift', parents=[kubeopenshiftcreate_parser],
+    kubecreate_subparsers.add_parser('openshift',
+                                     parents=[kubeopenshiftcreate_parser],
                                      description=kubeopenshiftcreate_desc,
                                      help=kubeopenshiftcreate_desc,
                                      epilog=kubeopenshiftcreate_epilog,
@@ -3826,7 +3838,8 @@ def cli():
     kuberke2create_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
     kuberke2create_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kuberke2create_parser.set_defaults(func=create_rke2_kube)
-    kubecreate_subparsers.add_parser('rke2', parents=[kuberke2create_parser],
+    kubecreate_subparsers.add_parser('rke2',
+                                     parents=[kuberke2create_parser],
                                      description=kuberke2create_desc,
                                      help=kuberke2create_desc,
                                      epilog=kuberke2create_epilog,
@@ -3834,17 +3847,24 @@ def cli():
 
     lbcreate_desc = 'Create Load Balancer'
     lbcreate_epilog = f"Examples:\n\n{examples.lbcreate}"
-    lbcreate_parser = create_subparsers.add_parser('lb', description=lbcreate_desc, help=lbcreate_desc,
-                                                   epilog=lbcreate_epilog, formatter_class=rawhelp,
-                                                   parents=[parent_parser], aliases=['loadbalancer'])
+    lbcreate_parser = create_subparsers.add_parser('lb',
+                                                   description=lbcreate_desc,
+                                                   help=lbcreate_desc,
+                                                   epilog=lbcreate_epilog,
+                                                   formatter_class=rawhelp,
+                                                   parents=[parent_parser],
+                                                   aliases=['loadbalancer'])
     lbcreate_parser.add_argument('name', metavar='NAME', nargs='?')
     lbcreate_parser.set_defaults(func=create_lb)
 
     networkcreate_desc = 'Create Network'
     networkcreate_epilog = f"Examples:\n\n{examples.networkcreate}"
-    networkcreate_parser = create_subparsers.add_parser('network', description=networkcreate_desc,
-                                                        help=networkcreate_desc, parents=[parent_parser],
-                                                        epilog=networkcreate_epilog, formatter_class=rawhelp,
+    networkcreate_parser = create_subparsers.add_parser('network',
+                                                        description=networkcreate_desc,
+                                                        help=networkcreate_desc,
+                                                        parents=[parent_parser],
+                                                        epilog=networkcreate_epilog,
+                                                        formatter_class=rawhelp,
                                                         aliases=['net'])
     networkcreate_parser.add_argument('-i', '--isolated', action='store_true', help='Isolated Network')
     networkcreate_parser.add_argument('-c', '--cidr', help='Cidr of the net', metavar='CIDR')
@@ -3862,8 +3882,12 @@ def cli():
     isocreate_parser.add_argument('-f', '--ignitionfile', help='Ignition file')
     isocreate_parser.add_argument('cluster', metavar='CLUSTER', help='Cluster')
     isocreate_parser.set_defaults(func=create_openshift_iso)
-    create_subparsers.add_parser('openshift-iso', parents=[isocreate_parser], description=isocreate_desc,
-                                 help=isocreate_desc, epilog=isocreate_epilog, formatter_class=rawhelp)
+    create_subparsers.add_parser('openshift-iso',
+                                 parents=[isocreate_parser],
+                                 description=isocreate_desc,
+                                 help=isocreate_desc,
+                                 epilog=isocreate_epilog,
+                                 formatter_class=rawhelp)
 
     openshiftsnocreate_desc = 'Create Openshift SNO'
     openshiftsnocreate_epilog = f"Examples:\n\n{examples.openshiftsnocreate}"
@@ -3872,14 +3896,20 @@ def cli():
     openshiftsnocreate_parser.add_argument('-t', '--threaded', help='Run threaded', action='store_true')
     openshiftsnocreate_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     openshiftsnocreate_parser.set_defaults(func=create_openshift_sno)
-    create_subparsers.add_parser('openshift-sno', parents=[openshiftsnocreate_parser],
-                                 description=openshiftsnocreate_desc, help=openshiftsnocreate_desc,
-                                 epilog=openshiftsnocreate_epilog, formatter_class=rawhelp)
+    create_subparsers.add_parser('openshift-sno',
+                                 parents=[openshiftsnocreate_parser],
+                                 description=openshiftsnocreate_desc,
+                                 help=openshiftsnocreate_desc,
+                                 epilog=openshiftsnocreate_epilog,
+                                 formatter_class=rawhelp)
 
     plancreate_desc = 'Create Plan'
     plancreate_epilog = f"Examples:\n\n{examples.plancreate}"
-    plancreate_parser = create_subparsers.add_parser('plan', description=plancreate_desc, help=plancreate_desc,
-                                                     parents=[parent_parser], epilog=plancreate_epilog,
+    plancreate_parser = create_subparsers.add_parser('plan',
+                                                     description=plancreate_desc,
+                                                     help=plancreate_desc,
+                                                     parents=[parent_parser],
+                                                     epilog=plancreate_epilog,
                                                      formatter_class=rawhelp)
     plancreate_parser.add_argument('-A', '--ansible', help='Generate ansible inventory', action='store_true')
     plancreate_parser.add_argument('-u', '--url', help='Url for plan', metavar='URL', type=valid_url)
@@ -3894,9 +3924,12 @@ def cli():
 
     plandatacreate_desc = 'Create Cloudinit/Ignition from plan file'
     plandatacreate_epilog = f"Examples:\n\n{examples.plandatacreate}"
-    plandatacreate_parser = create_subparsers.add_parser('plan-data', description=plandatacreate_desc,
-                                                         help=plandatacreate_desc, parents=[parent_parser],
-                                                         epilog=plandatacreate_epilog, formatter_class=rawhelp)
+    plandatacreate_parser = create_subparsers.add_parser('plan-data',
+                                                         description=plandatacreate_desc,
+                                                         help=plandatacreate_desc,
+                                                         parents=[parent_parser],
+                                                         epilog=plandatacreate_epilog,
+                                                         formatter_class=rawhelp)
     plandatacreate_parser.add_argument('-f', '--inputfile', help='Input Plan file', default='kcli_plan.yml')
     plandatacreate_parser.add_argument('--outputdir', '-o', help='Output directory', metavar='OUTPUTDIR')
     plandatacreate_parser.add_argument('name', metavar='VMNAME', nargs='?', type=valid_fqdn)
@@ -3904,16 +3937,20 @@ def cli():
 
     plantemplatecreate_desc = 'Create plan template'
     plantemplatecreate_epilog = f"Examples:\n\n{examples.plantemplatecreate}"
-    plantemplatecreate_parser = create_subparsers.add_parser('plan-template', description=plantemplatecreate_desc,
-                                                             help=plantemplatecreate_desc, parents=[parent_parser],
-                                                             epilog=plantemplatecreate_epilog, formatter_class=rawhelp)
+    plantemplatecreate_parser = create_subparsers.add_parser('plan-template',
+                                                             description=plantemplatecreate_desc,
+                                                             help=plantemplatecreate_desc,
+                                                             parents=[parent_parser],
+                                                             epilog=plantemplatecreate_epilog,
+                                                             formatter_class=rawhelp)
     plantemplatecreate_parser.add_argument('-x', '--skipfiles', action='store_true', help='Skip files in assets')
     plantemplatecreate_parser.add_argument('-y', '--skipscripts', action='store_true', help='Skip scripts in assets')
     plantemplatecreate_parser.add_argument('directory', metavar='DIR')
     plantemplatecreate_parser.set_defaults(func=create_plantemplate)
 
     plansnapshotcreate_desc = 'Create Plan Snapshot'
-    plansnapshotcreate_parser = create_subparsers.add_parser('plan-snapshot', description=plansnapshotcreate_desc,
+    plansnapshotcreate_parser = create_subparsers.add_parser('plan-snapshot',
+                                                             description=plansnapshotcreate_desc,
                                                              help=plansnapshotcreate_desc,
                                                              aliases=['cluster-snapshot'])
     plansnapshotcreate_parser.add_argument('plan', metavar='PLAN')
@@ -3921,7 +3958,9 @@ def cli():
     plansnapshotcreate_parser.set_defaults(func=create_snapshot_plan)
 
     poolcreate_desc = 'Create Pool'
-    poolcreate_parser = create_subparsers.add_parser('pool', description=poolcreate_desc, help=poolcreate_desc)
+    poolcreate_parser = create_subparsers.add_parser('pool',
+                                                     description=poolcreate_desc,
+                                                     help=poolcreate_desc)
     poolcreate_parser.add_argument('-f', '--full', action='store_true')
     poolcreate_parser.add_argument('-t', '--pooltype', help='Type of the pool', choices=('dir', 'lvm', 'zfs'),
                                    default='dir')
@@ -4623,7 +4662,8 @@ def cli():
     kubehypershiftinfo_desc = 'Info Hypershift Kube'
     kubehypershiftinfo_parser = kubeinfo_subparsers.add_parser('hypershift', description=kubehypershiftinfo_desc,
                                                                help=kubehypershiftinfo_desc,
-                                                               parents=[output_parser])
+                                                               parents=[output_parser],
+                                                               aliases=['hcp'])
     kubehypershiftinfo_parser.add_argument('cluster', metavar='CLUSTER', nargs='?', type=valid_cluster)
     kubehypershiftinfo_parser.set_defaults(func=info_hypershift_kube)
 
@@ -5031,8 +5071,11 @@ def cli():
     kubegkescale_parser.add_argument('-w', '--workers', help='Total number of workers', type=int)
     kubegkescale_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='mykube')
     kubegkescale_parser.set_defaults(func=scale_gke_kube)
-    kubescale_subparsers.add_parser('gke', parents=[kubegkescale_parser], description=kubegkescale_desc,
-                                    help=kubegkescale_desc, epilog=kubegkescale_epilog, formatter_class=rawhelp)
+    kubescale_subparsers.add_parser('gke', parents=[kubegkescale_parser],
+                                    description=kubegkescale_desc,
+                                    help=kubegkescale_desc,
+                                    epilog=kubegkescale_epilog,
+                                    formatter_class=rawhelp)
 
     kubehypershiftscale_desc = 'Scale Hypershift Kube'
     kubehypershiftscale_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
@@ -5041,7 +5084,8 @@ def cli():
     kubehypershiftscale_parser.set_defaults(func=scale_hypershift_kube)
     kubescale_subparsers.add_parser('hypershift', parents=[kubehypershiftscale_parser],
                                     description=kubehypershiftscale_desc,
-                                    help=kubehypershiftscale_desc)
+                                    help=kubehypershiftscale_desc,
+                                    aliases=['hcp'])
 
     kubek3sscale_desc = 'Scale K3s Kube'
     kubek3sscale_epilog = f"Examples:\n\n{examples.kubek3sscale}"
@@ -5243,15 +5287,21 @@ def cli():
     kubegenericupdate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubegenericupdate_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='mykube')
     kubegenericupdate_parser.set_defaults(func=update_generic_kube)
-    kubeupdate_subparsers.add_parser('generic', parents=[kubegenericupdate_parser], description=kubegenericupdate_desc,
-                                     help=kubegenericupdate_desc, aliases=['kubeadm'])
+    kubeupdate_subparsers.add_parser('generic',
+                                     parents=[kubegenericupdate_parser],
+                                     description=kubegenericupdate_desc,
+                                     help=kubegenericupdate_desc,
+                                     aliases=['kubeadm'])
 
     kubehypershiftupdate_desc = 'Update Hypershift Kube'
     kubehypershiftupdate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
     kubehypershiftupdate_parser.add_argument('cluster', metavar='CLUSTER', type=valid_cluster, default='myhypershift')
     kubehypershiftupdate_parser.set_defaults(func=update_hypershift_kube)
-    kubeupdate_subparsers.add_parser('hypershift', parents=[kubehypershiftupdate_parser],
-                                     description=kubehypershiftupdate_desc, help=kubehypershiftupdate_desc)
+    kubeupdate_subparsers.add_parser('hypershift',
+                                     parents=[kubehypershiftupdate_parser],
+                                     description=kubehypershiftupdate_desc,
+                                     help=kubehypershiftupdate_desc,
+                                     aliases=['hcp'])
 
     kubek3supdate_desc = 'Update K3s Kube'
     kubek3supdate_parser = argparse.ArgumentParser(add_help=False, parents=[parent_parser])
