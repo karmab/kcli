@@ -39,7 +39,7 @@ env:
 
 jobs:
     deploy-okd:
-      runs-on: u08
+      runs-on: u09
       steps:
        - uses: actions/checkout@v2
        - run: git pull origin ${GITHUB_REF##*/}

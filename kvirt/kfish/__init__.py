@@ -419,7 +419,7 @@ class Redfish(object):
             return result
         except Exception as e:
             if self.debug:
-                pprint(f"Dell iDRAC10: /Settings PATCH failed, trying iDRAC attributes")
+                pprint(f"Dell iDRAC10: /Settings PATCH failed with {e}, trying iDRAC attributes")
             return self._set_iso_once_dell_idrac_attributes()
 
     def _set_iso_once_dell_idrac_attributes(self):
@@ -497,10 +497,10 @@ class Redfish(object):
         request = Request(reset_url, headers=self.headers, method='POST', data=data)
         return urlopen(request, context=self.context)
 
-    def set_iso(self, iso_url):
+    def set_iso(self, iso_url, force=False):
         result = None
         current_iso, inserted = self.get_iso_status()
-        if current_iso == iso_url and inserted:
+        if current_iso == iso_url and inserted and not force:
             pprint(f"Iso {iso_url} already set")
         else:
             if inserted:
