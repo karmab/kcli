@@ -1155,7 +1155,8 @@ class Kvirt(object):
                     nvmexml += """<qemu:arg value='-drive'/>
 <qemu:arg value='file={diskpath},format=qcow2,if=none,id=NVME{index}'/>
 <qemu:arg value='-device'/>
-<qemu:arg value='nvme,drive=NVME{index},serial=nvme-{index}'/>""".format(index=index, diskpath=diskpath)
+<qemu:arg value='nvme,drive=NVME{index},serial=nvme-{index},addr={addr}'/>""".format(index=index, diskpath=diskpath,
+                                                                                     addr=0x10 + index)
             slirpxml = ""
             if slirp:
                 slirpxml = f"""<qemu:arg value='-netdev'/>
