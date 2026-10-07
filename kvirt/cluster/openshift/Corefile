@@ -12,8 +12,13 @@
         {% endif %}
         fallthrough
     }
-    template ANY ANY apps.{{ cluster }}.{{ domain }} {
-       answer "{% raw %}{{ .Name }}{% endraw %} {{ 'AAAA' if ipv6 else 'A' }} {{ ingress_ip if ingress_ip != None else api_ip }}"
+{% set apps_ip = ingress_ip if ingress_ip != None else api_ip %}
+{% set apps_type = 'AAAA' if ':' in apps_ip else 'A' %}
+    template IN {{ apps_type }} apps.{{ cluster }}.{{ domain }} {
+       answer "{% raw %}{{ .Name }}{% endraw %} {{ apps_type }} {{ apps_ip }}"
+    }
+    template IN {{ 'A' if apps_type == 'AAAA' else 'AAAA' }} apps.{{ cluster }}.{{ domain }} {
+       rcode NOERROR
     }
     forward . {{ coredns_nameserver or "NAMESERVER" }}
     cache 30
