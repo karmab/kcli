@@ -186,7 +186,7 @@ def update_openshift_etc_hosts(cluster, domain, host_ip, ingress_ip=None):
         if not correct:
             entries = [f"api.{cluster}.{domain}"]
             ingress_entries = [f"{x}.{cluster}.{domain}" for x in ['console-openshift-console.apps',
-                               'oauth-openshift.apps', 'prometheus-k8s-openshift-monitoring.apps']]
+                               'oauth-openshift.apps', 'prometheus-k8s-openshift-monitoring.apps', 'rh-ai']]
             if ingress_ip is None:
                 entries.extend(ingress_entries)
             entries = ' '.join(entries)
@@ -197,7 +197,7 @@ def update_openshift_etc_hosts(cluster, domain, host_ip, ingress_ip=None):
     else:
         entries = [f"api.{cluster}.{domain}"]
         ingress_entries = [f"{x}.{cluster}.{domain}" for x in ['console-openshift-console.apps',
-                                                               'oauth-openshift.apps',
+                                                               'oauth-openshift.apps', 'rh-ai',
                                                                'prometheus-k8s-openshift-monitoring.apps']]
         if ingress_ip is None:
             entries.extend(ingress_entries)
@@ -237,7 +237,7 @@ def offline_image(version='stable', tag=OPENSHIFT_TAG, pull_secret='openshift_pu
         if version == "nightly" and str(tag).count('.') == 1:
             nightly_url = f"https://amd64.ocp.releases.ci.openshift.org/api/v1/releasestream/{tag}.0-0.nightly/latest"
             tag = json.loads(urlopen(nightly_url).read())['name']
-        cmd = f"oc adm release info registry.ci.openshift.org/ocp/release:{tag} -a {pull_secret}"
+        cmd = f"oc adm release info registry.ci.openshift.org/ocp/{ocp_release_repo(tag)}:{tag} -a {pull_secret}"
         for line in os.popen(cmd).readlines():
             if 'Pull From: ' in str(line):
                 offline = line.replace('Pull From: ', '').strip()
@@ -286,6 +286,22 @@ def get_installer_minor(installer_version):
     if '.' not in installer_version:
         return 100
     return int(installer_version.split('.')[1])
+
+
+def ocp_release_repo(tag):
+    """Return the app.ci imagestream name backing the ocp release payload for tag.
+
+    Historically all ocp release payloads lived in the ocp/release imagestream
+    regardless of minor version. Starting with OpenShift 5, each major version
+    got its own ocp/release-<major> imagestream instead (e.g. release-5 for
+    5.y), so release/nightly/ci tags need to target that imagestream instead
+    of the original one once the major version goes beyond 4.
+    """
+    try:
+        major = int(str(tag).split('.')[0])
+    except ValueError:
+        major = 4
+    return 'release' if major <= 4 else f'release-{major}'
 
 
 def get_release_image():
@@ -390,7 +406,7 @@ def get_ci_installer(pull_secret, tag=None, macosx=False, debug=False, nightly=F
             tag = f'registry.ci.openshift.org/ocp-arm64/release-arm64:{tag}'
         else:
             basetag = 'ocp'
-            tag = f'registry.ci.openshift.org/{basetag}/release:{tag}'
+            tag = f'registry.ci.openshift.org/{basetag}/{ocp_release_repo(tag)}:{tag}'
     os.environ['OPENSHIFT_RELEASE_IMAGE'] = tag
     pprint(f'Downloading openshift-install {tag} in current directory')
     binary = 'openshift-baremetal-install' if baremetal else 'openshift-install'
@@ -955,7 +971,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 tag = f'registry.ci.openshift.org/ocp-arm64/release-arm64:{tag}'
             else:
                 basetag = 'ocp'
-                tag = f'registry.ci.openshift.org/{basetag}/release:{tag}'
+                tag = f'registry.ci.openshift.org/{basetag}/{ocp_release_repo(tag)}:{tag}'
     which_openshift = which('openshift-install')
     openshift_dir = os.path.dirname(which_openshift) if which_openshift is not None else '.'
     if which_openshift is None:
@@ -1047,12 +1063,12 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             msg = f"Missing {image}. Indicate correct image in your parameters file..."
             return {'result': 'failure', 'reason': msg}
     base_url = 'quay.io/okd/scos-release' if okd else 'quay.io/openshift-release-dev/ocp-release'
-    if provider in virt_providers and platform.machine() != arch:
-        pprint(f"Forcing release image to {arch}")
-        os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = f'{base_url}:{INSTALLER_VERSION}-{arch}'
-    elif provider in cloud_providers and platform.machine() != 'x86_64':
-        pprint("Forcing release image to x86_64")
-        os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = f'{base_url}:{INSTALLER_VERSION}-x86_64'
+    onprem_arch_diff = provider in virt_providers and platform.machine() != arch
+    cloud_arch_diff = provider in cloud_providers and platform.machine() != 'x86_64'
+    if (onprem_arch_diff or cloud_arch_diff) and not okd:
+        dest_arch = 'x86_64' if provider in cloud_providers else arch
+        pprint(f"Forcing release image to {dest_arch}")
+        os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = f'{base_url}:{INSTALLER_VERSION}-{dest_arch}'
     overrides['image'] = image
     static_networking_ctlplane, static_networking_worker = False, False
     macentries = []
@@ -1543,7 +1559,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         elif sno_dns:
             warning("Add the following entry in /etc/hosts if needed")
             dnsentries = ['api', 'console-openshift-console.apps', 'oauth-openshift.apps',
-                          'prometheus-k8s-openshift-monitoring.apps']
+                          'prometheus-k8s-openshift-monitoring.apps', 'rh-ai']
             dnsentry = ' '.join([f"{entry}.{cluster}.{domain}" for entry in dnsentries])
             warning(f"$your_node_ip {dnsentry}")
         if baremetal_hosts:
@@ -1699,7 +1715,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if arbiters > 0:
             pprint("Deploying arbiters")
             threaded = data['threaded'] or data['arbiters_threaded']
-            result = config.plan(plan, inputfile=f'{plandir}/cloud_arbiters.yml', overrides=overrides, threaded=threaded)
+            result = config.plan(plan, inputfile=f'{plandir}/cloud_arbiters.yml', overrides=overrides,
+                                 threaded=threaded)
             if result['result'] != 'success':
                 return result
         if workers == 0:

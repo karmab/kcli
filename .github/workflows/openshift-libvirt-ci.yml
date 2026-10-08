@@ -1,11 +1,11 @@
-name: OPENSHIFT-CI-LIBVIRT
+name: OPENSHIFT-CI
 on:
   workflow_dispatch:
     inputs:
       PLAN:
         description: 'Plan Name'
         required: true
-        default: ci-libvirt
+        default: ci
       PARAMFILE:
         description: 'paramfile'
         required: false

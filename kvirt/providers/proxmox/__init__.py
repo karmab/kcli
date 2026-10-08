@@ -354,6 +354,7 @@ class Kproxmox(Kbase):
         nets=[],
         iso=None,
         vnc=True,
+        vncpassword=None,
         cloudinit=True,
         reserveip=False,
         reservedns=False,
@@ -389,6 +390,8 @@ class Kproxmox(Kbase):
         vmuser=None,
         guestagent=True,
     ):
+        arch = overrides.get('arch')
+        default_machine = 'virt' if arch == 'aarch64' else 'q35'
         imagepool = self.imagepool or pool
         if overrides.get('lxc', False):
             if image is None:
@@ -419,7 +422,7 @@ class Kproxmox(Kbase):
         uefi_legacy = overrides.get('uefi_legacy', False)
         secureboot = overrides.get('secureboot', False)
         if (uefi or uefi_legacy or secureboot or enableiommu):
-            machine = 'q35'
+            machine = default_machine
         # Check if vm already exists
         if self._get_vm_id(name) is not None:
             return {"result": "failure", "reason": f"VM {name} already exists"}
@@ -507,8 +510,8 @@ class Kproxmox(Kbase):
                 nets[index]['noconf'] = True
                 sriov_nic = True
                 if machine is None:
-                    machine = 'q35'
-                    warning("Forcing machine type to q35")
+                    machine = default_machine
+                    warning(f"Forcing machine type to {default_machine}")
             nettype = net.get('type', 'virtio')
             bridge = self._get_default_network(node) if net['name'] == 'default' else net["name"]
             vm_data[f'net{index}'] = f"model={nettype},bridge={bridge}"
@@ -585,7 +588,7 @@ class Kproxmox(Kbase):
             vm_data['cicustom'] += f',user=local:snippets/{name}-userdata.yaml'
             if netdata is not None:
                 vm_data['cicustom'] += f',network=local:snippets/{name}-netdata.yaml'
-            vm_data['ide0'] = f"{pool}:cloudinit"
+            vm_data[f'scsi{len(disks)}' if arch == 'aarch64' else 'ide0'] = f"{pool}:cloudinit"
 
         initial_disks = self._get_current_disks(new_vm.config.get())
         # Disks

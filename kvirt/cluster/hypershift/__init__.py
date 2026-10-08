@@ -417,7 +417,7 @@ def create(config, plandir, cluster, overrides):
         result = config.create_app_openshift(app_name, app_data)
         if result != 0:
             return {'result': 'failure', 'reason': "Couldnt install kubevirt properly"}
-    kubeconfig = os.environ.get('KUBECONFIG')
+    kubeconfig = os.path.expanduser(os.environ.get('KUBECONFIG'))
     kubeconfigdir = os.path.dirname(kubeconfig) if kubeconfig is not None else os.path.expanduser("~/.kube")
     kubeconfig = os.path.basename(kubeconfig) if kubeconfig is not None else 'config'
     hosted_crd_cmd = 'oc get crd hostedclusters.hypershift.openshift.io -o yaml 2>/dev/null'

@@ -22,7 +22,7 @@ elif [ "$(which dnf)" != "" ] ; then
     exit 1
   fi
   # workaround for epel9 copr build failures
-  uname -r | grep -q el9_ && sudo sed -i 's@epel@centos-stream@g' '/etc/yum.repos.d/_copr:copr.fedorainfracloud.org:karmab:kcli.repo'
+  uname -r | grep -q el9 && sudo sed -i 's@epel@centos-stream@g' '/etc/yum.repos.d/_copr:copr.fedorainfracloud.org:karmab:kcli.repo'
 elif [ "$(which apt-get)" != "" ] ; then
   packagefound=true
   echo -e "${BLUE}Installing using deb package${NC}"

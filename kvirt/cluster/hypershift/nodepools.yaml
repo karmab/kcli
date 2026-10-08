@@ -22,6 +22,7 @@ spec:
   management:
     autoRepair: false
     upgradeType: InPlace
+  nodeDrainTimeout: 60s
   platform:
 {% if platform == 'kubevirt' %}
     kubevirt:

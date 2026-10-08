@@ -282,7 +282,11 @@ class Ksushy():
                     token_iso = os.path.basename(image).split('?')[0]
                     if token_iso != iso:
                         iso = f"boot-{token_iso}.iso"
+                redfish_refresh = info.get('redfish_refresh', False)
                 isos = [os.path.basename(i) for i in config.k.volumes(iso=True)]
+                if iso in isos and redfish_refresh:
+                    config.k.delete_image(iso, config.pool)
+                    isos.remove(iso)
                 if iso not in isos:
                     result = config.download_image(pool=config.pool, image=iso, url=image)
                     if result['result'] != 'success':

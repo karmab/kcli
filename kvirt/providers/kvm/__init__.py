@@ -2,11 +2,11 @@
 
 from concurrent.futures import ThreadPoolExecutor
 from getpass import getuser
+from ipaddress import ip_address, ip_network
 from kvirt.defaults import IMAGES, METADATA_FIELDS, UBUNTUS
 from kvirt import common
 from kvirt.common import error, pprint, warning, get_ssh_pub_key, success
 from kvirt.providers.kvm.helpers import DHCPKEYWORDS
-from ipaddress import ip_address, ip_network
 from libvirt import open as libvirtopen, registerErrorHandler, libvirtError
 from libvirt import VIR_DOMAIN_AFFECT_LIVE, VIR_DOMAIN_AFFECT_CONFIG
 from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_AGENT as vir_src_agent
@@ -16,18 +16,16 @@ from libvirt import (VIR_DOMAIN_NOSTATE, VIR_DOMAIN_RUNNING, VIR_DOMAIN_BLOCKED,
 from libvirt import VIR_CONNECT_LIST_STORAGE_POOLS_ACTIVE
 from libvirt import VIR_DOMAIN_SNAPSHOT_CREATE_DISK_ONLY, VIR_DOMAIN_SNAPSHOT_CREATE_ATOMIC
 from libvirt import VIR_DOMAIN_BLOCK_COMMIT_ACTIVE, VIR_DOMAIN_BLOCK_JOB_ABORT_PIVOT
-try:
-    from libvirt import VIR_DOMAIN_UNDEFINE_KEEP_NVRAM
-except:
-    pass
+from libvirt import VIR_DOMAIN_UNDEFINE_KEEP_NVRAM
 from pwd import getpwuid
 import json
 import os
-from subprocess import call
+from random import choices
 import re
-import string
+from string import ascii_lowercase
 import sys
 from shutil import which
+from subprocess import call
 from tempfile import TemporaryDirectory
 import time
 from uuid import UUID
@@ -214,12 +212,12 @@ class Kvirt(object):
     def create(self, name, virttype=None, profile='kvirt', flavor=None, plan='kvirt', cpumodel='host-model',
                cpuflags=[], cpupinning=[], numcpus=2, memory=512, guestid='guestrhel764', pool='default', image=None,
                disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None,
-               vnc=True, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=[],
-               cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
-               files=[], enableroot=True, overrides={}, tags=[], storemetadata=False, sharedfolders=[],
-               cmdline=None, placement=[], autostart=False, cpuhotplug=False,
-               memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False, metadata={},
-               securitygroups=[], vmuser=None, guestagent=True):
+               vnc=True, vncpassword=None, cloudinit=True, reserveip=False, reservedns=False, reservehost=False,
+               start=True, keys=[], cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None,
+               tunnel=False, files=[], enableroot=True, overrides={}, tags=[], storemetadata=False, sharedfolders=[],
+               cmdline=None, placement=[], autostart=False, cpuhotplug=False, memoryhotplug=False, numamode=None,
+               numa=[], pcidevices=[], tpm=False, rng=False, metadata={}, securitygroups=[], vmuser=None,
+               guestagent=True):
         bootdev = 1
         namespace = ''
         ignition = False
@@ -928,13 +926,20 @@ class Kvirt(object):
                         msg = open(f'{tmpdir}/error.log').read()
                         return {'result': 'failure', 'reason': msg}
                     self._uploadimage(name, pool=default_storagepool, origin=tmpdir)
-        listen = '0.0.0.0' if self.host not in ['localhost', '127.0.0.1'] else '127.0.0.1'
+        listen = '0.0.0.0' if self.host not in ['localhost', '127.0.0.1'] and not tunnel else '127.0.0.1'
         if not vnc:
             displayxml = ''
         else:
             displayxml = """<input type='mouse' bus='virtio'/>"""
             vncviewerpath = '/Applications/VNC Viewer.app'
-            passwd = "passwd='kcli'" if os.path.exists('/Applications') and not os.path.exists(vncviewerpath) else ''
+            if os.path.exists('/Applications') and not os.path.exists(vncviewerpath):
+                passwd = vncpassword or ''.join(choices(ascii_lowercase, k=6))
+                passwd = f"passwd='{passwd}'"
+            elif vncpassword is not None:
+                passwd = f"passwd='{vncpassword}'"
+            else:
+                passwd = ''
+
             displayxml += """<graphics type='vnc' port='-1' autoport='yes' listen='%s' %s>
 <listen type='address' address='%s'/>
 </graphics>
@@ -1150,7 +1155,8 @@ class Kvirt(object):
                     nvmexml += """<qemu:arg value='-drive'/>
 <qemu:arg value='file={diskpath},format=qcow2,if=none,id=NVME{index}'/>
 <qemu:arg value='-device'/>
-<qemu:arg value='nvme,drive=NVME{index},serial=nvme-{index}'/>""".format(index=index, diskpath=diskpath)
+<qemu:arg value='nvme,drive=NVME{index},serial=nvme-{index},addr={addr}'/>""".format(index=index, diskpath=diskpath,
+                                                                                     addr=0x10 + index)
             slirpxml = ""
             if slirp:
                 slirpxml = f"""<qemu:arg value='-netdev'/>
@@ -1163,7 +1169,8 @@ class Kvirt(object):
 {freeformxml}
 {nvmexml}
 {slirpxml}
-</qemu:commandline>""".format(ignitionxml=ignitionxml, macosxml=macosxml, freeformxml=freeformxml, nvmexml=nvmexml, slirpxml=slirpxml)
+</qemu:commandline>""".format(ignitionxml=ignitionxml, macosxml=macosxml, freeformxml=freeformxml, nvmexml=nvmexml,
+                              slirpxml=slirpxml)
         sharedxml = ""
         if sharedfolders:
             for folder in sharedfolders:
@@ -1771,7 +1778,7 @@ class Kvirt(object):
                     consolecommand += "ssh %s -o LogLevel=QUIET -f -p %s -L %s:127.0.0.1:%s %s@%s sleep 10;"\
                         % (self.identitycommand, self.port, localport, port, self.user, self.host)
                     host = '127.0.0.1'
-                if passwd is not None:
+                if passwd is not None and protocol == 'vnc' and not os.path.exists('/Applications/VNC Viewer.app'):
                     url = f"{protocol}://kcli:{passwd}@{host}:{localport}"
                 else:
                     url = f"{protocol}://{host}:{localport}"
@@ -1892,6 +1899,9 @@ class Kvirt(object):
             e = element.find('{kvirt}redfish_iso')
             if e is not None:
                 yamlinfo['redfish_iso'] = e.text
+            e = element.find('{kvirt}redfish_refresh')
+            if e is not None:
+                yamlinfo['redfish_refresh'] = e.text
             e = element.find('{kvirt}user')
             if e is not None:
                 yamlinfo['user'] = e.text
@@ -2976,11 +2986,11 @@ class Kvirt(object):
         else:
             diskindex = currentdisk
         if interface == 'scsi':
-            diskdev = f"sd{string.ascii_lowercase[scsi_index]}"
+            diskdev = f"sd{ascii_lowercase[scsi_index]}"
         elif interface == 'ide':
-            diskdev = f"hd{string.ascii_lowercase[ide_index]}"
+            diskdev = f"hd{ascii_lowercase[ide_index]}"
         else:
-            diskdev = f"vd{string.ascii_lowercase[virtio_index]}"
+            diskdev = f"vd{ascii_lowercase[virtio_index]}"
         if existing is None:
             storagename = f"{name}_{diskindex}.img"
             diskpath = self.create_disk(name=storagename, size=size, pool=pool, thin=thin, image=image)
@@ -3510,10 +3520,15 @@ class Kvirt(object):
             return {'result': 'failure', 'reason': f"Invalid Cidr {cidr}"}
         if cidr in cidrs:
             return {'result': 'failure', 'reason': f"Cidr {cidr} already exists"}
-        gateway = str(cidr_range[1])
+        gateway_index = overrides.get('gateway_index')
+        if gateway_index is not None and isinstance(gateway_index, int):
+            gateway_index = int(gateway_index)
+        else:
+            gateway_index = cidr_range[1]
+        gateway = str(gateway_index)
         family = 'ipv6' if ':' in gateway else 'ipv4'
         if dhcp:
-            start = overrides.get('dhcp_start') or str(cidr_range[2])
+            start = overrides.get('dhcp_start') or str(gateway_index + 1)
             end = overrides.get('dhcp_end') or str(cidr_range[65535 if family == 'ipv6' else -2])
             dhcpxml = f"<dhcp><range start='{start}' end='{end}'/>"
             if 'pxe' in overrides:

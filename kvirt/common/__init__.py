@@ -109,6 +109,8 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
             prefix = 'enc'
         elif machine == 'vsphere':
             prefix = 'ens19'
+        elif machine == 'q35':
+            prefix = 'enp3s'
         else:
             prefix = 'enp1s'
     dns_hack = image is not None and is_debian_new(image)
@@ -138,6 +140,8 @@ def cloudinit(name, keys=[], cmds=[], nets=[], gateway=None, dns=None, domain=No
                     nicname = f"{prefix}{index + 3}"
                 elif prefix.startswith('enc'):
                     nicname = f"{prefix}{index + 1}"
+                elif prefix.startswith('enp3s'):
+                    nicname = f"enp{index + 3}s0"
                 else:
                     nicname = f"{prefix}{index}"
             ip = net.get('ip')

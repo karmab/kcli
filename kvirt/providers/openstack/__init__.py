@@ -79,7 +79,7 @@ class Kopenstack(object):
                cpumodel='host-model', cpuflags=[], cpupinning=[], numcpus=2, memory=512,
                guestid='guestrhel764', pool='default', image=None,
                disks=[{'size': 10}], disksize=10, diskthin=True,
-               diskinterface='virtio', nets=['default'], iso=None, vnc=True,
+               diskinterface='virtio', nets=['default'], iso=None, vnc=True, vncpassword=None,
                cloudinit=True, reserveip=False, reservedns=False,
                reservehost=False, start=True, keys=[], cmds=[], ips=None,
                netmasks=None, gateway=None, nested=True, dns=None, domain=None,

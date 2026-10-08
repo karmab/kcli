@@ -17,6 +17,7 @@ DISKSIZE = 10
 DISKS = [{'size': DISKSIZE, 'default': True}]
 GUESTID = 'guestrhel764'
 VNC = True
+VNCPASSWORD = None
 CLOUDINIT = True
 GUESTAGENT = True
 RESERVEIP = False
@@ -32,7 +33,7 @@ TUNNELDIR = '/var/www/html'
 TUNNELPORT = 22
 VMUSER = None
 VMPORT = None
-OPENSHIFT_TAG = '4.21'
+OPENSHIFT_TAG = '4.22'
 ALMA = 'https://repo.almalinux.org/almalinux'
 BSD = 'https://object-storage.public.mtl1.vexxhost.net/swift/v1/1dbafeefbd4f4c80864414a441e72dd2'
 BSD += '/bsd-cloud-image.org/images/dragonflybsd'
@@ -53,7 +54,7 @@ IMAGES = {'almalinux8': f'{ALMA}/8/cloud/x86_64/images/AlmaLinux-8-GenericCloud-
           'arch': 'https://linuximages.de/openstack/arch/arch-openstack-LATEST-image-bootstrap.qcow2',
           'centos7': f'{CENTOS}/7/images/CentOS-7-x86_64-GenericCloud.qcow2',
           'centos8stream': f'{CENTOS}/8-stream/x86_64/images/CentOS-Stream-GenericCloud-8-latest.x86_64.qcow2',
-          'centos9stream': f'{CENTOS}/9-stream/x86_64/images/CentOS-Stream-GenericCloud-x86_64-9-latest.x86_64.qcow2',
+          'centos9stream': f'{CENTOS}/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-latest.x86_64.qcow2',
           'centos10stream': f'{CENTOS}/10-stream/x86_64/images/CentOS-Stream-GenericCloud-10-latest.x86_64.qcow2',
           'cirros': 'http://download.cirros-cloud.net/0.5.2/cirros-0.5.2-x86_64-disk.img',
           'debian10': f'{DEBIAN}/openstack/current-10/debian-10-openstack-amd64.qcow2',
@@ -94,6 +95,7 @@ IMAGES = {'almalinux8': f'{ALMA}/8/cloud/x86_64/images/AlmaLinux-8-GenericCloud-
           'rhcos419': f'{RHCOS}/4.19',
           'rhcos420': f'{RHCOS}/4.20',
           'rhcos421': f'{RHCOS}/4.21',
+          'rhcos422': f'{RHCOS}/4.22',
           'rhcoslatest': f'{RHCOS}/{OPENSHIFT_TAG}',
           'rhel7': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7',
           'rhel8': 'https://access.redhat.com/downloads/content/479/ver=/rhel---8',
@@ -214,7 +216,7 @@ oEO8BRcXIiXiQqW9KnF99fXOiQ/cKYh3kWBBPnuEOhC77Ke5aMlqMNOPULf3PMix
 -----END CERTIFICATE-----"""
 VIRTTYPE = None
 METADATA_FIELDS = ['dnsclient', 'domain', 'image', 'kube', 'kubetype', 'loadbalancer', 'owner', 'plan', 'profile',
-                   'user', 'redfish_iso', 'cluster_network', 'userport']
+                   'user', 'redfish_iso', 'redfish_refresh', 'cluster_network', 'userport']
 VMRULES = []
 VMRULES_STRICT = False
 SECURITYGROUPS = []

@@ -25,3 +25,4 @@ bandwidth_inbound_burst: Bandwidth inbound burst
 bandwidth_outbound_average: Bandwidth outbound average
 bandwidth_outbound_peak: Bandwidth outbound peak
 bandwidth_outbound_burst: Bandwidth outbound bursrt
+gateway_index: Custom index for the gateway ip of a libvirt network

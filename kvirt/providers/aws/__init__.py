@@ -6,9 +6,9 @@ from kvirt import common
 from kvirt.common import pprint, error, warning, get_ssh_pub_key
 from kvirt.defaults import IMAGES, METADATA_FIELDS
 import boto3
+from botocore.exceptions import ClientError, WaiterError
 import os
 import sys
-from socket import gethostbyname
 from string import ascii_lowercase
 from tempfile import TemporaryDirectory
 from time import sleep
@@ -111,12 +111,12 @@ class Kaws(object):
     def create(self, name, virttype=None, profile='', flavor=None, plan='kvirt', cpumodel='host-model', cpuflags=[],
                cpupinning=[], numcpus=2, memory=512, guestid='guestrhel764', pool='default', image=None,
                disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None,
-               vnc=True, cloudinit=True, reserveip=False, reservedns=False, reservehost=False, start=True, keys=[],
-               cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None, tunnel=False,
-               files=[], enableroot=True, alias=[], overrides={}, tags=[], storemetadata=False,
-               sharedfolders=[], cmdline=None, placement=[], autostart=False,
-               cpuhotplug=False, memoryhotplug=False, numamode=None, numa=[], pcidevices=[], tpm=False, rng=False,
-               metadata={}, securitygroups=[], vmuser=None, guestagent=True):
+               vnc=True, vncpassword=None, cloudinit=True, reserveip=False, reservedns=False, reservehost=False,
+               start=True, keys=[], cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None,
+               tunnel=False, files=[], enableroot=True, alias=[], overrides={}, tags=[], storemetadata=False,
+               sharedfolders=[], cmdline=None, placement=[], autostart=False, cpuhotplug=False, memoryhotplug=False,
+               numamode=None, numa=[], pcidevices=[], tpm=False, rng=False, metadata={}, securitygroups=[], vmuser=None,
+               guestagent=True):
         conn = self.conn
         if self.exists(name):
             return {'result': 'failure', 'reason': f"VM {name} already exists"}
@@ -456,8 +456,17 @@ class Kaws(object):
         except:
             return {'result': 'failure', 'reason': f"VM {name} not found"}
         instanceid = vm['InstanceId']
-        conn.start_instances(InstanceIds=[instanceid])
-        return {'result': 'success'}
+        try:
+            conn.start_instances(InstanceIds=[instanceid])
+        except ClientError as e:
+            if e.response['Error']['Code'] != 'InsufficientInstanceCapacity':
+                return {'result': 'failure', 'reason': str(e)}
+        waiter = conn.get_waiter('instance_running')
+        try:
+            waiter.wait(InstanceIds=[instanceid], WaiterConfig={'Delay': 5, 'MaxAttempts': 24})
+            return {'result': 'success'}
+        except WaiterError:
+            return {'result': 'failure', 'reason': 'Instance did not reach running state'}
 
     def stop(self, name, soft=False):
         conn = self.conn
@@ -1587,16 +1596,9 @@ class Kaws(object):
                 elb.register_instances_with_load_balancer(LoadBalancerName=clean_name, Instances=Instances)
         if domain is not None:
             lb_dns_name = lb['DNSName']
-            while True:
-                try:
-                    ip = gethostbyname(lb_dns_name)
-                    break
-                except:
-                    pprint(f"Waiting 10s for {lb_dns_name} to resolve")
-                    sleep(10)
             if dnsclient is not None:
-                return ip
-            self.reserve_dns(name, ip=ip, domain=domain, alias=alias)
+                return lb_dns_name
+            self.reserve_dns(name, ip=lb_dns_name, domain=domain, alias=alias)
 
     def delete_loadbalancer(self, name):
         domain = None

@@ -29,7 +29,7 @@ capabilities:
 {% endif %}
 {% endif %}
 baseDomain: {{ domain }}
-{% if config_type in ['aws', 'gcp'] %}
+{% if config_type in ['aws', 'gcp', 'ibm'] %}
 credentialsMode: Mint
 {% endif %}
 {% if http_proxy != None %}
@@ -137,6 +137,9 @@ platform:
     computeSubnet: {{ subnet_worker|default(network) }}
 {% endif %}
     region: {{ config_location }}
+{% elif config_type == 'ibm' %}
+  ibm:
+    region: {{ config_region }}
 {% else %}
   none: {}
 {% endif %}

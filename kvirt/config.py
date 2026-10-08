@@ -52,7 +52,8 @@ def dependency_error(provider, exception=None):
 
 
 class Kconfig(Kbaseconfig):
-    def __init__(self, client=None, debug=False, quiet=False, region=None, zone=None, namespace=None, offline=False):
+    def __init__(self, client=None, debug=False, quiet=False, region=None, zone=None, namespace=None, offline=False,
+                 resource_group=None):
         Kbaseconfig.__init__(self, client=client, debug=debug, quiet=quiet, offline=offline)
         options = self.options
         if not self.enabled:
@@ -145,9 +146,9 @@ class Kconfig(Kbaseconfig):
                 admin_user = options.get('admin_user', AZURE['admin_user'])
                 admin_password = options.get('admin_password')
                 location = options.get('location', AZURE['location'])
-                resource_group = options.get('resource_group', AZURE['resource_group'])
+                resource_group = resource_group or options.get('resource_group', AZURE['resource_group'])
                 mail = options.get('mail')
-                storage_account = options.get('storage_account')
+                storage_account = None if resource_group is not None else options.get('storage_account')
                 subscription_id = options.get('subscription_id')
                 if subscription_id is None:
                     error("Missing subscription_id in the configuration. Leaving")
@@ -562,6 +563,7 @@ class Kconfig(Kbaseconfig):
         guestid = profile.get('guestid', self.guestid)
         iso = profile.get('iso', self.iso)
         vnc = profile.get('vnc', self.vnc)
+        vncpassword = profile.get('vncpassword', self.vncpassword)
         cloudinit = profile.get('cloudinit', self.cloudinit)
         if cloudinit and self.type == 'kvm' and\
                 which('mkisofs') is None and which('genisoimage') and which('xorrisofs') is None:
@@ -708,8 +710,9 @@ class Kconfig(Kbaseconfig):
                 elif image.startswith('rhel-server-7') or image == 'rhel7':
                     rhncommands.append('subscription-manager repos --enable=rhel-7-server-rpms')
             elif rhnuser is not None and rhnpassword is not None:
-                rhncommands.append('subscription-manager register --serverurl=%s --force --username=%s --password=\'%s\''
-                                   % (rhnserver, rhnuser, rhnpassword))
+                command = f'subscription-manager register --serverurl={rhnserver} --force --username={rhnuser}'
+                command += f' --password=\'{rhnpassword}\''
+                rhncommands.append(command)
                 if rhnpool is not None:
                     rhncommands.append(f'subscription-manager attach --pool={rhnpool}')
                 else:
@@ -828,6 +831,8 @@ class Kconfig(Kbaseconfig):
             metadata['owner'] = profile.get('owner') or overrides.get('owner')
         if 'redfish_iso' in profile or 'redfish_iso' in overrides:
             metadata['redfish_iso'] = profile.get('redfish_iso') or overrides.get('redfish_iso')
+        if 'redfish_refresh' in profile or 'redfish_refresh' in overrides:
+            metadata['redfish_refresh'] = profile.get('redfish_refresh') or overrides.get('redfish_refresh')
         vmuser = profile.get('vmuser') or overrides.get('vmuser') or profile.get('user') or overrides.get('user')
         if vmuser is not None:
             metadata['user'] = vmuser
@@ -908,14 +913,15 @@ class Kconfig(Kbaseconfig):
                           cpumodel=cpumodel, cpuflags=cpuflags, cpupinning=cpupinning, numamode=numamode, numa=numa,
                           numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool,
                           image=image, disks=disks, disksize=disksize, diskthin=diskthin,
-                          diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), cloudinit=bool(cloudinit),
-                          reserveip=bool(reserveip), reservedns=bool(reservedns), reservehost=bool(reservehost),
-                          start=bool(start), keys=keys, cmds=cmds, ips=ips, netmasks=netmasks, gateway=gateway, dns=dns,
-                          domain=domain, nested=bool(nested), tunnel=tunnel, files=files, enableroot=enableroot,
-                          overrides=overrides, tags=tags, storemetadata=storemetadata,
-                          sharedfolders=sharedfolders, cmdline=cmdline, placement=placement, autostart=autostart,
-                          cpuhotplug=cpuhotplug, memoryhotplug=memoryhotplug, pcidevices=pcidevices, tpm=tpm, rng=rng,
-                          metadata=metadata, securitygroups=securitygroups, vmuser=vmuser, guestagent=guestagent)
+                          diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), vncpassword=vncpassword,
+                          cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns),
+                          reservehost=bool(reservehost), start=bool(start), keys=keys, cmds=cmds, ips=ips,
+                          netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=bool(nested),
+                          tunnel=tunnel, files=files, enableroot=enableroot, overrides=overrides, tags=tags,
+                          storemetadata=storemetadata, sharedfolders=sharedfolders, cmdline=cmdline,
+                          placement=placement, autostart=autostart, cpuhotplug=cpuhotplug, memoryhotplug=memoryhotplug,
+                          pcidevices=pcidevices, tpm=tpm, rng=rng, metadata=metadata, securitygroups=securitygroups,
+                          vmuser=vmuser, guestagent=guestagent)
         if result['result'] != 'success':
             return result
         if reservedns and dnsclient is not None and domain is not None:
@@ -2697,6 +2703,13 @@ class Kconfig(Kbaseconfig):
             ingress_ip = clusterdata.get('ingress_ip')
             if self.type == 'kubevirt' and clusterdata.get('platform') is None and ingress_ip is None:
                 call(f'KUBECONFIG={kubeconfigmgmt} {oc} -n {k.namespace} delete route {cluster}-ingress', shell=True)
+            call(f'KUBECONFIG={kubeconfigmgmt} {oc} delete -f {clusterdir}/autoapprovercron.yml', shell=True)
+            result = run(f'KUBECONFIG={kubeconfigmgmt} {oc} get machines -n clusters-{cluster} -o name',
+                         shell=True, stdout=PIPE, stderr=PIPE)
+            for machine in result.stdout.decode().split():
+                patch = '\'{"metadata":{"finalizers":null}}\''
+                call(f'KUBECONFIG={kubeconfigmgmt} {oc} patch {machine} -n clusters-{cluster} --type=merge -p {patch}',
+                     shell=True)
         for hypervisor in deleteclients:
             c = deleteclients[hypervisor]
             for vm in sorted(c.list(), key=lambda x: x['name']):
