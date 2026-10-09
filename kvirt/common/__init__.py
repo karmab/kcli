@@ -2202,6 +2202,7 @@ def restart_baremetal_host(url, user, password, debug=False):
 def start_baremetal_host(url, user, password, overrides={}, debug=False):
     iso_url = overrides.get('iso_url')
     reset = overrides.get('reset', False)
+    force = overrides.get('force', False)
     if iso_url is not None and overrides.get('sno_worker', False):
         role = overrides.get('role') or 'worker'
         iso_url = iso_url.replace('-sno.iso', f'-{role}.iso')
@@ -2215,7 +2216,7 @@ def start_baremetal_host(url, user, password, overrides={}, debug=False):
     if iso_url is not None:
         pprint(f"Booting host with url {url} with iso {iso_url}")
         try:
-            red.set_iso(iso_url)
+            red.set_iso(iso_url, force=force)
         except Exception as e:
             msg = f"Hit {e} when plugging iso {iso_url} to host with url {url}"
             error(msg)
