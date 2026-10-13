@@ -191,9 +191,9 @@ def process_nodepools(config, plandir, namespace, cluster, platform, nodepools, 
     for entry in nodepools:
         nodepool = entry['name']
         note = r"{.metadata.annotations.hypershift\.openshift\.io/nodePoolCurrentConfigVersion}"
-        cmd = f"until oc get nodepool ci-hypershift -n clusters -o jsonpath='{note}' | grep -q . ; do sleep 2; done"
+        cmd = f"until oc get nodepool {cluster} -n clusters -o jsonpath='{note}' | grep -q . ; do sleep 2; done"
         call(cmd, shell=True)
-        cmd = f"oc get nodepool ci-hypershift -n clusters -o jsonpath='{note}'"
+        cmd = f"oc get nodepool {cluster} -n clusters -o jsonpath='{note}'"
         version = os.popen(cmd).read()
         pprint(f"Waiting before ignition data for nodepool {nodepool} is available")
         cmd = f"until oc -n {namespace}-{cluster} get secret user-data-{cluster}-{version} ; do sleep 2 ; done"
