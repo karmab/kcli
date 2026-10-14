@@ -6,12 +6,14 @@ import base64
 import json
 import os
 import plistlib
+import re
 import subprocess
 from shutil import which, copy2
 from tempfile import TemporaryDirectory
 from time import sleep
 import struct
 import uuid
+import yaml
 
 
 UTM_POOL_DIR = os.path.expanduser('~/.kcli/utm/pool')
@@ -54,10 +56,26 @@ def _find_vm_qcow2_files(vm_name):
     return sorted([os.path.join(data_dir, f) for f in os.listdir(data_dir) if f.endswith('.qcow2')])
 
 
+def _find_vm_disk_files(vm_name):
+    bundle = os.path.join(UTM_DOCUMENTS_DIR, f"{vm_name}.utm")
+    plist_path = os.path.join(bundle, 'config.plist')
+    if not os.path.exists(plist_path):
+        return _find_vm_qcow2_files(vm_name)
+    with open(plist_path, 'rb') as f:
+        config = plistlib.load(f)
+    return [os.path.join(bundle, 'Data', drive['ImageName']) for drive in config.get('Drive', [])
+            if drive.get('ImageName') and not drive.get('ReadOnly', False) and drive.get('ImageType') != 'CD' and
+            not drive['ImageName'].lower().endswith('.iso')]
+
+
 class Kutm(object):
-    def __init__(self, debug=False):
+    def __init__(self, debug=False, backend='qemu'):
         self.conn = None
         self.debug = debug
+        self.backend = backend.lower()
+        if self.backend not in ('qemu', 'apple'):
+            error(f"Unsupported UTM backend {backend}. Choose qemu or apple")
+            return
         if which('osascript') is None:
             error("osascript not found. UTM provider only works on macOS")
             return
@@ -96,6 +114,11 @@ set vm to virtual machine named "{name}"
 return id of vm
 end tell'''
         return _osascript(script)
+
+    def _get_vm_backend(self, name):
+        return _osascript(f'''tell application "UTM"
+return backend of virtual machine named "{name}" as string
+end tell''').lower()
 
     def _get_vm_status(self, name):
         script = f'''tell application "UTM"
@@ -158,7 +181,7 @@ end tell'''
         mapping = {'virtio': 'VirtIO', 'nvme': 'NVMe', 'scsi': 'SCSI', 'ide': 'IDE', 'usb': 'USB', 'sd': 'SD'}
         return mapping.get(interface.lower(), 'VirtIO') if interface else 'VirtIO'
 
-    def _build_net_parts(self, nets):
+    def _build_net_parts(self, nets, backend='qemu'):
         net_parts = []
         mode_mapping = {'bridge': 'bridged', 'bridged': 'bridged', 'emulated': 'emulated',
                         'host': 'host', 'host-only': 'host', 'shared': 'shared', 'default': 'shared'}
@@ -166,6 +189,8 @@ end tell'''
             if isinstance(net, str):
                 mac = common.gen_mac()
                 mode = mode_mapping.get(net, 'shared')
+                if backend == 'apple' and mode not in ('shared', 'bridged'):
+                    raise ValueError(f"Network mode {mode} is not supported by the Apple backend")
                 if mode == 'bridged':
                     net_parts.append(f'{{mode:bridged, address:"{mac}", host interface:"en0"}}')
                 else:
@@ -175,6 +200,8 @@ end tell'''
                 model = net.get('model', '')
                 net_name = net.get('name', 'default')
                 mode = mode_mapping.get(net_name, 'shared')
+                if backend == 'apple' and mode not in ('shared', 'bridged'):
+                    raise ValueError(f"Network mode {mode} is not supported by the Apple backend")
                 props = []
                 if mode == 'bridged':
                     host_if = net.get('bridge', 'en0')
@@ -182,7 +209,7 @@ end tell'''
                 else:
                     props.append(f'mode:{mode}')
                 props.append(f'address:"{mac}"')
-                if model:
+                if model and backend == 'qemu':
                     props.append(f'hardware:"{model}"')
                 net_parts.append('{' + ', '.join(props) + '}')
         if not net_parts:
@@ -191,6 +218,7 @@ end tell'''
         return net_parts
 
     def _add_disk(self, name, size, interface='VirtIO'):
+        interface_prop = f', interface:{interface}' if self._get_vm_backend(name) == 'qemu' else ''
         script = f'''tell application "UTM"
 set vm to virtual machine named "{name}"
 set config to configuration of vm
@@ -199,7 +227,7 @@ set newDrives to {{}}
 repeat with d in allDrives
     copy d to end of newDrives
 end repeat
-copy {{guest size:{size * 1024}, interface:{interface}}} to end of newDrives
+copy {{guest size:{size * 1024}{interface_prop}}} to end of newDrives
 set drives of config to newDrives
 update configuration of vm with config
 end tell'''
@@ -216,58 +244,75 @@ end tell'''
                vmuser=None, guestagent=True):
         if self.exists(name):
             return {'result': 'failure', 'reason': f"VM {name} already exists"}
+        backend = overrides.get('backend', self.backend).lower()
+        if backend not in ('qemu', 'apple'):
+            return {'result': 'failure', 'reason': f"Unsupported UTM backend {backend}. Choose qemu or apple"}
+        if backend == 'apple' and (tpm or not overrides.get('uefi', True)):
+            return {'result': 'failure', 'reason': "The Apple backend requires UEFI and does not support TPM"}
         uefi = overrides.get('uefi', True)
         machine = overrides.get('machine', 'virt')
-        net_parts = self._build_net_parts(nets)
+        if backend == 'apple':
+            nets = [net.copy() if isinstance(net, dict) else {'name': net} for net in nets or ['default']]
+            for index, net in enumerate(nets):
+                net.setdefault('mac', common.gen_mac())
+                net.setdefault('nic', f'eth{index}')
+        try:
+            net_parts = self._build_net_parts(nets, backend=backend)
+        except ValueError as e:
+            return {'result': 'failure', 'reason': str(e)}
+        displays_str = '{}'
+        if vnc:
+            displays_str = '{{hardware:"virtio-gpu-gl-pci"}}' if backend == 'qemu' else '{{dynamic resolution:true}}'
         if image is not None:
             template = self._find_template(image)
             if template is None:
                 return {'result': 'failure', 'reason': f"Template VM {image} not found. Use kcli download image first"}
             try:
+                if self._get_vm_backend(template) != backend:
+                    return {'result': 'failure', 'reason': f"Template {template} does not use the {backend} backend"}
                 nets_str = '{' + ', '.join(net_parts) + '}'
+                properties = (f'name:"{name}", memory:{memory}, cpu cores:{numcpus}, '
+                              f'network interfaces:{nets_str}')
+                if backend == 'apple' or not vnc:
+                    properties += f', displays:{displays_str}'
                 script = f'''tell application "UTM"
 set vm to virtual machine named "{template}"
-duplicate vm with properties {{configuration:{{name:"{name}", memory:{memory}, cpu cores:{numcpus}, network interfaces:{nets_str}}}}}
+duplicate vm with properties {{configuration:{{{properties}}}}}
 end tell'''
                 if self.debug:
                     pprint(f"AppleScript: {script}")
                 _osascript(script)
             except Exception as e:
                 return {'result': 'failure', 'reason': f"Failed to create VM {name} from template {template}: {e}"}
-            if not vnc:
-                try:
-                    script = f'''tell application "UTM"
-set vm to virtual machine named "{name}"
-set config to configuration of vm
-set displays of config to {{}}
-update configuration of vm with config
-end tell'''
-                    _osascript(script)
-                except Exception:
-                    pass
             self._patch_vm_plist(name, uefi=uefi, rng=rng, tpm=tpm, machine=machine, cpumodel=cpumodel, vnc=vnc)
-            first_disk_size = self._disk_size(disks[0], disksize)
-            existing_qcow2 = set(_find_vm_qcow2_files(name))
-            if existing_qcow2 and first_disk_size:
-                self.resize_disk(sorted(existing_qcow2)[0], first_disk_size)
+            first_disk_size = self._disk_size(disks[0], disksize) if disks else None
+            disk_files = _find_vm_disk_files(name)
+            existing_disks = set(disk_files)
+            if existing_disks and first_disk_size:
+                result = self.resize_disk(disk_files[0], first_disk_size)
+                if result['result'] != 'success':
+                    return result
             if len(disks) > 1:
                 for disk in disks[1:]:
                     size = self._disk_size(disk, disksize)
                     interface = disk.get('interface', diskinterface) if isinstance(disk, dict) else diskinterface
                     interface_str = self._disk_interface(interface)
                     self._add_disk(name, size, interface_str)
-                    new_qcow2 = set(_find_vm_qcow2_files(name)) - existing_qcow2
-                    if new_qcow2:
-                        new_file = new_qcow2.pop()
-                        self.resize_disk(new_file, size)
-                        existing_qcow2.add(new_file)
+                    new_disks = set(_find_vm_disk_files(name)) - existing_disks
+                    if new_disks:
+                        new_file = new_disks.pop()
+                        result = self.resize_disk(new_file, size)
+                        if result['result'] != 'success':
+                            return result
+                        existing_disks.add(new_file)
         else:
             drives_parts = []
             for disk in disks:
                 size = self._disk_size(disk, disksize)
                 interface = disk.get('interface', diskinterface) if isinstance(disk, dict) else diskinterface
                 interface_str = self._disk_interface(interface)
-                drives_parts.append(f'{{guest size:{size * 1024}, interface:{interface_str}}}')
+                interface_prop = f', interface:{interface_str}' if backend == 'qemu' else ''
+                drives_parts.append(f'{{guest size:{size * 1024}{interface_prop}}}')
             if iso is not None:
                 iso_path = iso if os.path.isabs(iso) else f"{UTM_POOL_DIR}/{iso}"
                 if os.path.exists(iso_path):
@@ -276,9 +321,11 @@ end tell'''
                     warning(f"ISO {iso} not found at {iso_path}")
             drives_str = '{' + ', '.join(drives_parts) + '}'
             nets_str = '{' + ', '.join(net_parts) + '}'
-            displays_str = '{}' if not vnc else '{{hardware:"virtio-gpu-gl-pci"}}'
+            backend_props = 'architecture:"aarch64", hypervisor:true, ' if backend == 'qemu' else ''
+            properties = (f'{backend_props}name:"{name}", memory:{memory}, cpu cores:{numcpus}, '
+                          f'drives:{drives_str}, network interfaces:{nets_str}, displays:{displays_str}')
             script = f'''tell application "UTM"
-set vm to make new virtual machine with properties {{backend:qemu, configuration:{{name:"{name}", architecture:"aarch64", memory:{memory}, cpu cores:{numcpus}, drives:{drives_str}, network interfaces:{nets_str}, displays:{{{displays_str}}}, hypervisor:true}}}}
+set vm to make new virtual machine with properties {{backend:{backend}, configuration:{{{properties}}}}}
 end tell'''
             try:
                 if self.debug:
@@ -310,6 +357,14 @@ end tell'''
                                                                   files=files, enableroot=enableroot,
                                                                   overrides=overrides, storemetadata=storemetadata,
                                                                   image=image, vmuser=vmuser)
+                if backend == 'apple' and netdata:
+                    network_config = yaml.safe_load(netdata)
+                    for net in nets:
+                        interface = network_config.get('ethernets', {}).get(net['nic'])
+                        if interface is not None:
+                            interface['match'] = {'macaddress': net['mac']}
+                            interface['set-name'] = net['nic']
+                    netdata = yaml.safe_dump(network_config)
             with TemporaryDirectory() as tmpdir:
                 result = common.make_iso(name, tmpdir, userdata, metadata_ci, netdata, openstack=needs_ignition)
                 if result != 0:
@@ -323,27 +378,30 @@ end tell'''
                         warning(f"Could not attach cloud-init ISO to {name}: {e}")
         if sharedfolders:
             try:
+                share_setting = 'set directory share mode of config to virtfs' if backend == 'qemu' else \
+                    'set directory shares of config to {' + ', '.join('{read only:false}' for _ in sharedfolders) + '}'
                 script = f'''tell application "UTM"
 set vm to virtual machine named "{name}"
 set config to configuration of vm
-set directory share mode of config to virtfs
+{share_setting}
 update configuration of vm with config
 end tell'''
                 _osascript(script)
             except Exception as e:
                 warning(f"Could not set directory share mode for {name}: {e}")
-            for folder in sharedfolders:
-                os.makedirs(folder, exist_ok=True)
-                try:
-                    script = f'''tell application "UTM"
+            try:
+                for folder in sharedfolders:
+                    os.makedirs(folder, exist_ok=True)
+                folders = '{' + ', '.join(f'POSIX file "{folder}"' for folder in sharedfolders) + '}'
+                script = f'''tell application "UTM"
 set vm to virtual machine named "{name}"
-update registry of vm with POSIX file "{folder}"
+update registry of vm with {folders}
 end tell'''
-                    _osascript(script)
-                except Exception as e:
-                    warning(f"Could not set shared folder {folder} for {name}: {e}")
+                _osascript(script)
+            except Exception as e:
+                warning(f"Could not set shared folders for {name}: {e}")
         if start:
-            self.start(name)
+            return self.start(name)
         return {'result': 'success'}
 
     def _find_template(self, image):
@@ -366,6 +424,9 @@ end tell'''
             return None
 
     def _attach_iso(self, name, iso_path):
+        # Import Apple's seed into the bundle instead of retaining an external
+        # path that the sandboxed UTM application cannot access on later starts.
+        removable = 'false' if self._get_vm_backend(name) == 'apple' else 'true'
         script = f'''tell application "UTM"
 set vm to virtual machine named "{name}"
 set config to configuration of vm
@@ -374,7 +435,7 @@ set newDrives to {{}}
 repeat with d in allDrives
     copy d to end of newDrives
 end repeat
-copy {{removable:true, source:POSIX file "{iso_path}"}} to end of newDrives
+copy {{removable:{removable}, source:POSIX file "{iso_path}"}} to end of newDrives
 set drives of config to newDrives
 update configuration of vm with config
 end tell'''
@@ -576,7 +637,9 @@ end tell'''
                     plist = plistlib.load(f)
                 qemu = plist.get('QEMU', {})
                 system = plist.get('System', {})
-                yamlinfo['uefi'] = qemu.get('UEFIBoot', False)
+                yamlinfo['backend'] = plist.get('Backend', 'QEMU').lower()
+                boot = system.get('Boot', {}) if yamlinfo['backend'] == 'apple' else qemu
+                yamlinfo['uefi'] = boot.get('UEFIBoot', False)
                 yamlinfo['tpm'] = qemu.get('TPMDevice', False)
                 yamlinfo['rng'] = qemu.get('RNGDevice', False)
                 yamlinfo['machine'] = system.get('Target', '')
@@ -598,7 +661,9 @@ set config to configuration of vm
 set allNics to network interfaces of config
 set nicInfo to ""
 repeat with n in allNics
-    set nicInfo to nicInfo & mode of n & "," & address of n & "," & hardware of n & "|"
+    set hw to "virtio"
+    if backend of vm is qemu then set hw to hardware of n
+    set nicInfo to nicInfo & mode of n & "," & address of n & "," & hw & "|"
 end repeat
 return nicInfo
 end tell'''
@@ -608,7 +673,8 @@ end tell'''
                     parts = entry.split(',')
                     if len(parts) >= 3:
                         mode, mac, hw = parts[0].strip(), parts[1].strip(), parts[2].strip()
-                        yamlinfo['nets'].append({'device': f'eth{i}', 'mac': mac, 'net': mode, 'type': hw or 'virtio-net-pci'})
+                        yamlinfo['nets'].append({'device': f'eth{i}', 'mac': mac, 'net': mode,
+                                                'type': hw or 'virtio-net-pci'})
         except Exception:
             pass
         yamlinfo['disks'] = []
@@ -619,13 +685,15 @@ set config to configuration of vm
 set allDrives to drives of config
 set driveInfo to ""
 repeat with d in allDrives
-    set driveInfo to driveInfo & interface of d & "," & removable of d & "|"
+    set iface to "VirtIO"
+    if backend of vm is qemu then set iface to interface of d
+    set driveInfo to driveInfo & iface & "," & removable of d & "|"
 end repeat
 return driveInfo
 end tell'''
             result = _osascript(script)
             if result:
-                qcow2_files = _find_vm_qcow2_files(name)
+                qcow2_files = _find_vm_disk_files(name)
                 disk_index = 0
                 qcow2_index = 0
                 for entry in result.strip().rstrip('|').split('|'):
@@ -634,15 +702,20 @@ end tell'''
                         iface, removable = parts[0].strip(), parts[1].strip()
                         if removable == 'true':
                             continue
+                        if yamlinfo.get('backend') == 'apple' and qcow2_index >= len(qcow2_files):
+                            continue
                         size_gb = 0
                         disk_path = ''
                         if qcow2_index < len(qcow2_files):
                             disk_path = qcow2_files[qcow2_index]
                             vsize = _qcow2_virtual_size(disk_path)
+                            if not vsize:
+                                vsize = os.path.getsize(disk_path)
                             size_gb = vsize // (1024 ** 3) if vsize > 0 else 0
                             qcow2_index += 1
                         device = f'vd{chr(97 + disk_index)}'
-                        yamlinfo['disks'].append({'device': device, 'size': size_gb, 'format': 'qcow2',
+                        disk_format = 'qcow2' if disk_path.endswith('.qcow2') else 'raw'
+                        yamlinfo['disks'].append({'device': device, 'size': size_gb, 'format': disk_format,
                                                   'type': iface, 'path': disk_path})
                         disk_index += 1
         except Exception:
@@ -662,6 +735,8 @@ end tell'''
 
     def ip(self, name):
         try:
+            if self._get_vm_backend(name) == 'apple':
+                return self._dhcp_ip(name)
             script = f'''tell application "UTM"
 set vm to virtual machine named "{name}"
 set ipList to query ip of vm
@@ -671,6 +746,34 @@ end tell'''
             return ip if ip else None
         except Exception:
             return None
+
+    def _dhcp_ip(self, name):
+        # The QEMU guest agent is unavailable on Apple's virtualization backend.
+        script = f'''tell application "UTM"
+set config to configuration of virtual machine named "{name}"
+set macAddresses to {{}}
+repeat with nic in network interfaces of config
+    copy address of nic to end of macAddresses
+end repeat
+return macAddresses
+end tell'''
+        macs = {':'.join(part.zfill(2) for part in mac.strip().lower().split(':'))
+                for mac in _osascript(script).split(', ')}
+        try:
+            with open('/var/db/dhcpd_leases') as f:
+                leases = f.read()
+        except OSError:
+            return None
+        for block in reversed(re.findall(r'\{([^}]+)\}', leases)):
+            lease = dict(re.findall(r'^\s*(\w+)=(.*)$', block, re.MULTILINE))
+            mac = lease.get('hw_address', '').split(',')[-1].strip().lower()
+            mac = ':'.join(part.zfill(2) for part in mac.split(':'))
+            # systemd-networkd may identify itself with an IAID/DUID instead of
+            # an Ethernet address. macOS then records its hostname in the lease.
+            duid_match = lease.get('hw_address', '').startswith('ff,') and lease.get('name', '').strip() == name
+            if mac in macs or duid_match:
+                return lease.get('ip_address', '').strip() or None
+        return None
 
     def volumes(self, iso=False, extended=False):
         if iso:
@@ -896,6 +999,10 @@ end tell'''
             with open(path, 'r+b') as f:
                 f.seek(0)
                 if f.read(4) != b'QFI\xfb':
+                    if path.endswith(('.raw', '.img')):
+                        if new_size > os.path.getsize(path):
+                            f.truncate(new_size)
+                        return {'result': 'success'}
                     return {'result': 'failure', 'reason': f"Not a qcow2 file: {path}"}
                 f.seek(20)
                 cluster_bits = struct.unpack('>I', f.read(4))[0]
@@ -946,7 +1053,7 @@ end tell'''
                 if notes.get('template'):
                     continue
                 try:
-                    qcow2_files = _find_vm_qcow2_files(vm_name)
+                    qcow2_files = _find_vm_disk_files(vm_name)
                     for i, qpath in enumerate(qcow2_files):
                         disk_name = f"{vm_name}_vd{chr(97 + i)}"
                         disks[disk_name] = {'pool': 'default', 'path': vm_name}
@@ -961,11 +1068,8 @@ end tell'''
             status = self._get_vm_status(name)
             if status != 'stopped':
                 return {'result': 'failure', 'reason': "VM must be stopped to add NIC"}
-            mode = 'shared'
-            host_if = ''
-            if network in ('bridge', 'bridged'):
-                mode = 'bridged'
-                host_if = ', host interface:"en0"'
+            net = {'name': network, 'model': model}
+            new_net = self._build_net_parts([net], backend=self._get_vm_backend(name))[0]
             script = f'''tell application "UTM"
 set vm to virtual machine named "{name}"
 set config to configuration of vm
@@ -974,7 +1078,7 @@ set newNets to {{}}
 repeat with n in allNets
     copy n to end of newNets
 end repeat
-copy {{mode:{mode}{host_if}}} to end of newNets
+copy {new_net} to end of newNets
 set network interfaces of config to newNets
 update configuration of vm with config
 end tell'''
@@ -1050,6 +1154,8 @@ end tell'''
             return
         with open(plist_path, 'rb') as f:
             config = plistlib.load(f)
+        if config.get('Backend') == 'Apple':
+            return
         cpu = 'default' if cpumodel in ('host-model', 'host-passthrough') else cpumodel
         config.setdefault('QEMU', {})
         config['QEMU']['UEFIBoot'] = uefi
@@ -1073,7 +1179,8 @@ end tell'''
         dest_disk = os.path.join(data_dir, disk_filename)
         copy2(qcow2_path, dest_disk)
         efi_vars = os.path.join(data_dir, "efi_vars.fd")
-        utm_efi_template = os.path.expanduser("~/Library/Containers/com.utmapp.UTM/Data/Library/Caches/qemu/edk2-arm-vars.fd")
+        utm_efi_template = os.path.expanduser(
+            "~/Library/Containers/com.utmapp.UTM/Data/Library/Caches/qemu/edk2-arm-vars.fd")
         if os.path.exists(utm_efi_template):
             copy2(utm_efi_template, efi_vars)
         else:
@@ -1100,7 +1207,8 @@ end tell'''
             'Input': {'MaximumUsbShare': 3, 'UsbBusSupport': '3.0', 'UsbSharing': False},
             'Network': [{'Hardware': 'virtio-net-pci', 'IsolateFromHost': False,
                          'MacAddress': common.gen_mac(), 'Mode': 'Shared', 'PortForward': []}],
-            'QEMU': {'AdditionalArguments': ['-smbios', 'type=1,serial=ds=nocloud'], 'BalloonDevice': False, 'DebugLog': False,
+            'QEMU': {'AdditionalArguments': ['-smbios', 'type=1,serial=ds=nocloud'],
+                     'BalloonDevice': False, 'DebugLog': False,
                      'Hypervisor': True, 'PS2Controller': False, 'RNGDevice': rng,
                      'RTCLocalTime': False, 'TPMDevice': tpm, 'TSO': False, 'UEFIBoot': uefi},
             'Serial': [{'Mode': 'Ptty', 'Target': 'Auto'}],
@@ -1183,6 +1291,14 @@ end tell'''
                     os.system(f"{decompress[ext]} '{download_path}'")
                     download_path = download_path[:-len(ext)]
                     break
+            if self.backend == 'apple':
+                try:
+                    self._create_apple_template(name, download_path)
+                except Exception as e:
+                    return {'result': 'failure', 'reason': f"Failed to create Apple template: {e}"}
+                os.remove(download_path)
+                pprint("Image imported successfully")
+                return {'result': 'success'}
             if not download_path.endswith('.qcow2'):
                 qcow2_path = download_path.rsplit('.', 1)[0] + '.qcow2'
                 os.rename(download_path, qcow2_path)
@@ -1198,6 +1314,28 @@ end tell'''
                 return {'result': 'failure', 'reason': f"Failed to import into UTM: {e}"}
         pprint("Image imported successfully")
         return {'result': 'success'}
+
+    def _create_apple_template(self, name, source):
+        with TemporaryDirectory(dir=UTM_IMAGES_DIR) as tmpdir:
+            with open(source, 'rb') as f:
+                is_qcow2 = f.read(4) == b'QFI\xfb'
+            if is_qcow2 or not source.endswith(('.raw', '.img')):
+                qemu_img = which('qemu-img')
+                if qemu_img is None:
+                    raise RuntimeError("qemu-img is required to convert disk images for the Apple backend")
+                raw_path = os.path.join(tmpdir, 'disk.raw')
+                result = subprocess.run([qemu_img, 'convert', '-O', 'raw', source, raw_path],
+                                        capture_output=True, text=True)
+                if result.returncode:
+                    raise RuntimeError(result.stderr.strip())
+                source = raw_path
+            encoded = base64.b64encode(json.dumps({'template': True}).encode()).decode()
+            properties = (f'name:"{name}", notes:"kcli:{encoded}", memory:4096, cpu cores:2, '
+                          f'drives:{{{{source:POSIX file "{source}"}}}}')
+            script = f'''tell application "UTM"
+make new virtual machine with properties {{backend:apple, configuration:{{{properties}}}}}
+end tell'''
+            _osascript(script)
 
     def create_network(self, name, cidr=None, dhcp=True, nat=True, domain=None, plan='kvirt', overrides={}):
         warning("Network creation is managed by UTM internally")

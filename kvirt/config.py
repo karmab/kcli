@@ -384,7 +384,7 @@ class Kconfig(Kbaseconfig):
                 self.type = 'web'
             elif self.type == 'utm':
                 from kvirt.providers.utm import Kutm
-                k = Kutm(debug=debug)
+                k = Kutm(debug=debug, backend=options.get('backend', 'qemu'))
             elif offline:
                 from kvirt.providers.fake import Kfake
                 k = Kfake()
