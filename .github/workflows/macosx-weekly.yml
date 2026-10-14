@@ -1,4 +1,4 @@
-name: SNAPSHOT-MACOSX-DAILY
+name: SNAPSHOT-MACOSX-WEEKLY
 on:
   schedule:
     - cron: '39 20 * * 0'

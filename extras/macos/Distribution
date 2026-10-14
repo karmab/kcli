@@ -4,7 +4,7 @@
     <background file="background.png" alignment="bottomleft" scaling="proportional"/>
     <welcome file="welcome.html"/>
     <options customize="never" require-scripts="false"/>
-    <domains enable_localSystem="true"/>
+    <domains enable_localSystem="true" enable_anywhere="true"/>
     <choices-outline>
         <line choice="default">
             <line choice="com.karmab.kcli"/>
