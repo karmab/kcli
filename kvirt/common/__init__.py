@@ -958,10 +958,11 @@ def ssh(name, ip='', user=None, local=None, remote=None, tunnel=False, tunnelhos
         if vmport is not None:
             sshcommand = f"-p {vmport} {sshcommand}"
         if insecure:
-            sshcommand = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o LogLevel=ERROR %s"\
-                % sshcommand
+            loglevel = 'DEBUG1' if debug else 'INFO'
+            sshcommand = ("ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "
+                          f"-o LogLevel={loglevel} {sshcommand}")
         else:
-            sshcommand = f"ssh {sshcommand}"
+            sshcommand = f"ssh {'-v ' if debug else ''}{sshcommand}"
         if debug:
             pprint(sshcommand)
         return sshcommand
@@ -1456,10 +1457,12 @@ def _ssh_credentials(k, name):
     vmport = None
     info = k.info(name, debug=False)
     if not info:
+        error(f"Could not find VM {name} or read its connection details")
         return None, None, None
     user, ip, status = info.get('user', 'root'), info.get('ip'), info.get('status')
     if status in ['down', 'suspended', 'unknown']:
         error(f"{name} down")
+        return user, None, None
     if 'loadbalancerip' in info:
         ip = info['loadbalancerip']
     elif 'nodeport' in info:
@@ -1473,7 +1476,7 @@ def _ssh_credentials(k, name):
         ip = '127.0.0.1'
         vmport = info['userport']
     if ip is None:
-        error(f"No ip found for {name}")
+        error(info.get('ssh_error') or f"No ip found for {name}")
     return user, ip, vmport
 
 

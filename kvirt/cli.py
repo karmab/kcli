@@ -2716,7 +2716,7 @@ def ssh_vm(args):
             if tunnelhost is None:
                 error(f"No valid node ip found for {name}")
         if ip is None:
-            return
+            sys.exit(1)
         if user is None:
             user = config.vmuser if config.vmuser is not None else u
         if vmport is None and config.vmport is not None:
@@ -2731,11 +2731,15 @@ def ssh_vm(args):
     if sshcommand is not None:
         if which('ssh') is not None:
             code = os.WEXITSTATUS(os.system(sshcommand))
+            if code == 255:
+                error(f"SSH connection to {user}@{ip} failed (exit status 255). "
+                      f"Run kcli -d ssh {name} for connection diagnostics.")
             sys.exit(code)
         else:
             print(sshcommand)
     else:
         error(f"Couldnt ssh to {name}")
+        sys.exit(1)
 
 
 def scp_vm(args):

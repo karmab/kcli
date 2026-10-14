@@ -718,7 +718,7 @@ Apple VMs use UEFI, raw disks, VirtIO devices, and shared or bridged networking.
 
 Cloud-init network interfaces are matched by MAC address, and the seed disk is imported into the VM bundle. Displays are enabled by default; use ``-P vnc=false`` for a headless VM.
 
-Apple VMs using DHCPv4 are configured to identify themselves by MAC address. Address discovery prefers the current VM's MAC and rejects ambiguous hostname matches from retained DHCP leases. The IP appears only after a noninteractive SSH login succeeds using the configured user and local SSH keys or agent. A running VM may therefore have a blank IP while it boots. Password-only login cannot satisfy this readiness check.
+Apple VMs using DHCPv4 are configured to identify themselves by MAC address. Address discovery prefers the current VM's MAC and rejects ambiguous hostname matches from retained DHCP leases. The IP appears only after a noninteractive SSH login succeeds using the configured user and local SSH keys or agent. A running VM may therefore have a blank IP while it boots; ``kcli ssh`` reports why SSH login failed and exits with an error. If login fails, the SSH error is reported. Password-only login cannot satisfy this readiness check.
 
 Web
 ~~~

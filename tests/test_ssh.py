@@ -24,12 +24,51 @@ class TestSSH(unittest.TestCase):
         self.system = patcher.start()
         self.addCleanup(patcher.stop)
 
+    def test_guest_not_ready_reports_reason_and_fails(self):
+        reason = 'SSH is not ready for test at 192.168.64.6:22; try again after the guest boots'
+        self.provider.info.return_value = {'user': 'ubuntu', 'status': 'up', 'ssh_error': reason}
+        with patch.object(common, 'error') as error, self.assertRaises(SystemExit) as exit:
+            cli.ssh_vm(self.args)
+        self.assertEqual(exit.exception.code, 1)
+        error.assert_called_once_with(reason)
+        self.system.assert_not_called()
+
+    def test_missing_vm_reports_error_and_fails(self):
+        self.provider.info.return_value = {}
+        with patch.object(common, 'error') as error, self.assertRaises(SystemExit) as exit:
+            cli.ssh_vm(self.args)
+        self.assertEqual(exit.exception.code, 1)
+        self.assertIn('Could not find VM test', error.call_args.args[0])
+        self.system.assert_not_called()
+
+    def test_stopped_vm_does_not_attempt_ssh(self):
+        self.provider.info.return_value['status'] = 'down'
+        with patch.object(common, 'error') as error, self.assertRaises(SystemExit) as exit:
+            cli.ssh_vm(self.args)
+        self.assertEqual(exit.exception.code, 1)
+        error.assert_called_once_with('test down')
+        self.system.assert_not_called()
+
+    def test_connection_failure_reports_target_and_preserves_exit_status(self):
+        self.system.return_value = 255 << 8
+        with patch.object(cli, 'error') as error, self.assertRaises(SystemExit) as exit:
+            cli.ssh_vm(self.args)
+        self.assertEqual(exit.exception.code, 255)
+        self.assertIn('SSH connection to ubuntu@192.168.64.6 failed', error.call_args.args[0])
+
+    def test_remote_command_failure_is_not_reported_as_a_connection_failure(self):
+        self.args.name.append('false')
+        self.system.return_value = 1 << 8
+        with patch.object(cli, 'error') as error, self.assertRaises(SystemExit) as exit:
+            cli.ssh_vm(self.args)
+        self.assertEqual(exit.exception.code, 1)
+        error.assert_not_called()
+
     def test_successful_session_exits_successfully(self):
         with self.assertRaises(SystemExit) as exit:
             cli.ssh_vm(self.args)
         self.assertEqual(exit.exception.code, 0)
         self.assertIn('ubuntu@192.168.64.6', self.system.call_args.args[0])
-
 
     def test_utm_login_probe_and_session_use_explicit_credentials(self):
         self.args.user = 'guest'
@@ -46,3 +85,9 @@ class TestSSH(unittest.TestCase):
         self.assertIn('-i /tmp/guest-key', command)
         self.assertIn('guest@192.168.64.6', command)
 
+    def test_debug_enables_ssh_diagnostics(self):
+        with patch.object(common, 'get_ssh_pub_key', return_value=None):
+            insecure = common.ssh('test', ip='192.168.64.6', user='ubuntu', insecure=True, debug=True)
+            secure = common.ssh('test', ip='192.168.64.6', user='ubuntu', debug=True)
+        self.assertIn('LogLevel=DEBUG1', insecure)
+        self.assertTrue(secure.startswith('ssh -v '))
