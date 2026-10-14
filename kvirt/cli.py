@@ -2703,7 +2703,13 @@ def ssh_vm(args):
         config = Kconfig(client=args.client, debug=args.debug, region=args.region, zone=args.zone,
                          namespace=args.namespace, resource_group=args.resource_group)
         k = config.k
-        u, ip, vmport = common._ssh_credentials(k, name)
+        if config.type == 'utm':
+            k.ssh_user = user or config.vmuser
+            k.ssh_identityfile = identityfile
+            if vmport is not None:
+                k.ssh_port = int(vmport)
+        u, ip, discovered_port = common._ssh_credentials(k, name)
+        vmport = vmport or discovered_port
         if tunnel and tunnelhost is None and config.type == 'kubevirt':
             info = k.info(name, debug=False)
             tunnelhost = k.node_host(name=info.get('host'))

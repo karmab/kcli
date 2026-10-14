@@ -7,6 +7,7 @@ import json
 import os
 import plistlib
 import re
+import shlex
 import subprocess
 from shutil import which, copy2
 from tempfile import TemporaryDirectory
@@ -69,10 +70,14 @@ def _find_vm_disk_files(vm_name):
 
 
 class Kutm(object):
-    def __init__(self, debug=False, backend='qemu'):
+    def __init__(self, debug=False, backend='qemu', ssh_port=22, ssh_user=None, ssh_insecure=True):
         self.conn = None
         self.debug = debug
         self.backend = backend.lower()
+        self.ssh_port = int(ssh_port)
+        self.ssh_user = ssh_user
+        self.ssh_insecure = ssh_insecure
+        self.ssh_identityfile = None
         if self.backend not in ('qemu', 'apple'):
             error(f"Unsupported UTM backend {backend}. Choose qemu or apple")
             return
@@ -337,6 +342,8 @@ end tell'''
         vm_metadata = {'plan': plan, 'profile': profile, 'image': image or '', 'user': common.getuser(),
                        'creationdate': common.datetime.now().strftime('%d-%m-%Y %H:%M'), 'domain': domain or '',
                        'tags': tags}
+        if vmuser is not None:
+            vm_metadata['vmuser'] = vmuser
         vm_metadata.update(metadata)
         try:
             self._set_vm_notes(name, vm_metadata)
@@ -628,7 +635,7 @@ end tell'''
         yamlinfo['profile'] = metadata.get('profile', '')
         yamlinfo['image'] = metadata.get('image', '')
         image = yamlinfo['image']
-        yamlinfo['user'] = common.get_user(image) if image else ''
+        yamlinfo['user'] = metadata.get('vmuser') or (common.get_user(image) if image else '')
         yamlinfo['creationdate'] = metadata.get('creationdate', '')
         yamlinfo['domain'] = metadata.get('domain', '')
         yamlinfo['tags'] = metadata.get('tags', [])
@@ -650,9 +657,11 @@ end tell'''
             pass
         if status == 'started':
             try:
-                ip = self.ip(name)
+                ip, ssh_error = self._ip_status(name)
                 if ip:
                     yamlinfo['ip'] = ip
+                elif ssh_error:
+                    yamlinfo['ssh_error'] = ssh_error
             except Exception:
                 pass
         yamlinfo['nets'] = []
@@ -736,18 +745,48 @@ end tell'''
         return yamlinfo
 
     def ip(self, name):
+        return self._ip_status(name)[0]
+
+    def _ip_status(self, name):
         try:
             if self._get_vm_backend(name) == 'apple':
-                return self._dhcp_ip(name)
+                ip = self._dhcp_ip(name)
+                if not ip:
+                    return None, f"No unambiguous DHCP address found for {name}; the guest may still be booting"
+                metadata = self._get_vm_notes(name)
+                user = self.ssh_user or metadata.get('vmuser') or common.get_user(metadata.get('image', ''))
+                reason = self._ssh_error(name, ip, user)
+                if reason:
+                    return None, reason
+                return ip, None
             script = f'''tell application "UTM"
 set vm to virtual machine named "{name}"
 set ipList to query ip of vm
 return item 1 of ipList
 end tell'''
             ip = _osascript(script)
-            return ip if ip else None
-        except Exception:
-            return None
+            return ip if ip else None, None
+        except Exception as e:
+            return None, f"Could not discover an IP for {name}: {e}"
+
+    def _ssh_error(self, name, ip, user):
+        # sshd may answer before cloud-init installs the login keys. Verify a
+        # noninteractive login using the same credentials as kcli ssh.
+        command = shlex.split(common.ssh(name, ip=ip, user=user, cmd='true', vmport=self.ssh_port,
+                                         identityfile=self.ssh_identityfile, insecure=self.ssh_insecure))
+        command[1:1] = ['-o', 'BatchMode=yes', '-o', 'ConnectTimeout=2', '-o', 'ConnectionAttempts=1',
+                        '-o', 'ControlMaster=no', '-o', 'ControlPath=none']
+        try:
+            result = subprocess.run(command, capture_output=True, text=True, timeout=3)
+        except subprocess.TimeoutExpired:
+            return f"SSH login to {user}@{ip}:{self.ssh_port} timed out; the guest may still be booting"
+        except OSError as e:
+            return f"Could not check SSH login for {name}: {e}"
+        if result.returncode:
+            errors = result.stderr.strip().splitlines()
+            reason = errors[-1] if errors else f"SSH exited with status {result.returncode}"
+            return f"SSH login to {user}@{ip}:{self.ssh_port} failed: {reason}"
+        return None
 
     def _dhcp_ip(self, name):
         # The QEMU guest agent is unavailable on Apple's virtualization backend.
