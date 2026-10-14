@@ -40,6 +40,12 @@ cp -a "$REPO_DIR" "$SRC_DIR"
 "$INSTALL_DIR/bin/pip" install --no-cache-dir "$SRC_DIR" 2>&1 | tail -1
 rm -rf "$SRC_DIR"
 
+# Fix shebangs to point to the installed path instead of the temp build dir
+find "$INSTALL_DIR/bin" -type f -exec grep -Il "$INSTALL_DIR" {} \; | while read f; do
+    sed -i "" "s|$INSTALL_DIR|/usr/local/kcli|g" "$f"
+done
+sed -i "" "s|$INSTALL_DIR|/usr/local/kcli|" "$INSTALL_DIR/pyvenv.cfg" 2>/dev/null || true
+
 mkdir -p "$BIN_DIR"
 cat > "$BIN_DIR/kcli" << 'WRAPPER'
 #!/bin/bash
