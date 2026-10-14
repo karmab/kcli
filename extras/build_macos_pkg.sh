@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -eo pipefail
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -11,6 +11,9 @@ REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 MACOS_DIR="$SCRIPT_DIR/macos"
 VERSION="${GIT_CUSTOM_VERSION:-99.0.$(date +%Y%m%d%H%M).$(git -C "$REPO_DIR" rev-parse --short HEAD | python3 -c "import sys; print(int(sys.stdin.read().strip(), 16))")}"
 STAGING=$(mktemp -d)
+# Python resolves macOS aliases such as /var to /private/var in shebangs.
+# Use the same physical path when creating and relocating the virtualenv.
+STAGING=$(cd "$STAGING" && pwd -P)
 PKG_ROOT="$STAGING/payload"
 INSTALL_DIR="$PKG_ROOT/kcli"
 BIN_DIR="$PKG_ROOT/bin"
