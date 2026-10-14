@@ -199,6 +199,9 @@ class TestUTM(unittest.TestCase):
                 self.assertEqual(interface['dhcp4'], not static)
                 if static:
                     self.assertEqual(interface['addresses'], ['192.0.2.2/24'])
+                    self.assertNotIn('dhcp-identifier', interface)
+                else:
+                    self.assertEqual(interface['dhcp-identifier'], 'mac')
                 self.assertEqual(net, original)
                 self.assertIn(f'address:"{net["mac"]}"', self.script.call_args.args[0])
 
@@ -236,6 +239,35 @@ class TestUTM(unittest.TestCase):
         with patch('builtins.open', mock_open(read_data=leases)):
             self.assertEqual(self.provider.ip('test'), '192.168.64.4')
             self.assertIsNone(self.provider.ip('other'))
+
+
+    def test_dhcp_ip_prefers_current_mac_over_retained_hostname(self):
+        self.script.return_value = '52:54:00:01:02:03'
+        current = '{\n name=test\n hw_address=1,52:54:0:1:2:3\n ip_address=192.168.64.6\n}\n'
+        stale = '{\n name=test\n hw_address=ff,1:2:3:4:5:6:7:8\n ip_address=192.168.64.5\n}\n'
+        for leases in (current + stale, stale + current):
+            with self.subTest(leases=leases), patch('builtins.open', mock_open(read_data=leases)):
+                self.assertEqual(self.provider._dhcp_ip('test'), '192.168.64.6')
+
+
+    def test_dhcp_ip_rejects_ambiguous_hostname_fallback(self):
+        self.script.return_value = '52:54:00:01:02:03'
+        duid = '{\n name=test\n hw_address=ff,1:2:3:4:5:6:7:8\n ip_address=192.168.64.5\n}\n'
+        for address in ('ff,8:7:6:5:4:3:2:1', '1,52:54:00:04:05:06'):
+            other = f'{{\n name=test\n hw_address={address}\n ip_address=192.168.64.6\n}}\n'
+            for leases in (duid + other, other + duid):
+                with self.subTest(leases=leases), patch('builtins.open', mock_open(read_data=leases)):
+                    self.assertIsNone(self.provider._dhcp_ip('test'))
+
+
+    def test_dhcp_ip_ignores_unrelated_hostname_and_missing_address(self):
+        self.script.return_value = '52:54:00:01:02:03'
+        leases = ('{\n name=test\n hw_address=ff,1:2:3:4:5:6:7:8\n ip_address=192.168.64.5\n}\n'
+                  '{\n name=other\n hw_address=ff,8:7:6:5:4:3:2:1\n ip_address=192.168.64.6\n}\n'
+                  '{\n name=test\n hw_address=1,52:54:0:1:2:3\n}\n')
+        with patch('builtins.open', mock_open(read_data=leases)):
+            self.assertEqual(self.provider._dhcp_ip('test'), '192.168.64.5')
+
 
 
 if __name__ == '__main__':

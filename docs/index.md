@@ -699,6 +699,8 @@ Apple VMs use UEFI, raw disks, VirtIO devices, and shared or bridged networking.
 
 Cloud-init network interfaces are matched by MAC address, and the seed disk is imported into the VM bundle. Displays are enabled by default; use `-P vnc=false` for a headless VM.
 
+Apple VMs using DHCPv4 are configured to identify themselves by MAC address. Address discovery prefers the current VM's MAC and rejects ambiguous hostname matches from retained DHCP leases.
+
 ### Web
 
 This provider allows you to interact with a kweb instance using kcli commands

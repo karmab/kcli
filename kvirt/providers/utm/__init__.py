@@ -364,6 +364,8 @@ end tell'''
                         if interface is not None:
                             interface['match'] = {'macaddress': net['mac']}
                             interface['set-name'] = net['nic']
+                            if interface.get('dhcp4'):
+                                interface['dhcp-identifier'] = 'mac'
                     netdata = yaml.safe_dump(network_config)
             with TemporaryDirectory() as tmpdir:
                 result = common.make_iso(name, tmpdir, userdata, metadata_ci, netdata, openstack=needs_ignition)
@@ -764,15 +766,28 @@ end tell'''
                 leases = f.read()
         except OSError:
             return None
+        hostname_ips = set()
+        has_duid_match = False
         for block in reversed(re.findall(r'\{([^}]+)\}', leases)):
             lease = dict(re.findall(r'^\s*(\w+)=(.*)$', block, re.MULTILINE))
             mac = lease.get('hw_address', '').split(',')[-1].strip().lower()
             mac = ':'.join(part.zfill(2) for part in mac.split(':'))
+            ip = lease.get('ip_address', '').strip()
+            if not ip:
+                continue
+            # A current NIC match takes precedence over every hostname match,
+            # regardless of the order of retained leases in macOS's file.
+            if mac in macs:
+                return ip
             # systemd-networkd may identify itself with an IAID/DUID instead of
             # an Ethernet address. macOS then records its hostname in the lease.
-            duid_match = lease.get('hw_address', '').startswith('ff,') and lease.get('name', '').strip() == name
-            if mac in macs or duid_match:
-                return lease.get('ip_address', '').strip() or None
+            if lease.get('name', '').strip() == name:
+                hostname_ips.add(ip)
+                has_duid_match |= lease.get('hw_address', '').startswith('ff,')
+        # A reused VM name can identify several retained addresses. Without a
+        # matching NIC, there is no reliable way to select the current one.
+        if has_duid_match and len(hostname_ips) == 1:
+            return hostname_ips.pop()
         return None
 
     def volumes(self, iso=False, extended=False):
