@@ -704,6 +704,20 @@ This provider allows you to manage VMs in your MACOSX. It requires UTM to be ins
 
 No extra dependencies are needed as instead AppleScript is used via osascript
 
+The backend defaults to ``qemu``. To use Apple's Virtualization.framework backend for Linux VMs (macOS 13 or newer), set ``backend: apple`` on the client:
+
+.. code:: yaml
+
+   myutm:
+    type: utm
+    backend: apple
+
+You can also select a backend for a VM with ``-P backend=apple`` (or ``backend: apple`` in a plan). Image downloads use the client's backend, and a template must use the same backend as the VM. Download images separately for each backend using distinct names.
+
+Apple VMs use UEFI, raw disks, VirtIO devices, and shared or bridged networking. Install ``qemu-img`` (for example, ``brew install qemu``) to convert downloaded QCOW2 images to raw format. Raw ``.img`` and ``.raw`` images need no conversion. Shared folders use VirtioFS. TPM and QEMU machine/CPU emulation options are unavailable with this backend. IP discovery uses macOS DHCP leases for shared networking; bridged guests need an independently known address.
+
+Cloud-init network interfaces are matched by MAC address, and the seed disk is imported into the VM bundle. Displays are enabled by default; use ``-P vnc=false`` for a headless VM.
+
 Web
 ~~~
 
