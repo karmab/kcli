@@ -886,7 +886,7 @@ def create(config, plandir, cluster, overrides):
     call(f"until oc -n {namespace} get secret {cluster}-kubeadmin-password >/dev/null 2>&1 ; do sleep 1 ; done",
          shell=True)
     kubeadminpath = f'{clusterdir}/auth/kubeadmin-password'
-    kubeadmin = os.popen(f"oc extract -n {namespace} secret/{cluster}-kubeadmin-password --to=-").read()
+    kubeadmin = os.popen(f"oc extract -n {namespace} secret/{cluster}-kubeadmin-password --to=-").read().strip()
     with open(kubeadminpath, 'w') as f:
         f.write(kubeadmin)
     if network_type == 'Calico':
