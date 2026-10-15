@@ -697,6 +697,20 @@ You can also select a backend for a VM with `-P backend=apple` (or `backend: app
 
 Apple VMs use UEFI, raw disks, VirtIO devices, and shared or bridged networking. Install `qemu-img` (for example, `brew install qemu`) to convert downloaded QCOW2 images to raw format. Raw `.img` and `.raw` images need no conversion. Shared folders use VirtioFS. TPM and QEMU machine/CPU emulation options are unavailable with this backend. IP discovery uses macOS DHCP leases for shared networking; bridged guests need an independently known address.
 
+With `backend: apple`, `sharedfolders` are automatically mounted at `/mnt/host` in cloud-init guests before custom `cmds` run, and persist across reboots. Each host folder appears under its basename: sharing `/Users/ffidencio/src` exposes `/mnt/host/src`. For example, in a plan:
+
+```yaml
+devvm:
+  image: your-apple-backend-image
+  backend: apple
+  sharedfolders:
+    - /Users/ffidencio/src
+```
+
+Apple shared-folder creation requires UTM 5.0.4 or newer containing [the upstream scripting fix](https://github.com/utmapp/UTM/commit/f2c3ecaedcda5fe4d2745234cfccc8abbedc9c38). UTM 4.7.5 cannot grant folder access through scripting. kcli checks the version before creating the VM; development builds must include the fix even if their version meets the minimum.
+
+The guest kernel must support VirtioFS. Without cloud-init, or with an Ignition image, mount the share manually with `sudo mkdir -p /mnt/host` and `sudo mount -t virtiofs share /mnt/host`.
+
 Cloud-init network interfaces are matched by MAC address, and the seed disk is imported into the VM bundle. Displays are enabled by default; use `-P vnc=false` for a headless VM.
 
 ### Web
