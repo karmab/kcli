@@ -2017,6 +2017,7 @@ def generate_rhcos_iso(k, cluster, pool, version='latest', installer=False, arch
 
 def olm_app(package, overrides={}):
     specific_catalog = overrides.get('catalog')
+    specific_channel = overrides.get('channel')
     os.environ["PATH"] += f":{os.getcwd()}"
     if specific_catalog is not None:
         data = None
@@ -2037,7 +2038,7 @@ def olm_app(package, overrides={}):
     namespace = name.split('-operator')[0]
     status = data['status']
     catalog = status['catalogSource']
-    defaultchannel = status['defaultChannel']
+    defaultchannel = specific_channel or status['defaultChannel']
     own = False
     channels = []
     for channel in status['channels']:
