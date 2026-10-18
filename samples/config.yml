@@ -65,6 +65,7 @@ default:
  start: true
  # Graphical connection to use for libvirt.
  vnc: true
+ spice: false
  # Array of ssh public keys to inject to the vm
  keys: []
  # Array of commands to run through cloudinit

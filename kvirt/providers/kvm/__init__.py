@@ -212,7 +212,7 @@ class Kvirt(object):
     def create(self, name, virttype=None, profile='kvirt', flavor=None, plan='kvirt', cpumodel='host-model',
                cpuflags=[], cpupinning=[], numcpus=2, memory=512, guestid='guestrhel764', pool='default', image=None,
                disks=[{'size': 10}], disksize=10, diskthin=True, diskinterface='virtio', nets=['default'], iso=None,
-               vnc=True, vncpassword=None, cloudinit=True, reserveip=False, reservedns=False, reservehost=False,
+               vnc=False, vncpassword=None, spice=True, spicepassword=None, cloudinit=True, reserveip=False, reservedns=False, reservehost=False,
                start=True, keys=[], cmds=[], ips=None, netmasks=None, gateway=None, nested=True, dns=None, domain=None,
                tunnel=False, files=[], enableroot=True, overrides={}, tags=[], storemetadata=False, sharedfolders=[],
                cmdline=None, placement=[], autostart=False, cpuhotplug=False, memoryhotplug=False, numamode=None,
@@ -927,10 +927,9 @@ class Kvirt(object):
                         return {'result': 'failure', 'reason': msg}
                     self._uploadimage(name, pool=default_storagepool, origin=tmpdir)
         listen = '0.0.0.0' if self.host not in ['localhost', '127.0.0.1'] and not tunnel else '127.0.0.1'
-        if not vnc:
-            displayxml = ''
-        else:
-            displayxml = """<input type='mouse' bus='virtio'/>"""
+
+        displayxml = ""
+        if vnc:
             vncviewerpath = '/Applications/VNC Viewer.app'
             if os.path.exists('/Applications') and not os.path.exists(vncviewerpath):
                 passwd = vncpassword or ''.join(choices(ascii_lowercase, k=6))
@@ -944,8 +943,25 @@ class Kvirt(object):
 <listen type='address' address='%s'/>
 </graphics>
 <memballoon model='virtio'/>""" % (listen, passwd, listen)
-            if aarch64_full:
-                displayxml += "<video><model type='virtio' vram='16384' heads='1' primary='yes'/></video>"
+            displayxml += "<video><model type='virtio' vram='16384' heads='1' primary='yes'/></video>"
+
+        elif spice:
+            spiceviewerpath = '/Applications/RemoteViewer.app'
+            if os.path.exists('/Applications') and not os.path.exists(spiceviewerpath):
+                passwd = spicepassword or ''.join(choices(ascii_lowercase, k=6))
+                passwd = f"passwd='{passwd}'"
+            elif spicepassword is not None:
+                passwd = f"passwd='{spicepassword}'"
+            else:
+                passwd = ''
+
+            displayxml += """<graphics type='spice' port='-1' autoport='yes' listen='%s' %s>
+<gl enable='no'/>
+<image compression='off'/>
+</graphics>
+<memballoon model='virtio'/>""" % (listen, passwd)
+            displayxml += "<video><model type='virtio' vram='16384' heads='1' primary='yes'/></video>"
+
         if cpumodel == 'host-model' and not aarch64:
             cpuxml = "<cpu mode='host-model'><model fallback='allow'/>"
         elif cpumodel == 'host-passthrough' or aarch64_full:
