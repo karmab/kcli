@@ -7,7 +7,7 @@ env:
  HOME: /root
  PYTHONUNBUFFERED: true
  CLUSTER: ci-sno
- PULLSECRET: /root/openshift_pull.json
+ PULL_SECRET: /root/openshift_pull.json
  PARAMFILE: openshift-ci-paramfiles/sno.yml
 
 jobs:
@@ -38,7 +38,7 @@ jobs:
    steps:
    - name: Deploy SNO
      run: |
-       kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET -P sno_disk=vdb $CLUSTER
+       kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULL_SECRET -P sno_disk=vdb $CLUSTER
 
 # clean-up:
 #   needs: deploy-openshift

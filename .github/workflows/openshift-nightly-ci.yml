@@ -7,7 +7,7 @@ env:
  HOME: /root
  PYTHONUNBUFFERED: true
  CLUSTER: ci
- PULLSECRET: /root/openshift_pull.json
+ PULL_SECRET: /root/openshift_pull.json
 
 jobs:
   deploy-openshift:
@@ -21,4 +21,4 @@ jobs:
      - name: Delete old install
        run: kcli delete cluster --yes $CLUSTER || true
      - name: Deploy Openshift on libvirt
-       run: kcli create cluster openshift --paramfile openshift-ci-paramfiles/libvirt.yml -P pull_secret=$PULLSECRET $CLUSTER --force
+       run: kcli create cluster openshift --paramfile openshift-ci-paramfiles/libvirt.yml -P pull_secret=$PULL_SECRET $CLUSTER --force

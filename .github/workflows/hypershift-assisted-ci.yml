@@ -13,7 +13,7 @@ on:
       EXTRAPARAMS:
         description: 'Extra params'
         default: ''
-      PULLSECRET:
+      PULL_SECRET:
         description: 'Pull Secret'
         required: false
         default: /root/openshift_pull.json
@@ -26,7 +26,7 @@ env:
  INPUTFILE: ${{github.event.inputs.INPUTFILE}}
  PARAMFILE: ${{github.event.inputs.PARAMFILE}}
  EXTRAPARAMS: ${{github.event.inputs.EXTRAPARAMS}}
- PULLSECRET: ${{github.event.inputs.PULLSECRET}}
+ PULL_SECRET: ${{github.event.inputs.PULL_SECRET}}
 
 jobs:
     requirements:
@@ -48,4 +48,4 @@ jobs:
       steps:
       - name: Deploy HYPERSHIFT ASSISTED
         run: |
-          kcli create cluster hypershift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET $EXTRAPARAMS $CLUSTER
+          kcli create cluster hypershift --paramfile $PARAMFILE -P pull_secret=$PULL_SECRET $EXTRAPARAMS $CLUSTER

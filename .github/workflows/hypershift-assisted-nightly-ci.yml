@@ -7,7 +7,7 @@ env:
  HOME: /root
  PYTHONUNBUFFERED: true
  CLUSTER: ci-hypershift-assisted
- PULLSECRET: /root/openshift_pull.json
+ PULL_SECRET: /root/openshift_pull.json
  KUBECONFIG: /root/.kcli/clusters/ci-sno/auth/kubeconfig
  PARAMFILE: openshift-ci-paramfiles/hypershift_assisted.yml
 
@@ -43,7 +43,7 @@ jobs:
    steps:
    - name: Deploy HYPERSHIFT ASSISTED
      run: |
-       kcli create cluster hypershift --pf $PARAMFILE -P pull_secret=$PULLSECRET $CLUSTER --force
+       kcli create cluster hypershift --pf $PARAMFILE -P pull_secret=$PULL_SECRET $CLUSTER --force
 
  clean-up:
    needs: deploy-hypershift

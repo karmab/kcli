@@ -13,7 +13,7 @@ on:
       EXTRAPARAMS:
         description: 'Extra params'
         default: ''
-      PULLSECRET:
+      PULL_SECRET:
         description: 'Pull Secret'
         required: false
         default: /root/openshift_pull.json
@@ -30,7 +30,7 @@ env:
  PARAMFILE: ${{github.event.inputs.PARAMFILE}}
  PLANFILE: ${{github.event.inputs.PLANFILE}}
  EXTRAPARAMS: ${{github.event.inputs.EXTRAPARAMS}}
- PULLSECRET: ${{github.event.inputs.PULLSECRET}}
+ PULL_SECRET: ${{github.event.inputs.PULL_SECRET}}
 
 jobs:
     requirements:
@@ -57,4 +57,4 @@ jobs:
       runs-on: libvirt
       steps:
       - name: Deploy SNO and additional nodes
-        run: kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET $EXTRAPARAMS $CLUSTER
+        run: kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULL_SECRET $EXTRAPARAMS $CLUSTER
