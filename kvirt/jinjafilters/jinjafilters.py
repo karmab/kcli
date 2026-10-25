@@ -99,7 +99,7 @@ def defaultnodes(replicas, cluster, domain, ctlplanes, workers):
     return nodes
 
 
-def wait_crd(crd, timeout=120):
+def wait_crd(crd, timeout=240):
     result = """timeout=0
 ready=false
 while [ "$timeout" -lt "%s" ] ; do
