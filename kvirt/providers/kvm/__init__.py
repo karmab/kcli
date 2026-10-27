@@ -98,6 +98,26 @@ def list_wildcards(root):
     return options
 
 
+def delete_wildcard(conn, network, root, hostname):
+    ET.register_namespace("dnsmasq", DNSMASQ_NS)
+    options_tag = f"{{{DNSMASQ_NS}}}options"
+    option_tag = f"{{{DNSMASQ_NS}}}option"
+    options_element = root.find(options_tag)
+    if options_element is not None:
+        for option in list(options_element.findall(option_tag)):
+            if hostname in option.get("value"):
+                options_element.remove(option)
+                if len(options_element) == 0:
+                    root.remove(options_element)
+                newxml = ET.tostring(root, encoding="unicode")
+                conn.networkDefineXML(newxml)
+                network.destroy()
+                network.create()
+                call("systemctl restart libvirtd", shell=True)
+                return 0
+    return 1
+
+
 registerErrorHandler(f=libvirt_callback, ctx=None)
 
 
@@ -4013,6 +4033,8 @@ class Kvirt(object):
                 netname = network.name()
                 netxml = network.XMLDesc()
                 netroot = ET.fromstring(netxml)
+                if delete_wildcard(conn, network, netroot, name) == 0:
+                    return
                 dns = list(netroot.iter('dns'))
                 if not dns:
                     continue
@@ -4039,7 +4061,8 @@ class Kvirt(object):
             network = conn.networkLookupByName(domain)
             netxml = network.XMLDesc()
             netroot = ET.fromstring(netxml)
-            dns = list(netroot.iter('dns'))
+            if delete_wildcard(conn, network, netroot, f'{name}.{domain}') == 0:
+                return
             if not dns:
                 warning(f"No dns information found in network {domain}")
                 return
