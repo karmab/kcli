@@ -2555,6 +2555,22 @@ class Kvirt(object):
                     warning("Ignoring reservedns as network was created with dns explicitely disabled")
                     continue
                 fqdn = f"{name}.{domain}" if domain is not None and not name.endswith(domain) else name
+                if '*' in alias:
+                    DNSMASQ_NS = "http://libvirt.org/schemas/network/dnsmasq/1.0"
+                    ET.register_namespace("dnsmasq", DNSMASQ_NS)
+                    options_tag = f"{{{DNSMASQ_NS}}}options"
+                    option_tag = f"{{{DNSMASQ_NS}}}option"
+                    options_element = root.find(options_tag)
+                    if options_element is None:
+                        options_element = ET.SubElement(root, options_tag)
+                    value = f'address=/.{fqdn}/{ip}'
+                    ET.SubElement(options_element, option_tag, {"value": value})
+                    newxml = ET.tostring(root, encoding="unicode")
+                    conn.networkDefineXML(newxml)
+                    network.destroy()
+                    network.create()
+                    call("systemctl restart libvirtd", shell=True)
+                    return
                 hostnamexml = f'<hostname>{fqdn}</hostname>'
                 alias = [f"{entry}.{domain}" if domain is not None and
                          not entry.endswith(domain) else entry for entry in alias]
