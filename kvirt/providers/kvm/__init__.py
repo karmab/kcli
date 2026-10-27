@@ -74,10 +74,28 @@ states = {VIR_DOMAIN_NOSTATE: 'nostate', VIR_DOMAIN_RUNNING: 'up',
           VIR_DOMAIN_BLOCKED: 'blocked', VIR_DOMAIN_PAUSED: 'paused',
           VIR_DOMAIN_SHUTDOWN: 'shuttingdown', VIR_DOMAIN_SHUTOFF: 'down',
           VIR_DOMAIN_CRASHED: 'crashed'}
+DNSMASQ_NS = "http://libvirt.org/schemas/network/dnsmasq/1.0"
 
 
 def libvirt_callback(ignore, err):
     return
+
+
+def list_wildcards(root):
+    options_tag = f"{{{DNSMASQ_NS}}}options"
+    option_tag = f"{{{DNSMASQ_NS}}}option"
+    options_element = root.find(options_tag)
+    if options_element is None:
+        return []
+    options = []
+    for option in options_element.findall(option_tag):
+        value = option.get("value")
+        if 'address' in value:
+            parts = value.split("/")
+            name = parts[1].lstrip(".")
+            ip = parts[2].split("'")[0]
+            options.append([name, ip])
+    return options
 
 
 registerErrorHandler(f=libvirt_callback, ctx=None)
@@ -2556,7 +2574,6 @@ class Kvirt(object):
                     continue
                 fqdn = f"{name}.{domain}" if domain is not None and not name.endswith(domain) else name
                 if '*' in alias:
-                    DNSMASQ_NS = "http://libvirt.org/schemas/network/dnsmasq/1.0"
                     ET.register_namespace("dnsmasq", DNSMASQ_NS)
                     options_tag = f"{{{DNSMASQ_NS}}}options"
                     option_tag = f"{{{DNSMASQ_NS}}}option"
@@ -4068,6 +4085,9 @@ class Kvirt(object):
                     for hostname in list(host.iter('hostname')):
                         if hostname.text.endswith(domain):
                             results.append([hostname.text, 'A', '0', f"{iphost} ({netname})"])
+                for wildcard in list_wildcards(netroot):
+                    name, ip = wildcard
+                    results.append([f'*.{name}', 'A', '0', f"{ip})"])
         return results
 
     def create_bucket(self, bucket, public=False):
@@ -4318,6 +4338,10 @@ class Kvirt(object):
                 for hostname in list(host.iter('hostname')):
                     if len(hostname.text.split('.')) > 1 and hostname.text.partition('.')[2] not in results:
                         results.append(hostname.text.partition('.')[2])
+            for wildcard in list_wildcards(netroot):
+                domain = wildcard[0].split(".", 2)[2]
+                if domain not in results:
+                    results.append(domain)
         return results
 
     def _rhel_legacy(self, machines):
