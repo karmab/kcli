@@ -4110,7 +4110,7 @@ class Kvirt(object):
                             results.append([hostname.text, 'A', '0', f"{iphost} ({netname})"])
                 for wildcard in list_wildcards(netroot):
                     name, ip = wildcard
-                    results.append([f'*.{name}', 'A', '0', f"{ip})"])
+                    results.append([f'*.{name}', 'A', '0', f"{ip}"])
         return results
 
     def create_bucket(self, bucket, public=False):
