@@ -675,6 +675,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     data = safe_load(open(f'{plandir}/kcli_default.yml'))
     data.update(overrides)
     fix_typos(data)
+    if data['customfeatureset'] and data['featureset'] not in (None, '', 'CustomNoUpgrade'):
+        return {'result': 'failure', 'reason': "featureset must be CustomNoUpgrade when customfeatureset is used"}
     esx = config.type == 'vsphere' and k.esx
     data['esx'] = esx
     ctlplanes = data['ctlplanes']
