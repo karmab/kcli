@@ -253,7 +253,7 @@ end tell'''
         uefi = overrides.get('uefi', True)
         machine = overrides.get('machine', 'virt')
         if backend == 'apple':
-            nets = [net.copy() if isinstance(net, dict) else {'name': net} for net in nets or ['default']]
+            nets = [net.copy() if isinstance(net, dict) else {'name': net} for net in nets or ['shared']]
             for index, net in enumerate(nets):
                 net.setdefault('mac', common.gen_mac())
                 net.setdefault('nic', f'eth{index}')
