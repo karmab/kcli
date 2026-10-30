@@ -3,6 +3,7 @@
 from kvirt import common
 from kvirt.common import pprint, error, warning
 import base64
+import ipaddress
 import json
 import os
 import plistlib
@@ -1354,11 +1355,14 @@ end tell'''
         return pools
 
     def list_networks(self):
+        ip = subprocess.check_output(['ipconfig', 'getifaddr', 'en0']).decode().strip()
+        mask = subprocess.check_output(['ipconfig', 'getoption', 'en0', 'subnet_mask']).decode().strip()
+        bridge_cidr = ipaddress.IPv4Network(f'{ip}/{mask}', strict=False)
         return {
-            'shared': {'cidr': 'N/A', 'dhcp': True, 'domain': '', 'type': 'routed', 'mode': 'nat'},
-            'bridged': {'cidr': 'N/A', 'dhcp': False, 'domain': '', 'type': 'bridged', 'mode': 'bridge'},
-            'host': {'cidr': 'N/A', 'dhcp': True, 'domain': '', 'type': 'isolated', 'mode': 'host-only'},
-            'emulated': {'cidr': 'N/A', 'dhcp': True, 'domain': '', 'type': 'routed', 'mode': 'vlan'},
+            'shared': {'cidr': '192.168.64.0/24', 'dhcp': True, 'domain': '', 'type': 'routed', 'mode': 'nat'},
+            'bridged': {'cidr': bridge_cidr, 'dhcp': False, 'domain': '', 'type': 'bridged', 'mode': 'bridge'},
+            'host': {'cidr': '192.168.64.0/24', 'dhcp': True, 'domain': '', 'type': 'isolated', 'mode': 'host-only'},
+            'emulated': {'cidr': '10.0.2.0/24', 'dhcp': True, 'domain': '', 'type': 'routed', 'mode': 'vlan'},
         }
 
     def info_network(self, name):
