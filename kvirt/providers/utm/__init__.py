@@ -553,14 +553,20 @@ end tell'''
                 metadata = self._get_vm_notes(name)
                 if metadata.get('template'):
                     continue
-                vms.append({
+                vm_entry = {
                     'name': name,
                     'status': state,
                     'ip': ip,
                     'source': metadata.get('image', ''),
                     'plan': metadata.get('plan', ''),
                     'profile': metadata.get('profile', ''),
-                })
+                }
+                kube = metadata.get('kube')
+                kubetype = metadata.get('kubetype')
+                if kube is not None and kubetype is not None:
+                    vm_entry['kube'] = kube
+                    vm_entry['kubetype'] = kubetype
+                vms.append(vm_entry)
             except Exception:
                 continue
         return sorted(vms, key=lambda x: x['name'])
@@ -631,6 +637,11 @@ end tell'''
         yamlinfo['creationdate'] = metadata.get('creationdate', '')
         yamlinfo['domain'] = metadata.get('domain', '')
         yamlinfo['tags'] = metadata.get('tags', [])
+        kube = metadata.get('kube')
+        kubetype = metadata.get('kubetype')
+        if kube is not None and kubetype is not None:
+            yamlinfo['kube'] = kube
+            yamlinfo['kubetype'] = kubetype
         try:
             plist_path = os.path.join(UTM_DOCUMENTS_DIR, f"{name}.utm", "config.plist")
             if os.path.exists(plist_path):
@@ -1369,6 +1380,8 @@ end tell'''
         networks = self.list_networks()
         if name in networks:
             return networks[name]
+        elif name == 'default':
+            return networks.get('shared', {})
         return {}
 
     def info_subnet(self, name):

@@ -132,13 +132,13 @@ def create(config, plandir, cluster, overrides):
         if not networkinfo:
             msg = f"Issue getting network {network}"
             return {'result': 'failure', 'reason': msg}
-        if provider == 'kvm' and networkinfo['type'] == 'routed':
+        if provider in ['kvm', 'utm'] and networkinfo['type'] == 'routed':
             cidr = networkinfo['cidr']
             if cidr == 'N/A':
                 msg = "Couldnt gather an api_ip from your specified network"
                 return {'result': 'failure', 'reason': msg}
             api_index = 2 if ':' in cidr else -3
-            api_ip = str(get_new_vip(network, ipv6=':' in cidr) or ip_network(cidr)[api_index])
+            api_ip = str(get_new_vip(config.client, network, ipv6=':' in cidr) or ip_network(cidr)[api_index])
             warning(f"Using {api_ip} as api_ip")
             data['api_ip'] = api_ip
             data['automatic_api_ip'] = True
@@ -205,7 +205,8 @@ def create(config, plandir, cluster, overrides):
         if not engine_version.startswith('v'):
             engine_version = f'v{engine_version}'
         data['engine_version'] = engine_version
-        engine_url = f"https://download.opensuse.org/repositories/isv:/cri-o:/stable:/{engine_version}/rpm/repodata/repomd.xml"
+        engine_url = f"https://download.opensuse.org/repositories/isv:/cri-o:/stable:/{engine_version}"
+        engine_url += "/rpm/repodata/repomd.xml"
         try:
             urlopen(engine_url)
         except:

@@ -2553,7 +2553,7 @@ class PlanLoader(yaml.SafeLoader):
 PlanLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, plan_constructor)
 
 
-def get_new_vip(network, ipv6=False):
+def get_new_vip(client, network, ipv6=False):
     data = {}
     clustersdir = os.path.expanduser('~/.kcli/clusters')
     if os.path.exists(clustersdir):
@@ -2564,6 +2564,9 @@ def get_new_vip(network, ipv6=False):
             if os.path.exists(f'{clusterdir}/kcli_parameters.yml'):
                 with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
                     installparam = yaml.safe_load(install)
+                    current_client = installparam.get('client', 'local')
+                    if current_client != client:
+                        continue
                     current_network = installparam.get('network', 'default')
                     api_ip = installparam.get('api_ip')
                     automatic = installparam.get('automatic_api_ip', False)
