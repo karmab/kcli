@@ -189,6 +189,8 @@ dedicated_etcd_size: 100
 prega: false
 virtualization_nightly: false
 techpreview: false
+featureset:
+customfeatureset:
 mirror_dir:
 ksushy_ip: 192.168.122.1
 ksushy_port: 9000

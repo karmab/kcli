@@ -46,7 +46,19 @@ compute:
 controlPlane:
   name: master
   replicas: {{ 1 if sno or sno_vm else ctlplanes }}
-{% if techpreview or rhel10 %}
+{% set featureset = 'CustomNoUpgrade' if customfeatureset else featureset %}
+{% if featureset %}
+featureSet: {{ featureset }}
+{% if featureset == 'CustomNoUpgrade' and customfeatureset %}
+featureGates:
+{% for feature in customfeatureset.get('enabled') or [] %}
+- {{ feature }}=true
+{% endfor %}
+{% for feature in customfeatureset.get('disabled') or [] %}
+- {{ feature }}=false
+{% endfor %}
+{% endif %}
+{% elif techpreview or rhel10 %}
 featureSet: TechPreviewNoUpgrade
 {% endif %}
 {% if arbiters > 0 %}
