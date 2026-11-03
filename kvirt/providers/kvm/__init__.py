@@ -4063,6 +4063,7 @@ class Kvirt(object):
             netroot = ET.fromstring(netxml)
             if delete_wildcard(conn, network, netroot, f'{name}.{domain}') == 0:
                 return
+            dns = list(netroot.iter('dns'))
             if not dns:
                 warning(f"No dns information found in network {domain}")
                 return
