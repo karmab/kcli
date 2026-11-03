@@ -1330,7 +1330,7 @@ class Kvirt(object):
             iommufeaturesxml = "<acpi/><apic/><pae/><apic/><pae/><ioapic driver='qemu'/>"
             iommudevicexml = f"<iommu model='{iommu_model}'><driver intremap='on' caching_mode='on'/></iommu>"
         controllerxml = ''
-        if uefi or uefi_legacy:
+        if 'q35' in machine:
             controllerxml = "<controller type='pci' model='pcie-root'/>"
             controllerxml += ''.join(["<controller type='pci' model='pcie-root-port'/>" for i in range(5)])
             pciexml = "<controller type='pci' model='pcie-to-pci-bridge'><model name='pcie-pci-bridge'/></controller>"
