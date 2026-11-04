@@ -730,7 +730,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     notify = data['notify']
     postscripts = data['postscripts']
     pprint(f"Deploying cluster {cluster}")
-    plan = cluster
+    plan = data.get('plan') or cluster
     overrides['kubetype'] = 'openshift'
     apps = overrides.get('apps', [])
     disks = overrides.get('disks', [30])

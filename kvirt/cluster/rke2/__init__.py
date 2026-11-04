@@ -92,7 +92,7 @@ def create(config, plandir, cluster, overrides):
         msg = f"Invalid sdn, Choose between {','.join(valid_sdns)}"
         return {'result': 'failure', 'reason': msg}
     data['cluster'] = cluster
-    plan = cluster
+    plan = data.get('plan') or cluster
     data['kube'] = data['cluster']
     data['kubetype'] = 'rke2'
     autolabel = data['autolabel']

@@ -105,7 +105,7 @@ def create(config, plandir, cluster, overrides):
         msg = "No usable public key found, which is required for the deployment. Create one using ssh-keygen"
         return {'result': 'failure', 'reason': msg}
     data['cluster'] = cluster
-    plan = cluster
+    plan = data.get('plan') or cluster
     data['kube'] = data['cluster']
     data['kubetype'] = 'generic'
     domain = data['domain']

@@ -88,7 +88,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     else:
         msg = f"Publickey file {pub_key} not found"
         return {'result': 'failure', 'reason': msg}
-    plan = cluster
+    plan = data.get('plan') or cluster
     tags = {'plan': cluster, 'kube': cluster, 'kubetype': 'aks'}
     cluster_data = {'name': cluster, 'tags': tags}
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}")
