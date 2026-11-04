@@ -14,6 +14,7 @@ class TestUTM(unittest.TestCase):
     def setUp(self):
         self.provider = utm.Kutm.__new__(utm.Kutm)
         self.provider.backend = 'apple'
+        self.provider.utm_version = '5.0.6'
         self.provider.debug = False
         self.provider.exists = Mock(return_value=False)
         self.provider._set_vm_notes = Mock()
@@ -58,6 +59,34 @@ class TestUTM(unittest.TestCase):
             with self.subTest(options=options):
                 self.assertEqual(self.provider.create('test', **options)['result'], 'failure')
                 self.script.assert_not_called()
+
+    def test_apple_sharing_rejects_unsupported_utm_before_creation(self):
+        for version in ('4.7.4', '4.7.5', '5.0.3', '', 'unknown'):
+            with self.subTest(version=version):
+                self.provider.utm_version = version
+                with patch.object(utm.os, 'makedirs') as mkdir:
+                    result = self.provider.create('test', sharedfolders=['/unused/share'], start=False)
+                self.assertEqual(result['result'], 'failure')
+                self.assertIn('UTM 5.0.4 or newer', result['reason'])
+                self.assertIn('f2c3ecae', result['reason'])
+                self.script.assert_not_called()
+                self.provider._set_vm_notes.assert_not_called()
+                mkdir.assert_not_called()
+
+    def test_apple_sharing_accepts_supported_utm_versions(self):
+        for version in ('5.0.4', '5.0.6', '5.0.10', '5.1.0', '6.0.0', '5.0.4-beta'):
+            with self.subTest(version=version), TemporaryDirectory() as directory:
+                self.provider.utm_version = version
+                result = self.provider.create('test', sharedfolders=[directory], start=False)
+                self.assertEqual(result['result'], 'success')
+
+    def test_old_utm_allows_unaffected_vm_creation(self):
+        self.provider.utm_version = '4.7.5'
+        for backend, sharing in (('apple', False), ('qemu', False), ('qemu', True)):
+            with self.subTest(backend=backend, sharing=sharing), TemporaryDirectory() as directory:
+                result = self.provider.create('test', overrides={'backend': backend}, start=False,
+                                              sharedfolders=[directory] if sharing else [])
+                self.assertEqual(result['result'], 'success')
 
     def test_network_models_and_bridge(self):
         nets = [{'name': 'bridged', 'bridge': 'en1', 'model': 'e1000', 'mac': '52:54:00:11:22:33'}]
@@ -171,7 +200,8 @@ class TestUTM(unittest.TestCase):
             result = self.provider.create('test', sharedfolders=folders, start=False)
             self.assertEqual(result['result'], 'success')
             scripts = [call.args[0] for call in self.script.call_args_list]
-            self.assertIn('directory shares of config to {{read only:false}, {read only:false}}', scripts[1])
+            self.assertIn('update configuration of vm with '
+                          '{directory shares:{{read only:false}, {read only:false}}}', scripts[1])
             self.assertNotIn('virtfs', scripts[1])
             self.assertTrue(all(folder in scripts[2] for folder in folders))
 
@@ -201,6 +231,35 @@ class TestUTM(unittest.TestCase):
                     self.assertEqual(interface['addresses'], ['192.0.2.2/24'])
                 self.assertEqual(net, original)
                 self.assertIn(f'address:"{net["mac"]}"', self.script.call_args.args[0])
+
+    def test_shared_folder_mount_precedes_custom_commands(self):
+        self.provider._find_template = Mock(return_value='template')
+        self.provider._attach_iso = Mock()
+        for backend, sharing in (('apple', True), ('apple', False), ('qemu', True)):
+            with self.subTest(backend=backend, sharing=sharing), TemporaryDirectory() as directory:
+                self.provider._get_vm_backend = Mock(return_value=backend)
+                cmds = ['touch /mnt/host/src/created-by-guest']
+                folders = [os.path.join(directory, 'src'), os.path.join(directory, 'other')] if sharing else []
+                with patch.object(utm, '_find_vm_disk_files', return_value=[]), \
+                        patch.object(utm.common, 'get_ssh_pub_key', return_value=None), \
+                        patch.object(utm.common, 'make_iso', return_value=0) as make_iso, \
+                        patch.object(utm, 'copy2'):
+                    result = self.provider.create('test', image='ubuntu2404', overrides={'backend': backend},
+                                                  sharedfolders=folders, cmds=cmds,
+                                                  keys=['ssh-ed25519 AAATEST'], start=False)
+                self.assertEqual(result['result'], 'success')
+                userdata = make_iso.call_args.args[2]
+                self.assertTrue(userdata.startswith('#cloud-config'))
+                commands = yaml.safe_load(userdata)['runcmd']
+                self.assertEqual(commands[-1], cmds[0])
+                self.assertEqual(cmds, ['touch /mnt/host/src/created-by-guest'])
+                if backend == 'apple' and sharing:
+                    self.assertEqual(commands[0], 'mkdir -p /mnt/host')
+                    self.assertIn('share /mnt/host virtiofs rw,nofail 0 0', commands[1])
+                    self.assertEqual(commands[2], 'mount /mnt/host')
+                    self.assertEqual(len(commands), 4)
+                else:
+                    self.assertEqual(commands, cmds)
 
     def test_apple_nic_rejects_unsupported_mode(self):
         self.provider._get_vm_status = Mock(return_value='stopped')
