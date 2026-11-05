@@ -1081,8 +1081,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             hostname = list(entry.keys())[0]
             if isinstance(entry[hostname], dict):
                 rule = entry[hostname]
-                if 'name' in rule:
-                    custom_names[hostname] = rule['name']
+                if 'name' in rule or 'hostname' in rule:
+                    custom_names[hostname] = rule.get('hostname') or rule.get('name')
                 if 'nets' in rule and isinstance(rule['nets'], list):
                     netrule = rule['nets'][0]
                     if isinstance(netrule, dict) and 'ip' in netrule and 'netmask' in netrule:
