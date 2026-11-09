@@ -22,7 +22,10 @@ This is both faster (libvirt calls stay local on the host) and avoids needing to
 
 ## Important Behavior
 
-- **Always run commands directly.** When the user asks to create/deploy/manage something, execute the command immediately — don't show it and wait for confirmation.
+- **Read-only commands run directly.** Commands like `list`, `info`, `get`, `render`, `ssh`, `console` are safe — execute them immediately.
+- **State-changing commands require confirmation.** For `create`, `deploy`, `update`, `start`, `stop`, `restart`, `scale`, `download`, and `switch`, show the exact command and target, then wait for the user to confirm before running.
+- **Destructive commands require explicit confirmation.** For any `delete` command (`delete vm`, `delete plan`, `delete kube`, `delete network`, `delete pool`, `delete image`, `delete snapshot`), always show the exact command and what will be destroyed, then wait for explicit approval. Never pass `--yes` unless the user specifically asked to skip confirmation in that turn.
+- **Remote commands follow the same rules.** When running kcli via SSH on a remote host, apply the same confirmation policy — the blast radius is larger, not smaller.
 
 ## Quick Reference
 
