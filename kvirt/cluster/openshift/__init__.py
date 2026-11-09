@@ -1508,11 +1508,13 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         live_url = os.environ.get('LIVEISO_URL') or overrides.get('liveiso_url')
         if provider == 'fake':
             pprint("Storing generated iso in current dir")
-            generate_rhcos_iso(k, f"{cluster}-sno", 'default', installer=True, extra_args=sno_extra_args, url=live_url)
+            generate_rhcos_iso(k, f"{cluster}-sno", 'default', installer=True, arch=arch, extra_args=sno_extra_args,
+                               url=live_url)
         else:
             iso_pool = data['pool'] or config.pool
             pprint(f"Storing generated iso in pool {iso_pool}")
-            generate_rhcos_iso(k, f"{cluster}-sno", iso_pool, installer=True, extra_args=sno_extra_args, url=live_url)
+            generate_rhcos_iso(k, f"{cluster}-sno", iso_pool, installer=True, arch=arch, extra_args=sno_extra_args,
+                               url=live_url)
         if sno_ctlplanes:
             if api_ip is None:
                 warning("sno ctlplanes requires api vip to be defined. Skipping")
