@@ -13,7 +13,7 @@
         fallthrough
     }
 {% set apps_ip = ingress_ip if ingress_ip != None else api_ip %}
-{% set apps_type = 'AAAA' if ':' in apps_ip else 'A' %}
+{% set apps_type = 'AAAA' if apps_ip is not none and ':' in apps_ip else 'A' %}
     template IN {{ apps_type }} apps.{{ cluster }}.{{ domain }} {
        answer "{% raw %}{{ .Name }}{% endraw %} {{ apps_type }} {{ apps_ip }}"
     }
