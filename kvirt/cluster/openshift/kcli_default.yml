@@ -107,6 +107,7 @@ disconnected_marketplace_operators: []
 disconnected_marketplace_operators_version:
 disconnected_ipv6_network: false
 disconnected_sync: true
+disconnected_graph: false
 disconnected_mac:
 disconnected_extra_images: []
 disconnected_extra_catalogs: []
