@@ -6,5 +6,5 @@ pip3 install cloudsmith-cli stdeb copr-cli build twine libvirt-python
 pip3 install -U Jinja2
 pip3 install -e .
 
-apt-get -y install libvirt-daemon libvirt0 qemu-system-x86 qemu-utils qemu-kvm libvirt-daemon-system curl genisoimage qemu-user-static podman rpm
-setfacl -m u:runner:rwx /var/run/libvirt/libvirt-sock
+apt-get update && apt-get -y install libvirt-daemon libvirt0 libvirt-daemon-system libvirt-clients qemu-system-x86 qemu-utils qemu-user-binfmt curl genisoimage podman rpm acl
+[ -S /var/run/libvirt/libvirt-sock ] && setfacl -m u:runner:rwx /var/run/libvirt/libvirt-sock
