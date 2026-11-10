@@ -41,7 +41,7 @@ CENTOS = 'https://cloud.centos.org/centos'
 DEBIAN = 'https://cdimage.debian.org/cdimage'
 EULER = 'https://mirror.accum.se/mirror/openeuler.org/openEuler'
 FEDORA = 'http://mirror.uv.es/mirror/fedora/linux/releases'
-FEDORA_ARCHIVE = 'http://mirror.uv.es/mirror/fedora/linux/releases'
+FEDORA_NEW = 'https://download.fedoraproject.org/pub/fedora/linux/releases'
 FEDORA_ARCHIVE = 'https://archives.fedoraproject.org/pub/archive/fedora/linux/releases'
 GENTOO = 'https://gentoo.osuosl.org/experimental/amd64/openstack'
 RHCOS = 'https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos'
@@ -68,6 +68,7 @@ IMAGES = {'almalinux8': f'{ALMA}/8/cloud/x86_64/images/AlmaLinux-8-GenericCloud-
           'fedora42': f'{FEDORA}/42/Cloud/x86_64/images/Fedora-Cloud-Base-Generic-42-1.1.x86_64.qcow2',
           'fedora43': f'{FEDORA}/43/Cloud/x86_64/images/Fedora-Cloud-Base-Generic-43-1.6.x86_64.qcow2',
           'fedora44': f'{FEDORA}/44/Cloud/x86_64/images/Fedora-Cloud-Base-Generic-44-1.7.x86_64.qcow2',
+          'fedora45': f'{FEDORA_NEW}/45/Cloud/x86_64/images/Fedora-Cloud-Base-Generic-45-1.4.x86_64.qcow2',
           'fedoralatest': 'https://alt.fedoraproject.org/cloud',
           'freebsd122': f'{BSD}/freebsd/12.2/freebsd-12.2.qcow2',
           'freebsd130': f'{BSD}/freebsd/13.0/freebsd-13.0-zfs.qcow2',
