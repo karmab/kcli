@@ -1,3 +1,11 @@
+{% if nets is not defined %}
+{% set net = {"name": network, "ipv6": disconnected_ipv6_network}  %}
+{% if disconnected_mac != None %}
+{% set _ = net.update({"mac": disconnected_mac}) %}
+{% endif %}
+{% set nets = [net] %}
+{% endif %}
+
 {{ disconnected_reuse_name or cluster }}-registry:
  image: {{ disconnected_image }}
  pool: {{ pool or config_pool }}
@@ -7,15 +15,7 @@
  numcpus: {{ numcpus }}
  keys: {{ keys }}
  memory: {{ memory }}
- nets:
- - name: {{ network }}
-   ipv6: {{ disconnected_ipv6_network }}
-{% if disconnected_mac != None %}
-   mac: {{ disconnected_mac }}
-{% endif %}
-{% if disconnected_default_network != None %}
- - {{ disconnected_default_network }}
-{% endif %}
+ nets: {{ nets }}
  disks:
  - {{ disconnected_disk_size }}
  files:
