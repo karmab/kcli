@@ -2607,6 +2607,8 @@ class Kvirt(object):
                     network.destroy()
                     network.create()
                     call("systemctl restart libvirtd", shell=True)
+                    time.sleep(5)
+                    self.conn = libvirtopen(self.url)
                     return
                 hostnamexml = f'<hostname>{fqdn}</hostname>'
                 alias = [f"{entry}.{domain}" if domain is not None and
