@@ -1836,7 +1836,7 @@ def create_app_openshift(config, appname, appdir, overrides={}, outputdir=None):
             g.write(rendered)
         destfile = f"{outputdir or tmpdir}/install.sh"
         with open(destfile, 'w') as f:
-            f.write("oc create -f install.yml\n")
+            f.write("oc apply -f install.yml\n")
             if os.path.exists(f"{appdir}/{appname}/pre.sh"):
                 f.write("bash pre.sh\n")
             if appdata.get('installplan', 'Automatic') == 'Manual':
