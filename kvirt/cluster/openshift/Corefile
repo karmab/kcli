@@ -14,11 +14,23 @@
     }
 {% set apps_ip = ingress_ip if ingress_ip != None else api_ip %}
 {% set apps_type = 'AAAA' if apps_ip is not none and ':' in apps_ip else 'A' %}
+{% set answer = 'answer "' ~ '{{ .Name }}' ~ ' ' ~ apps_type ~ ' ' ~ apps_ip ~ '"' %}
+{% set dual_apps_type = 'A' if apps_type == 'AAAA' else 'AAAA' %}
+{% if dual_ingress_ip != None %}
+{% set dual_apps_ip = dual_ingress_ip %}
+{% elif dual_api_ip != None %}
+{% set dual_apps_ip = dual_api_ip %}
+{% endif %}
+{% if dual_apps_ip is defined %}
+{% set dual_answer = 'answer "' ~ '{{ .Name }}' ~ ' ' ~ dual_apps_type ~ ' ' ~ dual_apps_ip ~ '"' %}
+{% else %}
+{% set dual_answer = "rcode NOERROR" %}
+{% endif %}
     template IN {{ apps_type }} apps.{{ cluster }}.{{ domain }} {
-       answer "{% raw %}{{ .Name }}{% endraw %} {{ apps_type }} {{ apps_ip }}"
+       {{ answer }}
     }
-    template IN {{ 'A' if apps_type == 'AAAA' else 'AAAA' }} apps.{{ cluster }}.{{ domain }} {
-       rcode NOERROR
+    template IN {{ dual_apps_type }} apps.{{ cluster }}.{{ domain }} {
+       {{ dual_answer }}
     }
     forward . {{ coredns_nameserver or "NAMESERVER" }}
     cache 30
