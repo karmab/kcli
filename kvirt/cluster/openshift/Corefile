@@ -32,6 +32,11 @@
     template IN {{ dual_apps_type }} apps.{{ cluster }}.{{ domain }} {
        {{ dual_answer }}
     }
+{% for domain in extra_domains|default([]) %}
+    {{ domain.name }} {
+       forward . {{ domain.ip }}
+    }
+{% endfor %}
     forward . {{ coredns_nameserver or "NAMESERVER" }}
     cache 30
     reload

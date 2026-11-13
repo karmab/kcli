@@ -78,6 +78,7 @@ extra_worker_disks: []
 extra_networks: []
 extra_ctlplane_networks: []
 extra_worker_networks: []
+extra_domains: []
 disconnected_url:
 disconnected_channel:
 disconnected: false
