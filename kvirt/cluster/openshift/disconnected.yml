@@ -4,6 +4,11 @@
 {% set _ = net.update({"mac": disconnected_mac}) %}
 {% endif %}
 {% set nets = [net] %}
+{% if disconnected_default_network != None %}
+{% set nets = [net] + [disconnected_default_network] %}
+{% else %}
+{% set nets = [net] %}
+{% endif %}
 {% endif %}
 
 {{ disconnected_reuse_name or cluster }}-registry:
