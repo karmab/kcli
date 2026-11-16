@@ -1,0 +1,45 @@
+{% if keycloak_users or keycloak_oauth %}
+apiVersion: k8s.keycloak.org/v2beta1
+kind: KeycloakRealmImport
+metadata:
+  name: {{ keycloak_name }}-realm-import
+  namespace: {{ namespace }}
+spec:
+  keycloakCRName: {{ keycloak_name }}
+  realm:
+    id: {{ keycloak_realm }}
+    realm: {{ keycloak_realm }}
+    enabled: true
+{% if keycloak_oauth %}
+    clients:
+    - clientId: {{ keycloak_oauth_client }}
+      name: OpenShift
+      protocol: openid-connect
+      publicClient: false
+      secret: {{ keycloak_oauth_clientsecret }}
+      standardFlowEnabled: true
+      defaultClientScopes:
+      - profile
+      - email
+      redirectUris:
+      - OAUTH_REDIRECT
+{% endif %}
+{% if keycloak_users %}
+    users:
+    - username: {{ keycloak_admin }}
+      enabled: true
+      credentials:
+      - type: password
+        value: {{ keycloak_adminpassword }}
+        temporary: false
+      clientRoles:
+        realm-management:
+        - realm-admin
+    - username: {{ keycloak_dev }}
+      enabled: true
+      credentials:
+      - type: password
+        value: {{ keycloak_devpassword }}
+        temporary: false
+{% endif %}
+{% endif %}

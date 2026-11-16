@@ -1,0 +1,97 @@
+{% if keycloak_deploy_db %}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ keycloak_db_secret }}
+  namespace: {{ namespace }}
+type: Opaque
+stringData:
+  username: {{ keycloak_db_username }}
+  password: {{ keycloak_db_password }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ keycloak_db_name }}
+  namespace: {{ namespace }}
+spec:
+  serviceName: {{ keycloak_db_name }}
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ keycloak_db_name }}
+  template:
+    metadata:
+      labels:
+        app: {{ keycloak_db_name }}
+    spec:
+      containers:
+        - name: postgresql
+          image: {{ keycloak_db_image }}
+          volumeMounts:
+            - mountPath: /data
+              name: data
+          env:
+            - name: POSTGRES_USER
+              value: {{ keycloak_db_username }}
+            - name: POSTGRES_PASSWORD
+              value: {{ keycloak_db_password }}
+            - name: POSTGRES_DB
+              value: {{ keycloak_db_database }}
+            - name: PGDATA
+              value: /data/pgdata
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ keycloak_db_name }}
+  namespace: {{ namespace }}
+spec:
+  selector:
+    app: {{ keycloak_db_name }}
+  ports:
+    - port: 5432
+      targetPort: 5432
+---
+{% set keycloak_db_host = keycloak_db_name %}
+{% endif %}
+apiVersion: k8s.keycloak.org/v2beta1
+kind: Keycloak
+metadata:
+  name: {{ keycloak_name }}
+  namespace: {{ namespace }}
+spec:
+  instances: {{ keycloak_instances }}
+{% if keycloak_db_host %}
+  db:
+    vendor: {{ keycloak_db_vendor }}
+    host: {{ keycloak_db_host }}
+    database: {{ keycloak_db_database }}
+    usernameSecret:
+      name: {{ keycloak_db_secret }}
+      key: username
+    passwordSecret:
+      name: {{ keycloak_db_secret }}
+      key: password
+{% endif %}
+{% if keycloak_tls_secret %}
+  http:
+    tlsSecret: {{ keycloak_tls_secret }}
+{% else %}
+  http:
+    httpEnabled: true
+  proxy:
+    headers: xforwarded
+{% endif %}
+  ingress:
+    enabled: {{ keycloak_ingress }}
+{% if keycloak_ingress %}
+    className: {{ keycloak_ingress_class }}
+{% endif %}
+{% if keycloak_hostname %}
+  hostname:
+    hostname: {{ keycloak_hostname }}
+{% endif %}

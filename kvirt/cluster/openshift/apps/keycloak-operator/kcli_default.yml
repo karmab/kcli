@@ -1,0 +1,26 @@
+keycloak_name: keycloak
+keycloak_instances: 1
+keycloak_deploy_db: true
+keycloak_db_image: postgres:16
+keycloak_db_name: keycloak-db
+keycloak_db_secret: keycloak-db-secret
+keycloak_db_vendor: postgres
+keycloak_db_host:
+keycloak_db_database: keycloak
+keycloak_db_username: keycloak
+keycloak_db_password: keycloak
+keycloak_ingress: true
+keycloak_ingress_class: openshift-default
+keycloak_hostname:
+keycloak_tls_secret:
+keycloak_realm: kcli
+keycloak_users: false
+keycloak_admin: admin
+keycloak_adminpassword: admin
+keycloak_dev: dev
+keycloak_devpassword: dev
+keycloak_oauth: false
+keycloak_oauth_idp: keycloak
+keycloak_oauth_client: openshift
+keycloak_oauth_clientsecret: openshift
+keycloak_oauth_ca:
