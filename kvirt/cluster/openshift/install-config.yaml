@@ -169,9 +169,9 @@ sshKey: |
 {% if disconnected_url != None %}
 imageContentSources:
 - mirrors:
-  - {{ disconnected_url }}/openshift-release-dev/ocp-v4.0-art-dev
+  - {{ disconnected_url }}/openshift-release-dev/ocp-v{{tag|string| first}}.0-art-dev
   - {{ disconnected_url }}/openshift/release
-  source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
+  source: quay.io/openshift-release-dev/ocp-v{{tag|string| first}}.0-art-dev
 - mirrors:
   - {{ disconnected_url }}/openshift-release-dev
   source: quay.io/openshift-release-dev
