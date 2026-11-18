@@ -1166,7 +1166,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if disconnected_url not in auths or auths[disconnected_url]['auth'] != key:
             auths[disconnected_url] = {'auth': key, 'email': 'jhendrix@karmalabs.corp'}
             data['pull_secret'] = json.dumps({"auths": auths})
-        if 'ca' not in data:
+        if data['ca'] is None:
             data['ca'] = get_registry_cert(disconnected_url)
     if provider == 'aws':
         aws_credentials(config)
