@@ -15,6 +15,11 @@ class TestUTM(unittest.TestCase):
         self.provider = utm.Kutm.__new__(utm.Kutm)
         self.provider.backend = 'apple'
         self.provider.debug = False
+        self.provider.ssh_port = 22
+        self.provider.ssh_user = None
+        self.provider.ssh_insecure = True
+        self.provider.ssh_identityfile = None
+        self.provider._get_vm_notes = Mock(return_value={'image': 'ubuntu2404'})
         self.provider.exists = Mock(return_value=False)
         self.provider._set_vm_notes = Mock()
         self.provider._patch_vm_plist = Mock()
@@ -199,6 +204,9 @@ class TestUTM(unittest.TestCase):
                 self.assertEqual(interface['dhcp4'], not static)
                 if static:
                     self.assertEqual(interface['addresses'], ['192.0.2.2/24'])
+                    self.assertNotIn('dhcp-identifier', interface)
+                else:
+                    self.assertEqual(interface['dhcp-identifier'], 'mac')
                 self.assertEqual(net, original)
                 self.assertIn(f'address:"{net["mac"]}"', self.script.call_args.args[0])
 
@@ -219,7 +227,8 @@ class TestUTM(unittest.TestCase):
         self.provider._get_vm_backend = Mock(return_value='apple')
         self.script.return_value = '52:54:00:01:02:03'
         leases = '{\n hw_address=1,52:54:0:1:2:3\n ip_address=192.168.64.2\n}\n'
-        with patch('builtins.open', mock_open(read_data=leases)):
+        with patch('builtins.open', mock_open(read_data=leases)), \
+                patch.object(self.provider, '_ssh_error', return_value=None):
             self.assertEqual(self.provider.ip('test'), '192.168.64.2')
         self.assertNotIn('query ip', self.script.call_args.args[0])
 
@@ -233,9 +242,112 @@ class TestUTM(unittest.TestCase):
         self.provider._get_vm_backend = Mock(return_value='apple')
         self.script.return_value = '52:54:00:01:02:03'
         leases = '{\n name=test\n hw_address=ff,1:2:3:4:5:6:7:8\n ip_address=192.168.64.4\n}\n'
-        with patch('builtins.open', mock_open(read_data=leases)):
+        with patch('builtins.open', mock_open(read_data=leases)), \
+                patch.object(self.provider, '_ssh_error', return_value=None):
             self.assertEqual(self.provider.ip('test'), '192.168.64.4')
             self.assertIsNone(self.provider.ip('other'))
+
+    def test_dhcp_ip_prefers_current_mac_over_retained_hostname(self):
+        self.script.return_value = '52:54:00:01:02:03'
+        current = '{\n name=test\n hw_address=1,52:54:0:1:2:3\n ip_address=192.168.64.6\n}\n'
+        stale = '{\n name=test\n hw_address=ff,1:2:3:4:5:6:7:8\n ip_address=192.168.64.5\n}\n'
+        for leases in (current + stale, stale + current):
+            with self.subTest(leases=leases), patch('builtins.open', mock_open(read_data=leases)):
+                self.assertEqual(self.provider._dhcp_ip('test'), '192.168.64.6')
+
+    def test_dhcp_ip_rejects_ambiguous_hostname_fallback(self):
+        self.script.return_value = '52:54:00:01:02:03'
+        duid = '{\n name=test\n hw_address=ff,1:2:3:4:5:6:7:8\n ip_address=192.168.64.5\n}\n'
+        for address in ('ff,8:7:6:5:4:3:2:1', '1,52:54:00:04:05:06'):
+            other = f'{{\n name=test\n hw_address={address}\n ip_address=192.168.64.6\n}}\n'
+            for leases in (duid + other, other + duid):
+                with self.subTest(leases=leases), patch('builtins.open', mock_open(read_data=leases)):
+                    self.assertIsNone(self.provider._dhcp_ip('test'))
+
+    def test_dhcp_ip_ignores_unrelated_hostname_and_missing_address(self):
+        self.script.return_value = '52:54:00:01:02:03'
+        leases = ('{\n name=test\n hw_address=ff,1:2:3:4:5:6:7:8\n ip_address=192.168.64.5\n}\n'
+                  '{\n name=other\n hw_address=ff,8:7:6:5:4:3:2:1\n ip_address=192.168.64.6\n}\n'
+                  '{\n name=test\n hw_address=1,52:54:0:1:2:3\n}\n')
+        with patch('builtins.open', mock_open(read_data=leases)):
+            self.assertEqual(self.provider._dhcp_ip('test'), '192.168.64.5')
+
+    def test_apple_ip_waits_for_ssh(self):
+        self.provider._get_vm_backend = Mock(return_value='apple')
+        self.provider._dhcp_ip = Mock(return_value='192.168.64.6')
+        reason = 'SSH login to ubuntu@192.168.64.6:22 failed: Permission denied (publickey).'
+        with patch.object(self.provider, '_ssh_error', return_value=reason) as ready:
+            ip, reason = self.provider._ip_status('test')
+            self.assertIsNone(ip)
+            self.assertIn('Permission denied (publickey)', reason)
+            self.assertIsNone(self.provider.ip('test'))
+            ready.assert_called_with('test', '192.168.64.6', 'ubuntu')
+        with patch.object(self.provider, '_ssh_error', return_value=None):
+            self.assertEqual(self.provider.ip('test'), '192.168.64.6')
+
+    def test_apple_missing_lease_does_not_probe_ssh(self):
+        self.provider._get_vm_backend = Mock(return_value='apple')
+        self.provider._dhcp_ip = Mock(return_value=None)
+        with patch.object(self.provider, '_ssh_error') as ready:
+            ip, reason = self.provider._ip_status('test')
+            self.assertIsNone(ip)
+            self.assertIn('No unambiguous DHCP address', reason)
+            ready.assert_not_called()
+
+    def test_ssh_readiness_requires_successful_login(self):
+        self.provider.ssh_port = 2222
+        self.provider.ssh_identityfile = '/tmp/test-key'
+        with patch.object(utm.subprocess, 'run', return_value=Mock(returncode=0)) as run:
+            self.assertIsNone(self.provider._ssh_error('test', '192.168.64.6', 'ubuntu'))
+            command = run.call_args.args[0]
+            self.assertIn('BatchMode=yes', command)
+            self.assertIn('ControlPath=none', command)
+            self.assertIn('/tmp/test-key', command)
+            self.assertIn('2222', command)
+            self.assertEqual(command[-2:], ['ubuntu@192.168.64.6', 'true'])
+            self.assertEqual(run.call_args.kwargs['timeout'], 3)
+        for stderr in ('Permission denied (publickey).', 'Connection refused', '',
+                       'Warning: Permanently added host to known hosts.\nPermission denied (publickey).'):
+            with self.subTest(stderr=stderr), \
+                    patch.object(utm.subprocess, 'run', return_value=Mock(returncode=255, stderr=stderr)):
+                reason = self.provider._ssh_error('test', '192.168.64.6', 'ubuntu')
+                self.assertIn('ubuntu@192.168.64.6:2222', reason)
+                self.assertIn(stderr.splitlines()[-1] if stderr else 'SSH exited with status 255', reason)
+                self.assertNotIn('Warning: Permanently added', reason)
+
+    def test_ssh_readiness_handles_connection_errors_and_timeouts(self):
+        for error, message in ((FileNotFoundError('ssh not found'), 'ssh not found'),
+                               (utm.subprocess.TimeoutExpired('ssh', 3), 'timed out')):
+            with self.subTest(error=error), patch.object(utm.subprocess, 'run', side_effect=error):
+                self.assertIn(message, self.provider._ssh_error('test', '192.168.64.6', 'ubuntu'))
+
+    def test_ssh_readiness_uses_configured_user_or_guest_user(self):
+        self.provider._get_vm_backend = Mock(return_value='apple')
+        self.provider._dhcp_ip = Mock(return_value='192.168.64.6')
+        self.provider._get_vm_notes.return_value['vmuser'] = 'guest'
+        with patch.object(self.provider, '_ssh_error', return_value=None) as ready:
+            self.provider.ip('test')
+            ready.assert_called_with('test', '192.168.64.6', 'guest')
+            self.provider.ssh_user = 'custom'
+            self.provider.ip('test')
+            ready.assert_called_with('test', '192.168.64.6', 'custom')
+
+    def test_info_and_list_hide_ip_until_ssh_is_ready(self):
+        self.provider.exists.return_value = True
+        self.provider._get_vm_status = Mock(return_value='started')
+        self.provider._get_vm_id = Mock(return_value='id')
+        self.provider._get_vm_notes = Mock(return_value={'image': 'ubuntu2604'})
+        self.provider._get_vm_backend = Mock(return_value='apple')
+        self.provider._dhcp_ip = Mock(return_value='192.168.64.6')
+        self.script.return_value = 'test'
+        with patch.object(self.provider, '_ssh_error', return_value='SSH login failed: Permission denied'):
+            info = self.provider.info('test')
+            self.assertNotIn('ip', info)
+            self.assertIn('Permission denied', info['ssh_error'])
+            self.assertEqual(self.provider.list()[0]['ip'], '')
+        with patch.object(self.provider, '_ssh_error', return_value=None):
+            self.assertEqual(self.provider.info('test')['ip'], '192.168.64.6')
+            self.assertEqual(self.provider.list()[0]['ip'], '192.168.64.6')
 
 
 if __name__ == '__main__':
