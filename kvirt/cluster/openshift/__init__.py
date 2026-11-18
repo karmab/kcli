@@ -89,6 +89,12 @@ def update_pull_secret(pull_secret, registry, user, password):
             json.dump(data, p)
 
 
+def get_registry_cert(disconnected_url):
+    cacmd = f"openssl s_client -showcerts -connect {disconnected_url} </dev/null 2>/dev/null|"
+    cacmd += "awk '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/'"
+    return os.popen(cacmd).read()
+
+
 def update_registry(config, plandir, cluster, data):
     disconnected_url = data['disconnected_url']
     pull_secret_path = data['pull_secret_path']
@@ -96,10 +102,7 @@ def update_registry(config, plandir, cluster, data):
     tag = data.get('ori_tag') or data.get('tag')
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}") if cluster is not None else '.'
     if data.get('ca') is None:
-        pprint(f"Trying to gather registry ca cert from {disconnected_url}")
-        cacmd = f"openssl s_client -showcerts -connect {disconnected_url} </dev/null 2>/dev/null|"
-        cacmd += "awk '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/'"
-        data['ca'] = os.popen(cacmd).read()
+        data['ca'] = get_registry_cert(disconnected_url)
     with open(f'{clusterdir}/ca.crt', 'w') as f:
         f.write(data['ca'])
     call(f'sudo cp {clusterdir}/ca.crt /etc/pki/ca-trust/source/anchors ; sudo update-ca-trust extract',
@@ -1163,6 +1166,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if disconnected_url not in auths or auths[disconnected_url]['auth'] != key:
             auths[disconnected_url] = {'auth': key, 'email': 'jhendrix@karmalabs.corp'}
             data['pull_secret'] = json.dumps({"auths": auths})
+        if 'ca' not in data:
+            data['ca'] = get_registry_cert(disconnected_url)
     if provider == 'aws':
         aws_credentials(config)
     elif provider == 'gcp':
