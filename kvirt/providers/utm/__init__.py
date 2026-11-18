@@ -1366,9 +1366,12 @@ end tell'''
         return pools
 
     def list_networks(self):
-        ip = subprocess.check_output(['ipconfig', 'getifaddr', 'en0']).decode().strip()
-        mask = subprocess.check_output(['ipconfig', 'getoption', 'en0', 'subnet_mask']).decode().strip()
-        bridge_cidr = ipaddress.IPv4Network(f'{ip}/{mask}', strict=False)
+        try:
+            ip = subprocess.check_output(['ipconfig', 'getifaddr', 'en0']).decode().strip()
+            mask = subprocess.check_output(['ipconfig', 'getoption', 'en0', 'subnet_mask']).decode().strip()
+            bridge_cidr = str(ipaddress.IPv4Network(f'{ip}/{mask}', strict=False))
+        except (subprocess.CalledProcessError, ValueError):
+            bridge_cidr = 'N/A'
         return {
             'shared': {'cidr': '192.168.64.0/24', 'dhcp': True, 'domain': '', 'type': 'routed', 'mode': 'nat'},
             'bridged': {'cidr': bridge_cidr, 'dhcp': False, 'domain': '', 'type': 'bridged', 'mode': 'bridge'},
