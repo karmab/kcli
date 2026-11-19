@@ -1379,52 +1379,58 @@ class Kconfig(Kbaseconfig):
         deleted_clusters = []
         for hypervisor in deleteclients:
             c = deleteclients[hypervisor]
-            for vm in sorted(c.list(), key=lambda x: x['name']):
+            all_vms = sorted((v for v in c.list() if 'plan' in v), key=lambda v: v['name'])
+            all_vms = [v for v in c.list() if 'plan' and v.get('kubetype', 'generic') not in ['aks', 'eks', 'gke']]
+            all_kubes = {}
+            shared_kubes = set()
+            for vm in all_vms:
+                current_kube, current_plan = vm.get('kube'), vm.get('plan')
+                if current_kube not in all_kubes:
+                    all_kubes[current_kube] = current_plan
+                elif current_plan != all_kubes[current_kube]:
+                    shared_kubes.add(current_kube)
+            for vm in sorted((v for v in all_vms if v['plan'] == plan), key=lambda v: v['name']):
                 name = vm['name']
-                description = vm.get('plan')
-                if description == plan:
-                    if vm.get('kubetype', 'generic') in ['aks', 'eks', 'gke']:
-                        continue
-                    cluster = vm.get('kube')
-                    if cluster is not None and cluster != '':
-                        if cluster not in deleted_clusters:
-                            pprint(f"Deleting cluster {cluster}")
-                            self.delete_kube(cluster)
-                            deleted_clusters.append(cluster)
-                            found = True
-                        continue
-                    if 'loadbalancer' in vm:
-                        lbs = vm['loadbalancer'].split(',')
-                        for lb in lbs:
-                            if lb not in deletedlbs:
-                                deletedlbs.append(lb)
-                    vmnetworks = c.vm_ports(name)
-                    for network in vmnetworks:
-                        if network != 'default' and network not in networks:
-                            networks.append(network)
-                    dnsclient, domain = c.dnsinfo(name)
-                    if unregister:
-                        image = k.info(name).get('image')
-                        if 'rhel' in image:
-                            pprint(f"Removing rhel subscription for {name}")
-                            ip, vmport = _ssh_credentials(k, name)[1:]
-                            cmd = "subscription-manager unregister"
-                            sshcmd = ssh(name, ip=ip, user='root', tunnel=self.tunnel,
-                                         tunnelhost=self.tunnelhost, tunnelport=self.tunnelport,
-                                         tunneluser=self.tunneluser, insecure=True, cmd=cmd, vmport=vmport)
-                            os.system(sshcmd)
-                    c.delete(name, snapshots=True)
-                    if dnsclient is not None and domain is not None and dnsclient in self.clients:
-                        if dnsclient in dnsclients:
-                            z = dnsclients[dnsclient]
-                        elif dnsclient in self.clients:
-                            z = Kconfig(client=dnsclient).k
-                            dnsclients[dnsclient] = z
-                        z.delete_dns(dnsclient, domain)
-                    common.delete_lastvm(name, self.client)
-                    success(f"{name} deleted on {hypervisor}!")
-                    deletedvms.append(name)
-                    found = True
+                cluster = vm.get('kube')
+                if cluster is not None and cluster != '' and cluster not in shared_kubes:
+                    if cluster not in deleted_clusters:
+                        pprint(f"Deleting cluster {cluster}")
+                        self.delete_kube(cluster)
+                        deleted_clusters.append(cluster)
+                        found = True
+                    continue
+                if 'loadbalancer' in vm:
+                    lbs = vm['loadbalancer'].split(',')
+                    for lb in lbs:
+                        if lb not in deletedlbs:
+                            deletedlbs.append(lb)
+                vmnetworks = c.vm_ports(name)
+                for network in vmnetworks:
+                    if network != 'default' and network not in networks:
+                        networks.append(network)
+                dnsclient, domain = c.dnsinfo(name)
+                if unregister:
+                    image = k.info(name).get('image')
+                    if 'rhel' in image:
+                        pprint(f"Removing rhel subscription for {name}")
+                        ip, vmport = _ssh_credentials(k, name)[1:]
+                        cmd = "subscription-manager unregister"
+                        sshcmd = ssh(name, ip=ip, user='root', tunnel=self.tunnel,
+                                     tunnelhost=self.tunnelhost, tunnelport=self.tunnelport,
+                                     tunneluser=self.tunneluser, insecure=True, cmd=cmd, vmport=vmport)
+                        os.system(sshcmd)
+                c.delete(name, snapshots=True)
+                if dnsclient is not None and domain is not None and dnsclient in self.clients:
+                    if dnsclient in dnsclients:
+                        z = dnsclients[dnsclient]
+                    elif dnsclient in self.clients:
+                        z = Kconfig(client=dnsclient).k
+                        dnsclients[dnsclient] = z
+                    z.delete_dns(dnsclient, domain)
+                common.delete_lastvm(name, self.client)
+                success(f"{name} deleted on {hypervisor}!")
+                deletedvms.append(name)
+                found = True
         if container:
             cont = Kcontainerconfig(self, client=self.containerclient).cont
             for conta in sorted(cont.list_containers(k)):
