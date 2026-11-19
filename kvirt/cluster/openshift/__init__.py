@@ -1018,7 +1018,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             disconnected_prefix = data['disconnected_prefix'] or 'openshift-release-dev/ocp-release'
             tag = f'{disconnected_url}/{disconnected_prefix}:{INSTALLER_VERSION}-{arch}'
             os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = tag
-        if 'ca' not in data and 'quay.io' not in disconnected_url:
+        if data['ca'] is None and 'quay.io' not in disconnected_url:
             pprint(f"Trying to gather registry ca cert from {disconnected_url}")
             cacmd = f"openssl s_client -showcerts -connect {disconnected_url} </dev/null 2>/dev/null|"
             cacmd += "openssl x509 -outform PEM"
