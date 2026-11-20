@@ -1377,12 +1377,12 @@ class Kconfig(Kbaseconfig):
         elif vmclients:
             deleteclients.update({cli: Kconfig(client=cli).k for cli in vmclients if cli != self.client})
         deleted_clusters = []
+        all_kubes = {}
+        shared_kubes = set()
+        ks = ['aks', 'eks', 'gke']
         for hypervisor in deleteclients:
             c = deleteclients[hypervisor]
-            all_vms = sorted((v for v in c.list() if 'plan' in v), key=lambda v: v['name'])
-            all_vms = [v for v in c.list() if 'plan' and v.get('kubetype', 'generic') not in ['aks', 'eks', 'gke']]
-            all_kubes = {}
-            shared_kubes = set()
+            all_vms = [v for v in c.list() if v.get('plan', '') != '' and v.get('kubetype', 'generic') not in ks]
             for vm in all_vms:
                 current_kube, current_plan = vm.get('kube'), vm.get('plan')
                 if current_kube not in all_kubes:
