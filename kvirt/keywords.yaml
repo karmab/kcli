@@ -26,7 +26,7 @@ disks: |
   Array of disks to define.
   For each of them, you can specify pool, size, thin (as boolean), interface (either ide or virtio) and a wwn.
   If you omit parameters, default values will be used from config or profile file (You can actually let the entire entry blank or just indicate a size number directly)
-disksize: Disk Size 
+disksize: Disk Size
 diskthin: Thin disk
 dns: Dns server to use in cloudinit/ignition with static networking
 domain: Domain server to use in cloudinit/ignition with static networking
@@ -47,7 +47,7 @@ initrd: Initrd location to pass to the vm. Needs to be local to the hypervisor
 insecure: Handles all the ssh option details so you don't get any warnings about man in the middle
 iso: |
   Iso to plug to the node
-  Can either be 
+  Can either be
   - an iso stored in one of the pools
   - a remote url which will get downloaded on the fly
   - a local path to the hypervisor or a non existent one (to allow precreating the vm before ISO is available)
@@ -123,6 +123,8 @@ slackchannel: Slack Channel where to send notification
 slacktoken: |
   Token to use when notifying through slack.
   Should be the token of an app generated in your workspace
+spice: when set to true, spice is used for console
+spicepassword: spice password
 start: Whether to actually start the vm upon creation
 storemetadata: |
   Creates a /root/.metadata yaml file whith all the overrides applied.

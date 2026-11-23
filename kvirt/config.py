@@ -564,6 +564,8 @@ class Kconfig(Kbaseconfig):
         iso = profile.get('iso', self.iso)
         vnc = profile.get('vnc', self.vnc)
         vncpassword = profile.get('vncpassword', self.vncpassword)
+        spice = profile.get('spice', self.spice)
+        spicepassword = profile.get('spicepassword', self.spicepassword)
         cloudinit = profile.get('cloudinit', self.cloudinit)
         if cloudinit and self.type == 'kvm' and\
                 which('mkisofs') is None and which('genisoimage') and which('xorrisofs') is None:
@@ -914,6 +916,7 @@ class Kconfig(Kbaseconfig):
                           numcpus=int(numcpus), memory=int(memory), guestid=guestid, pool=pool,
                           image=image, disks=disks, disksize=disksize, diskthin=diskthin,
                           diskinterface=diskinterface, nets=nets, iso=iso, vnc=bool(vnc), vncpassword=vncpassword,
+                          spice=bool(spice), spicepassword=spicepassword,
                           cloudinit=bool(cloudinit), reserveip=bool(reserveip), reservedns=bool(reservedns),
                           reservehost=bool(reservehost), start=bool(start), keys=keys, cmds=cmds, ips=ips,
                           netmasks=netmasks, gateway=gateway, dns=dns, domain=domain, nested=bool(nested),
