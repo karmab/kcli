@@ -985,10 +985,14 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         pprint("Using existing openshift-install found in your PATH and skipping version check")
         download = False
     else:
+        while os.path.exists('.openshift-install.downloading'):
+            warning("Waiting 10s for openshift-install to finish downloading")
+            sleep(10)
         download = not same_release_images(version=version, tag=tag, pull_secret=pull_secret, path=openshift_dir)
         if download:
             pprint("Redownloading openshift-install as found version doesn't match requirements")
     if download:
+        open('.openshift-install.downloading', 'w').close()
         if okd:
             run = get_okd_installer(tag, version=version)
         elif version in ['ci', 'nightly'] or '/' in str(tag):
@@ -1001,6 +1005,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if run != 0:
             return {'result': 'failure', 'reason': "Couldn't download openshift-install"}
         pprint("Move downloaded openshift-install somewhere in your PATH if you want to reuse it")
+        os.remove('.openshift-install.downloading')
     os.environ["PATH"] = f'{os.getcwd()}:{os.environ["PATH"]}'
     INSTALLER_VERSION = get_installer_version()
     pprint(f"Using installer version {INSTALLER_VERSION}")
