@@ -1827,8 +1827,8 @@ class Kvirt(object):
                 if os.path.exists('/Applications'):
                     if protocol == 'spice' and os.path.exists('/Applications/RemoteViewer.app'):
                         consolecommand += f"open -a RemoteViewer --args {url} &"
-                    elif protocol == 'vnc' and os.path.exists('/Applications/VNC Viewer.app'):
-                        consolecommand += f"open -a 'VNC Viewer' --args {url.replace('vnc://', '')} &"
+                    elif protocol == 'vnc' and os.path.exists('/Applications/TigerVNC.app'):
+                        consolecommand += f"open -a 'TigerVNC' --args {url.replace('vnc://', '')} &"
                     else:
                         consolecommand += f"open -a 'Screen Sharing' {url} &"
                 else:
