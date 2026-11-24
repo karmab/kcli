@@ -17,7 +17,7 @@ info: |
     bootstrap in place (which removes the need for a bootstrap vm). This approach is suitable for baremetal single node
     baremetal_hosts can be specified as an array of bmc urls to deploy baremetal workers (or in the case of SNO described before)
 version: stable
-tag: '4.22'
+tag: '5.0'
 pull_secret: openshift_pull.json
 image:
 network: default
@@ -78,6 +78,7 @@ extra_worker_disks: []
 extra_networks: []
 extra_ctlplane_networks: []
 extra_worker_networks: []
+extra_domains: []
 disconnected_url:
 disconnected_channel:
 disconnected: false
@@ -107,6 +108,7 @@ disconnected_marketplace_operators: []
 disconnected_marketplace_operators_version:
 disconnected_ipv6_network: false
 disconnected_sync: true
+disconnected_graph: false
 disconnected_mac:
 disconnected_extra_images: []
 disconnected_extra_catalogs: []
@@ -189,6 +191,8 @@ dedicated_etcd_size: 100
 prega: false
 virtualization_nightly: false
 techpreview: false
+featureset:
+customfeatureset:
 mirror_dir:
 ksushy_ip: 192.168.122.1
 ksushy_port: 9000

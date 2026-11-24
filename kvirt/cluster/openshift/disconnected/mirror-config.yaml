@@ -1,4 +1,4 @@
-{% set release =  '4.' + (tag|string).split('.')[1] if tag|count('.') > 1 else tag %}
+{% set release = (tag|string).split('.')[0] + '.' + (tag|string).split('.')[1] if tag|count('.') > 1 else tag %}
 {% set kcli_images = ["quay.io/karmab/curl:multi", "quay.io/karmab/origin-coredns:multi", "quay.io/karmab/haproxy:multi", "quay.io/karmab/origin-keepalived-ipfailover:multi", "quay.io/karmab/mdns-publisher:multi", "quay.io/karmab/kubectl:multi"] %}
 {% if async|default(False) %}
 {% do kcli_images.append("quay.io/karmab/kcli:latest") %}
@@ -11,16 +11,17 @@ apiVersion: mirror.openshift.io/v2alpha1
 kind: ImageSetConfiguration
 mirror:
   platform:
-    graph: false
+    graph: {{ disconnected_graph|default(false) }}
 {% if version in ['ci', 'nightly'] %}
 {% set release = 'origin/release-scos:scos-%s' % tag if okd else 'ocp/release:%s' % tag %}
     release: registry.ci.openshift.org/{{ release }}
 {% else %}
     channels:
     - name: {{ disconnected_channel or ('candidate' if 'rc' in tag else 'stable') }}-{{ release }}
-    {% if openshift_version is defined or disconnected_extra_release is defined %}
-      minVersion: {{ (disconnected_extra_release or openshift_version)|min_ocp_version(openshift_version) }}
-      maxVersion: {{ (disconnected_extra_release or openshift_version)|max_ocp_version(openshift_version) }}
+    {% set version = openshift_version | default('', true) or disconnected_extra_release | default('', true) %}
+      {% if version %}
+      minVersion: {{ version|min_ocp_version(version) }}
+      maxVersion: {{ version|max_ocp_version(version) }}
     {% endif %}
 {% endif %}
     architectures:

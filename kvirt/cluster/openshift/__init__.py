@@ -25,7 +25,7 @@ from urllib.request import urlopen, Request
 from yaml import safe_dump, safe_load, safe_load_all, safe_dump_all
 
 
-virt_providers = ['kvm', 'kubevirt', 'openstack', 'ovirt', 'proxmox', 'vsphere']
+virt_providers = ['kvm', 'kubevirt', 'openstack', 'ovirt', 'proxmox', 'vsphere', 'utm']
 cloud_providers = ['aws', 'azure', 'gcp', 'ibm', 'hcloud']
 
 
@@ -89,6 +89,12 @@ def update_pull_secret(pull_secret, registry, user, password):
             json.dump(data, p)
 
 
+def get_registry_cert(disconnected_url):
+    cacmd = f"openssl s_client -showcerts -connect {disconnected_url} </dev/null 2>/dev/null|"
+    cacmd += "awk '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/'"
+    return os.popen(cacmd).read()
+
+
 def update_registry(config, plandir, cluster, data):
     disconnected_url = data['disconnected_url']
     pull_secret_path = data['pull_secret_path']
@@ -96,10 +102,7 @@ def update_registry(config, plandir, cluster, data):
     tag = data.get('ori_tag') or data.get('tag')
     clusterdir = os.path.expanduser(f"~/.kcli/clusters/{cluster}") if cluster is not None else '.'
     if data.get('ca') is None:
-        pprint(f"Trying to gather registry ca cert from {disconnected_url}")
-        cacmd = f"openssl s_client -showcerts -connect {disconnected_url} </dev/null 2>/dev/null|"
-        cacmd += "awk '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/'"
-        data['ca'] = os.popen(cacmd).read()
+        data['ca'] = get_registry_cert(disconnected_url)
     with open(f'{clusterdir}/ca.crt', 'w') as f:
         f.write(data['ca'])
     call(f'sudo cp {clusterdir}/ca.crt /etc/pki/ca-trust/source/anchors ; sudo update-ca-trust extract',
@@ -675,6 +678,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     data = safe_load(open(f'{plandir}/kcli_default.yml'))
     data.update(overrides)
     fix_typos(data)
+    if data['customfeatureset'] and data['featureset'] is None:
+        data['featureset'] = 'CustomNoUpgrade'
     esx = config.type == 'vsphere' and k.esx
     data['esx'] = esx
     ctlplanes = data['ctlplanes']
@@ -728,7 +733,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     notify = data['notify']
     postscripts = data['postscripts']
     pprint(f"Deploying cluster {cluster}")
-    plan = cluster
+    plan = data.get('plan') or cluster
     overrides['kubetype'] = 'openshift'
     apps = overrides.get('apps', [])
     disks = overrides.get('disks', [30])
@@ -840,7 +845,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             if cidr == 'N/A':
                 return {'result': 'failure', 'reason': "Couldnt gather an api_ip from your specified network"}
             api_index = 2 if ':' in cidr else -3
-            api_ip = str(get_new_vip(network, ipv6=':' in cidr) or ip_network(cidr)[api_index])
+            api_ip = str(get_new_vip(config.client, network, ipv6=':' in cidr) or ip_network(cidr)[api_index])
             warning(f"Using {api_ip} as api_ip")
             overrides['api_ip'] = api_ip
             installparam['automatic_api_ip'] = True
@@ -1013,7 +1018,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             disconnected_prefix = data['disconnected_prefix'] or 'openshift-release-dev/ocp-release'
             tag = f'{disconnected_url}/{disconnected_prefix}:{INSTALLER_VERSION}-{arch}'
             os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = tag
-        if 'ca' not in data and 'quay.io' not in disconnected_url:
+        if data['ca'] is None and 'quay.io' not in disconnected_url:
             pprint(f"Trying to gather registry ca cert from {disconnected_url}")
             cacmd = f"openssl s_client -showcerts -connect {disconnected_url} </dev/null 2>/dev/null|"
             cacmd += "openssl x509 -outform PEM"
@@ -1079,8 +1084,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             hostname = list(entry.keys())[0]
             if isinstance(entry[hostname], dict):
                 rule = entry[hostname]
-                if 'name' in rule:
-                    custom_names[hostname] = rule['name']
+                if 'name' in rule or 'hostname' in rule:
+                    custom_names[hostname] = rule.get('hostname') or rule.get('name')
                 if 'nets' in rule and isinstance(rule['nets'], list):
                     netrule = rule['nets'][0]
                     if isinstance(netrule, dict) and 'ip' in netrule and 'netmask' in netrule:
@@ -1161,6 +1166,8 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         if disconnected_url not in auths or auths[disconnected_url]['auth'] != key:
             auths[disconnected_url] = {'auth': key, 'email': 'jhendrix@karmalabs.corp'}
             data['pull_secret'] = json.dumps({"auths": auths})
+        if data['ca'] is None:
+            data['ca'] = get_registry_cert(disconnected_url)
     if provider == 'aws':
         aws_credentials(config)
     elif provider == 'gcp':
@@ -1506,11 +1513,13 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         live_url = os.environ.get('LIVEISO_URL') or overrides.get('liveiso_url')
         if provider == 'fake':
             pprint("Storing generated iso in current dir")
-            generate_rhcos_iso(k, f"{cluster}-sno", 'default', installer=True, extra_args=sno_extra_args, url=live_url)
+            generate_rhcos_iso(k, f"{cluster}-sno", 'default', installer=True, arch=arch, extra_args=sno_extra_args,
+                               url=live_url)
         else:
             iso_pool = data['pool'] or config.pool
             pprint(f"Storing generated iso in pool {iso_pool}")
-            generate_rhcos_iso(k, f"{cluster}-sno", iso_pool, installer=True, extra_args=sno_extra_args, url=live_url)
+            generate_rhcos_iso(k, f"{cluster}-sno", iso_pool, installer=True, arch=arch, extra_args=sno_extra_args,
+                               url=live_url)
         if sno_ctlplanes:
             if api_ip is None:
                 warning("sno ctlplanes requires api vip to be defined. Skipping")
@@ -1585,7 +1594,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 return {'result': 'failure', 'reason': msg}
         else:
             c = f"{clusterdir}/auth/kubeconfig"
-            kubepassword = open(f"{clusterdir}/auth/kubeadmin-password").read()
+            kubepassword = open(f"{clusterdir}/auth/kubeadmin-password").read().strip()
             console = f"https://console-openshift-console.apps.{cluster}.{domain}"
             info2(f"To access the cluster as the system:admin user when running 'oc', run export KUBECONFIG={c}")
             info2(f"Access the Openshift web-console here: {console}")
@@ -1780,7 +1789,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                 return result
     if async_install:
         kubeconf = f"{clusterdir}/auth/kubeconfig"
-        kubepassword = open(f"{clusterdir}/auth/kubeadmin-password").read()
+        kubepassword = open(f"{clusterdir}/auth/kubeadmin-password").read().strip()
         if async_install:
             success("Async Cluster created")
             info2("You will need to wait before it is fully available")

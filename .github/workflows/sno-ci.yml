@@ -13,7 +13,7 @@ on:
       EXTRAPARAMS:
         description: 'Extra params'
         default: ''
-      PULLSECRET:
+      PULL_SECRET:
         description: 'Pull Secret'
         required: false
         default: /root/openshift_pull.json
@@ -38,7 +38,7 @@ env:
  INPUTFILE: ${{github.event.inputs.INPUTFILE}}
  PARAMFILE: ${{github.event.inputs.PARAMFILE}}
  EXTRAPARAMS: ${{github.event.inputs.EXTRAPARAMS}}
- PULLSECRET: ${{github.event.inputs.PULLSECRET}}
+ PULL_SECRET: ${{github.event.inputs.PULL_SECRET}}
  DISKS: ${{github.event.inputs.DISKS}}
  MEMORY: ${{github.event.inputs.MEMORY}}
  NUMCPUS: ${{github.event.inputs.NUMCPUS}}
@@ -70,4 +70,4 @@ jobs:
       steps:
       - name: Deploy SNO
         run: |
-          kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET $EXTRAPARAMS $CLUSTER
+          kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULL_SECRET $EXTRAPARAMS $CLUSTER

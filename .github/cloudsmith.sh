@@ -3,6 +3,8 @@
 export HOME=.
 export PATH=/usr/local/bin:$PATH
 export DEB_BUILD_OPTIONS=nocheck debuild
+export DEBFULLNAME="karmab"
+export DEBEMAIL="karimboumedhel@karmalabs.local"
 
 . venv/bin/activate
 

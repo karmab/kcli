@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 import plistlib
@@ -348,6 +349,18 @@ class TestUTM(unittest.TestCase):
         with patch.object(self.provider, '_ssh_error', return_value=None):
             self.assertEqual(self.provider.info('test')['ip'], '192.168.64.6')
             self.assertEqual(self.provider.list()[0]['ip'], '192.168.64.6')
+    def test_list_networks_bridged_cidr(self):
+        with patch.object(utm.subprocess, 'check_output', side_effect=[b'192.168.1.23\n', b'255.255.255.0\n']):
+            networks = self.provider.list_networks()
+        self.assertEqual(networks['bridged']['cidr'], '192.168.1.0/24')
+        self.assertIn('"192.168.1.0/24"', json.dumps(networks))
+
+    def test_list_networks_without_en0_address(self):
+        failure = subprocess.CalledProcessError(1, ['ipconfig', 'getifaddr', 'en0'])
+        with patch.object(utm.subprocess, 'check_output', side_effect=failure):
+            networks = self.provider.list_networks()
+        self.assertEqual(networks['bridged']['cidr'], 'N/A')
+        self.assertEqual(networks['shared']['cidr'], '192.168.64.0/24')
 
 
 if __name__ == '__main__':

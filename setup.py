@@ -15,7 +15,8 @@ OPENSTACK = ['python-cinderclient', 'python-neutronclient', 'python-glanceclient
 OVIRT = ['ovirt-engine-sdk-python']
 PROXMOX = ['proxmoxer']
 VSPHERE = ['pyvmomi', 'cryptography']
-IBMCLOUD = ['google-crc32c==1.1.2', 'ibm_vpc', 'ibm-cos-sdk', 'ibm-platform-services', 'ibm-cloud-networking-services']
+IBMCLOUD = ['google-crc32c==1.1.2', 'ibm-vpc>=0.36.1', 'ibm-cos-sdk', 'ibm-platform-services',
+            'ibm-cloud-networking-services']
 EXTRAS = ['pyghmi', 'podman', 'websockify']
 ALL = EXTRAS + AWS + GCP + OPENSTACK + OVIRT + VSPHERE + IBMCLOUD + AZURE + HCLOUD + PROXMOX
 

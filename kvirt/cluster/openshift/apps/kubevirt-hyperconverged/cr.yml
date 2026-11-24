@@ -17,7 +17,11 @@ spec:
 {% if kubevirt_featuregates %}
   featureGates:
   {% for featuregate in kubevirt_featuregates %}
-    {{ featuregate }}: true 
+  {% if featuregate is mapping %}
+    {{ featuregate.name }}: {{ featuregate.enabled }}
+  {% else %}
+    {{ featuregate }}: true
+  {% endif %}
   {% endfor %}
 {% endif %}
   infra:

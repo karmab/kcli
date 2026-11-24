@@ -13,7 +13,7 @@ on:
       EXTRAPARAMS:
         description: 'Extra params'
         default: ''
-      PULLSECRET:
+      PULL_SECRET:
         description: 'Pull Secret'
         required: false
         default: /root/openshift_pull.json
@@ -33,7 +33,7 @@ env:
  INPUTFILE: ${{github.event.inputs.INPUTFILE}}
  PARAMFILE: ${{github.event.inputs.PARAMFILE}}
  EXTRAPARAMS: ${{github.event.inputs.EXTRAPARAMS}}
- PULLSECRET: ${{github.event.inputs.PULLSECRET}}
+ PULL_SECRET: ${{github.event.inputs.PULL_SECRET}}
  NETWORK: ${{github.event.inputs.NETWORK}}
  NETWORK_CIDR: ${{github.event.inputs.NETWORK_CIDR}}
 
@@ -48,4 +48,4 @@ jobs:
        - name: Deploy network if needed
          run: kcli create network -c $NETWORK_CIDR $NETWORK || true
        - name: Deploy OKD on libvirt
-         run: kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET $EXTRAPARAMS $PLAN --force
+         run: kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULL_SECRET $EXTRAPARAMS $PLAN --force

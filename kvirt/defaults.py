@@ -33,7 +33,7 @@ TUNNELDIR = '/var/www/html'
 TUNNELPORT = 22
 VMUSER = None
 VMPORT = None
-OPENSHIFT_TAG = '4.22'
+OPENSHIFT_TAG = '5.0'
 ALMA = 'https://repo.almalinux.org/almalinux'
 BSD = 'https://object-storage.public.mtl1.vexxhost.net/swift/v1/1dbafeefbd4f4c80864414a441e72dd2'
 BSD += '/bsd-cloud-image.org/images/dragonflybsd'
@@ -41,7 +41,7 @@ CENTOS = 'https://cloud.centos.org/centos'
 DEBIAN = 'https://cdimage.debian.org/cdimage'
 EULER = 'https://mirror.accum.se/mirror/openeuler.org/openEuler'
 FEDORA = 'http://mirror.uv.es/mirror/fedora/linux/releases'
-FEDORA_ARCHIVE = 'http://mirror.uv.es/mirror/fedora/linux/releases'
+FEDORA_NEW = 'https://download.fedoraproject.org/pub/fedora/linux/releases'
 FEDORA_ARCHIVE = 'https://archives.fedoraproject.org/pub/archive/fedora/linux/releases'
 GENTOO = 'https://gentoo.osuosl.org/experimental/amd64/openstack'
 RHCOS = 'https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos'
@@ -68,6 +68,7 @@ IMAGES = {'almalinux8': f'{ALMA}/8/cloud/x86_64/images/AlmaLinux-8-GenericCloud-
           'fedora42': f'{FEDORA}/42/Cloud/x86_64/images/Fedora-Cloud-Base-Generic-42-1.1.x86_64.qcow2',
           'fedora43': f'{FEDORA}/43/Cloud/x86_64/images/Fedora-Cloud-Base-Generic-43-1.6.x86_64.qcow2',
           'fedora44': f'{FEDORA}/44/Cloud/x86_64/images/Fedora-Cloud-Base-Generic-44-1.7.x86_64.qcow2',
+          'fedora45': f'{FEDORA_NEW}/45/Cloud/x86_64/images/Fedora-Cloud-Base-Generic-45-1.4.x86_64.qcow2',
           'fedoralatest': 'https://alt.fedoraproject.org/cloud',
           'freebsd122': f'{BSD}/freebsd/12.2/freebsd-12.2.qcow2',
           'freebsd130': f'{BSD}/freebsd/13.0/freebsd-13.0-zfs.qcow2',
@@ -96,6 +97,7 @@ IMAGES = {'almalinux8': f'{ALMA}/8/cloud/x86_64/images/AlmaLinux-8-GenericCloud-
           'rhcos420': f'{RHCOS}/4.20',
           'rhcos421': f'{RHCOS}/4.21',
           'rhcos422': f'{RHCOS}/4.22',
+          'rhcos520': f'{RHCOS}/5.0',
           'rhcoslatest': f'{RHCOS}/{OPENSHIFT_TAG}',
           'rhel7': 'https://access.redhat.com/downloads/content/69/ver=/rhel---7',
           'rhel8': 'https://access.redhat.com/downloads/content/479/ver=/rhel---8',

@@ -222,24 +222,24 @@ class Kopenstack(object):
             if self.external_network is not None:
                 networks = neutron.list_networks(name=self.external_network)['networks']
                 if networks:
-                    network_id = networks[0]['id']
+                    net_id = networks[0]['id']
                     if available_floating_ips:
-                        floating_ips = [f['id'] for f in available_floating_ips if f['floating_network_id'] == network_id]
+                        floating_ips = [f['id'] for f in available_floating_ips if f['floating_network_id'] == net_id]
                 else:
                     error(f"Network {self.external_network} doesn't seem  to be a valid external network")
             elif available_floating_ips:
                 floating_ips = [f['id'] for f in available_floating_ips]
             if not floating_ips:
-                network_id = None
+                net_id = None
                 if self.external_network is not None:
                     networks = [n for n in neutron.list_networks()['networks'] if n['router:external']
                                 if n['name'] == self.external_network]
                 else:
                     networks = [n for n in neutron.list_networks()['networks'] if n['router:external']]
                 if networks:
-                    network_id = networks[0]['id']
-                if network_id is not None and tenant_id is not None:
-                    args = dict(floating_network_id=network_id, tenant_id=tenant_id)
+                    net_id = networks[0]['id']
+                if net_id is not None and tenant_id is not None:
+                    args = dict(floating_network_id=net_id, tenant_id=tenant_id)
                     floating_ip = neutron.create_floatingip(body={'floatingip': args})
                     floatingip_id = floating_ip['floatingip']['id']
                     floatingip_ip = floating_ip['floatingip']['floating_ip_address']

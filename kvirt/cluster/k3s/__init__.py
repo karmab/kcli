@@ -131,7 +131,7 @@ def create(config, plandir, cluster, overrides):
     cloud_storage = data['cloud_storage']
     cloud_native = data['cloud_native']
     data['cluster'] = cluster
-    plan = cluster
+    plan = data.get('plan') or cluster
     data['kube'] = data['cluster']
     data['kubetype'] = 'k3s'
     autoscale = data['autoscale']
@@ -152,13 +152,13 @@ def create(config, plandir, cluster, overrides):
                 data['api_ip'] = api_ip
         elif api_ip is None:
             networkinfo = k.info_network(network)
-            if provider == 'kvm' and networkinfo['type'] == 'routed':
+            if provider in ['kvm', 'utm'] and networkinfo['type'] == 'routed':
                 cidr = networkinfo['cidr']
                 if cidr == 'N/A':
                     msg = "Couldnt gather an api_ip from your specified network"
                     return {'result': 'failure', 'reason': msg}
                 api_index = 2 if ':' in cidr else -3
-                api_ip = str(get_new_vip(network, ipv6=':' in cidr) or ip_network(cidr)[api_index])
+                api_ip = str(get_new_vip(config.client, network, ipv6=':' in cidr) or ip_network(cidr)[api_index])
                 warning(f"Using {api_ip} as api_ip")
                 data['api_ip'] = api_ip
                 data['automatic_api_ip'] = True

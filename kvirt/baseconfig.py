@@ -128,7 +128,7 @@ class Kbaseconfig:
         defaults['diskthin'] = default.get('diskthin', kdefaults.DISKTHIN)
         defaults['guestid'] = default.get('guestid', kdefaults.GUESTID)
         defaults['vnc'] = bool(default.get('vnc', kdefaults.VNC))
-        defaults['vncpassword'] = default.get('vnc', kdefaults.VNCPASSWORD)
+        defaults['vncpassword'] = default.get('vncpassword', kdefaults.VNCPASSWORD)
         defaults['cloudinit'] = bool(default.get('cloudinit', kdefaults.CLOUDINIT))
         defaults['guestagent'] = bool(default.get('guestagent', kdefaults.GUESTAGENT))
         defaults['reserveip'] = bool(default.get('reserveip', kdefaults.RESERVEIP))

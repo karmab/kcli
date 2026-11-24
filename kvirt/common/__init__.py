@@ -1839,7 +1839,7 @@ def create_app_openshift(config, appname, appdir, overrides={}, outputdir=None):
             g.write(rendered)
         destfile = f"{outputdir or tmpdir}/install.sh"
         with open(destfile, 'w') as f:
-            f.write("oc create -f install.yml\n")
+            f.write("oc apply -f install.yml\n")
             if os.path.exists(f"{appdir}/{appname}/pre.sh"):
                 f.write("bash pre.sh\n")
             if appdata.get('installplan', 'Automatic') == 'Manual':
@@ -2020,6 +2020,7 @@ def generate_rhcos_iso(k, cluster, pool, version='latest', installer=False, arch
 
 def olm_app(package, overrides={}):
     specific_catalog = overrides.get('catalog')
+    specific_channel = overrides.get('channel')
     os.environ["PATH"] += f":{os.getcwd()}"
     if specific_catalog is not None:
         data = None
@@ -2040,7 +2041,7 @@ def olm_app(package, overrides={}):
     namespace = name.split('-operator')[0]
     status = data['status']
     catalog = status['catalogSource']
-    defaultchannel = status['defaultChannel']
+    defaultchannel = specific_channel or status['defaultChannel']
     own = False
     channels = []
     for channel in status['channels']:
@@ -2555,7 +2556,7 @@ class PlanLoader(yaml.SafeLoader):
 PlanLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, plan_constructor)
 
 
-def get_new_vip(network, ipv6=False):
+def get_new_vip(client, network, ipv6=False):
     data = {}
     clustersdir = os.path.expanduser('~/.kcli/clusters')
     if os.path.exists(clustersdir):
@@ -2566,6 +2567,9 @@ def get_new_vip(network, ipv6=False):
             if os.path.exists(f'{clusterdir}/kcli_parameters.yml'):
                 with open(f"{clusterdir}/kcli_parameters.yml", 'r') as install:
                     installparam = yaml.safe_load(install)
+                    current_client = installparam.get('client', 'local')
+                    if current_client != client:
+                        continue
                     current_network = installparam.get('network', 'default')
                     api_ip = installparam.get('api_ip')
                     automatic = installparam.get('automatic_api_ip', False)

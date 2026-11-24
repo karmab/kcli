@@ -3,6 +3,7 @@
 from kvirt import common
 from kvirt.common import pprint, error, warning
 import base64
+import ipaddress
 import json
 import os
 import plistlib
@@ -257,7 +258,7 @@ end tell'''
         uefi = overrides.get('uefi', True)
         machine = overrides.get('machine', 'virt')
         if backend == 'apple':
-            nets = [net.copy() if isinstance(net, dict) else {'name': net} for net in nets or ['default']]
+            nets = [net.copy() if isinstance(net, dict) else {'name': net} for net in nets or ['shared']]
             for index, net in enumerate(nets):
                 net.setdefault('mac', common.gen_mac())
                 net.setdefault('nic', f'eth{index}')
@@ -561,14 +562,20 @@ end tell'''
                 metadata = self._get_vm_notes(name)
                 if metadata.get('template'):
                     continue
-                vms.append({
+                vm_entry = {
                     'name': name,
                     'status': state,
                     'ip': ip,
                     'source': metadata.get('image', ''),
                     'plan': metadata.get('plan', ''),
                     'profile': metadata.get('profile', ''),
-                })
+                }
+                kube = metadata.get('kube')
+                kubetype = metadata.get('kubetype')
+                if kube is not None and kubetype is not None:
+                    vm_entry['kube'] = kube
+                    vm_entry['kubetype'] = kubetype
+                vms.append(vm_entry)
             except Exception:
                 continue
         return sorted(vms, key=lambda x: x['name'])
@@ -639,6 +646,11 @@ end tell'''
         yamlinfo['creationdate'] = metadata.get('creationdate', '')
         yamlinfo['domain'] = metadata.get('domain', '')
         yamlinfo['tags'] = metadata.get('tags', [])
+        kube = metadata.get('kube')
+        kubetype = metadata.get('kubetype')
+        if kube is not None and kubetype is not None:
+            yamlinfo['kube'] = kube
+            yamlinfo['kubetype'] = kubetype
         try:
             plist_path = os.path.join(UTM_DOCUMENTS_DIR, f"{name}.utm", "config.plist")
             if os.path.exists(plist_path):
@@ -1408,17 +1420,25 @@ end tell'''
         return pools
 
     def list_networks(self):
+        try:
+            ip = subprocess.check_output(['ipconfig', 'getifaddr', 'en0']).decode().strip()
+            mask = subprocess.check_output(['ipconfig', 'getoption', 'en0', 'subnet_mask']).decode().strip()
+            bridge_cidr = str(ipaddress.IPv4Network(f'{ip}/{mask}', strict=False))
+        except (subprocess.CalledProcessError, ValueError):
+            bridge_cidr = 'N/A'
         return {
-            'shared': {'cidr': 'N/A', 'dhcp': True, 'domain': '', 'type': 'routed', 'mode': 'nat'},
-            'bridged': {'cidr': 'N/A', 'dhcp': False, 'domain': '', 'type': 'bridged', 'mode': 'bridge'},
-            'host': {'cidr': 'N/A', 'dhcp': True, 'domain': '', 'type': 'isolated', 'mode': 'host-only'},
-            'emulated': {'cidr': 'N/A', 'dhcp': True, 'domain': '', 'type': 'routed', 'mode': 'vlan'},
+            'shared': {'cidr': '192.168.64.0/24', 'dhcp': True, 'domain': '', 'type': 'routed', 'mode': 'nat'},
+            'bridged': {'cidr': bridge_cidr, 'dhcp': False, 'domain': '', 'type': 'bridged', 'mode': 'bridge'},
+            'host': {'cidr': '192.168.64.0/24', 'dhcp': True, 'domain': '', 'type': 'isolated', 'mode': 'host-only'},
+            'emulated': {'cidr': '10.0.2.0/24', 'dhcp': True, 'domain': '', 'type': 'routed', 'mode': 'vlan'},
         }
 
     def info_network(self, name):
         networks = self.list_networks()
         if name in networks:
             return networks[name]
+        elif name == 'default':
+            return networks.get('shared', {})
         return {}
 
     def info_subnet(self, name):

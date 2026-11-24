@@ -13,7 +13,7 @@ on:
       EXTRAPARAMS:
         description: 'Extra params'
         default: ''
-      PULLSECRET:
+      PULL_SECRET:
         description: 'Pull Secret'
         required: false
         default: /root/openshift_pull.json
@@ -25,7 +25,7 @@ env:
  INPUTFILE: ${{github.event.inputs.INPUTFILE}}
  PARAMFILE: ${{github.event.inputs.PARAMFILE}}
  EXTRAPARAMS: ${{github.event.inputs.EXTRAPARAMS}}
- PULLSECRET: ${{github.event.inputs.PULLSECRET}}
+ PULL_SECRET: ${{github.event.inputs.PULL_SECRET}}
 
 jobs:
     deploy-openshift:
@@ -36,4 +36,4 @@ jobs:
        - name: Install kcli
          run: curl https://raw.githubusercontent.com/karmab/kcli/main/install.sh | bash
        - name: Deploy Openshift on kubevirt
-         run: kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULLSECRET $EXTRAPARAMS $PLAN --force
+         run: kcli create cluster openshift --paramfile $PARAMFILE -P pull_secret=$PULL_SECRET $EXTRAPARAMS $PLAN --force

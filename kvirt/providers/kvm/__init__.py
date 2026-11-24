@@ -74,10 +74,48 @@ states = {VIR_DOMAIN_NOSTATE: 'nostate', VIR_DOMAIN_RUNNING: 'up',
           VIR_DOMAIN_BLOCKED: 'blocked', VIR_DOMAIN_PAUSED: 'paused',
           VIR_DOMAIN_SHUTDOWN: 'shuttingdown', VIR_DOMAIN_SHUTOFF: 'down',
           VIR_DOMAIN_CRASHED: 'crashed'}
+DNSMASQ_NS = "http://libvirt.org/schemas/network/dnsmasq/1.0"
 
 
 def libvirt_callback(ignore, err):
     return
+
+
+def list_wildcards(root):
+    options_tag = f"{{{DNSMASQ_NS}}}options"
+    option_tag = f"{{{DNSMASQ_NS}}}option"
+    options_element = root.find(options_tag)
+    if options_element is None:
+        return []
+    options = []
+    for option in options_element.findall(option_tag):
+        value = option.get("value")
+        if 'address' in value:
+            parts = value.split("/")
+            name = parts[1].lstrip(".")
+            ip = parts[2].split("'")[0]
+            options.append([name, ip])
+    return options
+
+
+def delete_wildcard(conn, network, root, hostname):
+    ET.register_namespace("dnsmasq", DNSMASQ_NS)
+    options_tag = f"{{{DNSMASQ_NS}}}options"
+    option_tag = f"{{{DNSMASQ_NS}}}option"
+    options_element = root.find(options_tag)
+    if options_element is not None:
+        for option in list(options_element.findall(option_tag)):
+            if hostname in option.get("value"):
+                options_element.remove(option)
+                if len(options_element) == 0:
+                    root.remove(options_element)
+                newxml = ET.tostring(root, encoding="unicode")
+                conn.networkDefineXML(newxml)
+                network.destroy()
+                network.create()
+                call("systemctl restart libvirtd", shell=True)
+                return 0
+    return 1
 
 
 registerErrorHandler(f=libvirt_callback, ctx=None)
@@ -1292,7 +1330,7 @@ class Kvirt(object):
             iommufeaturesxml = "<acpi/><apic/><pae/><apic/><pae/><ioapic driver='qemu'/>"
             iommudevicexml = f"<iommu model='{iommu_model}'><driver intremap='on' caching_mode='on'/></iommu>"
         controllerxml = ''
-        if uefi or uefi_legacy:
+        if 'q35' in machine:
             controllerxml = "<controller type='pci' model='pcie-root'/>"
             controllerxml += ''.join(["<controller type='pci' model='pcie-root-port'/>" for i in range(5)])
             pciexml = "<controller type='pci' model='pcie-to-pci-bridge'><model name='pcie-pci-bridge'/></controller>"
@@ -1789,8 +1827,8 @@ class Kvirt(object):
                 if os.path.exists('/Applications'):
                     if protocol == 'spice' and os.path.exists('/Applications/RemoteViewer.app'):
                         consolecommand += f"open -a RemoteViewer --args {url} &"
-                    elif protocol == 'vnc' and os.path.exists('/Applications/VNC Viewer.app'):
-                        consolecommand += f"open -a 'VNC Viewer' --args {url.replace('vnc://', '')} &"
+                    elif protocol == 'vnc' and os.path.exists('/Applications/TigerVNC.app'):
+                        consolecommand += f"open -a 'TigerVNC' --args {url.replace('vnc://', '')} &"
                     else:
                         consolecommand += f"open -a 'Screen Sharing' {url} &"
                 else:
@@ -2555,6 +2593,23 @@ class Kvirt(object):
                     warning("Ignoring reservedns as network was created with dns explicitely disabled")
                     continue
                 fqdn = f"{name}.{domain}" if domain is not None and not name.endswith(domain) else name
+                if '*' in alias:
+                    ET.register_namespace("dnsmasq", DNSMASQ_NS)
+                    options_tag = f"{{{DNSMASQ_NS}}}options"
+                    option_tag = f"{{{DNSMASQ_NS}}}option"
+                    options_element = root.find(options_tag)
+                    if options_element is None:
+                        options_element = ET.SubElement(root, options_tag)
+                    value = f'address=/.{fqdn}/{ip}'
+                    ET.SubElement(options_element, option_tag, {"value": value})
+                    newxml = ET.tostring(root, encoding="unicode")
+                    conn.networkDefineXML(newxml)
+                    network.destroy()
+                    network.create()
+                    call("systemctl restart libvirtd", shell=True)
+                    time.sleep(5)
+                    self.conn = libvirtopen(self.url)
+                    return
                 hostnamexml = f'<hostname>{fqdn}</hostname>'
                 alias = [f"{entry}.{domain}" if domain is not None and
                          not entry.endswith(domain) else entry for entry in alias]
@@ -3980,6 +4035,8 @@ class Kvirt(object):
                 netname = network.name()
                 netxml = network.XMLDesc()
                 netroot = ET.fromstring(netxml)
+                if delete_wildcard(conn, network, netroot, name) == 0:
+                    return
                 dns = list(netroot.iter('dns'))
                 if not dns:
                     continue
@@ -4006,6 +4063,8 @@ class Kvirt(object):
             network = conn.networkLookupByName(domain)
             netxml = network.XMLDesc()
             netroot = ET.fromstring(netxml)
+            if delete_wildcard(conn, network, netroot, f'{name}.{domain}') == 0:
+                return
             dns = list(netroot.iter('dns'))
             if not dns:
                 warning(f"No dns information found in network {domain}")
@@ -4052,6 +4111,9 @@ class Kvirt(object):
                     for hostname in list(host.iter('hostname')):
                         if hostname.text.endswith(domain):
                             results.append([hostname.text, 'A', '0', f"{iphost} ({netname})"])
+                for wildcard in list_wildcards(netroot):
+                    name, ip = wildcard
+                    results.append([f'*.{name}', 'A', '0', f"{ip}"])
         return results
 
     def create_bucket(self, bucket, public=False):
@@ -4302,6 +4364,10 @@ class Kvirt(object):
                 for hostname in list(host.iter('hostname')):
                     if len(hostname.text.split('.')) > 1 and hostname.text.partition('.')[2] not in results:
                         results.append(hostname.text.partition('.')[2])
+            for wildcard in list_wildcards(netroot):
+                domain = wildcard[0].split(".", 2)[2]
+                if domain not in results:
+                    results.append(domain)
         return results
 
     def _rhel_legacy(self, machines):

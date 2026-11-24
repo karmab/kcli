@@ -1,0 +1,23 @@
+apiVersion: config.openshift.io/v1
+kind: OAuth
+metadata:
+  name: cluster
+spec:
+  identityProviders:
+  - name: {{ keycloak_oauth_idp }}
+    mappingMethod: claim
+    type: OIDC
+    oidc:
+      issuer: KEYCLOAK_ISSUER
+      clientID: {{ keycloak_oauth_client }}
+      clientSecret:
+        name: keycloak-oauth-secret
+      ca:
+        name: {{ keycloak_oauth_ca | default('keycloak-ca', true) }}
+      claims:
+        preferredUsername:
+        - preferred_username
+        name:
+        - name
+        email:
+        - email

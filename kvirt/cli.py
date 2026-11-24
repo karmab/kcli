@@ -2269,8 +2269,9 @@ def restart_plan(args):
 
 
 def info_app(args):
+    overrides = handle_parameters(args.param, args.paramfile)
     baseconfig = Kbaseconfig(client=args.client, debug=args.debug, offline=True)
-    baseconfig.info_app(args.app)
+    baseconfig.info_app(args.app, overrides=overrides)
 
 
 def info_kubeadm_registry(args):
