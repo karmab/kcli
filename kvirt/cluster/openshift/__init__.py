@@ -1015,7 +1015,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         update_pull_secret(pull_secret, disconnected_url, disconnected_user, disconnected_password)
         data['ori_tag'] = tag
         if '/' not in str(tag):
-            disconnected_prefix = data['disconnected_prefix'] or 'openshift-release-dev/ocp-release'
+            disconnected_prefix = data['disconnected_prefix'] or 'openshift/release-images'
             tag = f'{disconnected_url}/{disconnected_prefix}:{INSTALLER_VERSION}-{arch}'
             os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = tag
         if data['ca'] is None and 'quay.io' not in disconnected_url:
