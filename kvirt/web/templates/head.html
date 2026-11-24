@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="layout-pf">
+<html class="layout-pf theme-{{ theme|default('default') }}" data-default-theme="{{ theme|default('default') }}">
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -28,6 +28,7 @@
     <script src="/static/js/kcli.js"></script>
     <script src="/static/js/list.js"></script>
     <script src="/static/js/bootstrap-notify.js"></script>
+    <script src="/static/js/theme.js"></script>
     {% endblock %}
 
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400&family=Roboto:wght@100&family=Water+Brush&display=swap" rel="stylesheet">
@@ -39,5 +40,7 @@
     <link href="/static/css/wheel.css" rel="stylesheet">
     <link href="/static/css/bootstrap-notify.css" rel="stylesheet">
     <link href="/static/css/kcli.css" rel="stylesheet">
+    <link href="/static/css/dark-theme.css" rel="stylesheet">
+    <link href="/static/css/light-theme.css" rel="stylesheet">
     {% endblock %}
 </head>

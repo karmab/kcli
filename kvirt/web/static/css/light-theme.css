@@ -1,0 +1,576 @@
+/*
+ * light-theme.css — high-contrast light theme for the kweb UI.
+ *
+ * Active only when <html> carries the `theme-light` class (set server side from
+ * KWEB_THEME and switched client side by static/js/theme.js). Every rule is
+ * prefixed with `html.theme-light` so the `default` and `dark` themes are not
+ * affected at all.
+ *
+ * Derived from the `default` look (bootstrap.min.css + navbar.css + kcli.css)
+ * but with deliberately stronger contrast: darker text, darker borders and
+ * emphasised primary actions. The navbar keeps the teal identity of the
+ * default theme, only darkened so the white nav text reaches contrast >= 5.5.
+ *
+ * Palette:
+ *   page background  #ffffff                       text #111111 (contrast 18.9)
+ *   navbar           #006b7a (teal)                text #ffffff (contrast 6.24)
+ *   tables           header #e8e8e8, rows #ffffff / #f5f5f5, borders #767676
+ *   forms            #ffffff background            text #111111, borders #767676
+ *   buttons          primary #003d7a / #ffffff (contrast 10.8), default #111 text
+ *   links            #0056b3 (contrast 7.04 on white)
+ */
+
+/* ===== Page root ===== */
+html.theme-light {
+    background-color: #ffffff;
+    color-scheme: light;
+}
+html.theme-light body {
+    background-color: #ffffff;
+    color: #111111;
+}
+html.theme-light hr {
+    border-color: #767676;
+}
+
+/* ===== Links ===== */
+html.theme-light a {
+    color: #0056b3;
+}
+html.theme-light a:hover,
+html.theme-light a:focus {
+    color: #003d7a;
+    text-decoration: underline;
+}
+html.theme-light a.text-muted,
+html.theme-light .text-muted {
+    color: #4d4d4d;
+}
+html.theme-light .help-block {
+    color: #4d4d4d;
+}
+
+/* ===== Navbar (teal identity kept, darkened) ===== */
+html.theme-light .navbar-custom {
+    background-color: #006b7a;
+    border-color: #004e59;
+    background-image: none;
+    background-repeat: no-repeat;
+}
+html.theme-light .navbar-custom .navbar-brand,
+html.theme-light .navbar-custom .navbar-text,
+html.theme-light .navbar-custom .navbar-link {
+    color: #ffffff;
+}
+html.theme-light .navbar-custom .navbar-brand:hover,
+html.theme-light .navbar-custom .navbar-brand:focus,
+html.theme-light .navbar-custom .navbar-link:hover,
+html.theme-light .navbar-custom .navbar-link:focus {
+    color: #ffffff;
+    background-color: #00545f;
+}
+html.theme-light .navbar-custom .navbar-nav > li > a {
+    color: #ffffff;
+    border-left-color: #00545f;
+}
+html.theme-light .navbar-custom .navbar-nav > li:last-child > a {
+    border-right-color: #00545f;
+}
+html.theme-light .navbar-custom .navbar-nav > li > a:hover,
+html.theme-light .navbar-custom .navbar-nav > li > a:focus {
+    color: #ffffff;
+    background-color: #00545f;
+}
+html.theme-light .navbar-custom .navbar-nav > .active > a,
+html.theme-light .navbar-custom .navbar-nav > .active > a:hover,
+html.theme-light .navbar-custom .navbar-nav > .active > a:focus,
+html.theme-light .navbar-custom .navbar-nav > .open > a,
+html.theme-light .navbar-custom .navbar-nav > .open > a:hover,
+html.theme-light .navbar-custom .navbar-nav > .open > a:focus {
+    color: #ffffff;
+    background-color: #004e59;
+}
+html.theme-light .navbar-custom .navbar-nav > .disabled > a,
+html.theme-light .navbar-custom .navbar-nav > .disabled > a:hover,
+html.theme-light .navbar-custom .navbar-nav > .disabled > a:focus {
+    color: #d5d5d5;
+    background-color: transparent;
+}
+html.theme-light .navbar-custom .navbar-nav > li > a .caret,
+html.theme-light .navbar-custom .navbar-nav > .dropdown > a .caret,
+html.theme-light .navbar-custom .navbar-nav > .open > a .caret {
+    border-top-color: #ffffff;
+    border-bottom-color: #ffffff;
+}
+html.theme-light .navbar-custom .navbar-toggle {
+    border-color: #ffffff;
+}
+html.theme-light .navbar-custom .navbar-toggle:hover,
+html.theme-light .navbar-custom .navbar-toggle:focus {
+    background-color: #00545f;
+}
+html.theme-light .navbar-custom .navbar-toggle .icon-bar {
+    background-color: #ffffff;
+}
+html.theme-light .navbar-custom .navbar-collapse,
+html.theme-light .navbar-custom .navbar-form {
+    border-color: #004e59;
+}
+
+
+/* ===== Dropdowns ===== */
+html.theme-light .dropdown-menu {
+    background-color: #ffffff;
+    border-color: #767676;
+    color: #111111;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+}
+html.theme-light .dropdown-menu > li > a,
+html.theme-light .dropdown-menu li a {
+    color: #111111;
+    border-color: #767676;
+}
+html.theme-light .dropdown-menu > li > a:hover,
+html.theme-light .dropdown-menu > li > a:focus,
+html.theme-light .dropdown-menu li a:hover,
+html.theme-light .dropdown-menu li a:focus {
+    background-color: #e8e8e8;
+    background-image: none;
+    color: #111111;
+}
+html.theme-light .dropdown-menu > .active > a,
+html.theme-light .dropdown-menu > .active > a:hover,
+html.theme-light .dropdown-menu > .active > a:focus {
+    background-color: #003d7a;
+    background-image: none;
+    color: #ffffff;
+}
+html.theme-light .dropdown-menu > .disabled > a,
+html.theme-light .dropdown-menu > .disabled > a:hover,
+html.theme-light .dropdown-menu > .disabled > a:focus {
+    color: #767676;
+    background-color: transparent;
+}
+html.theme-light .dropdown-header {
+    color: #4d4d4d;
+}
+html.theme-light .dropdown-menu .divider {
+    background-color: #767676;
+}
+html.theme-light .caret {
+    border-top-color: #111111;
+    border-bottom-color: #111111;
+}
+
+/* ===== Tables ===== */
+html.theme-light .table {
+    background-color: #ffffff;
+    color: #111111;
+    border-color: #767676;
+}
+html.theme-light .table > thead > tr > th,
+html.theme-light .table > tbody > tr > th,
+html.theme-light .table > tfoot > tr > th,
+html.theme-light .table th {
+    background-color: #e8e8e8;
+    color: #111111;
+    border-color: #767676;
+}
+html.theme-light .table > thead > tr > td,
+html.theme-light .table > tbody > tr > td,
+html.theme-light .table > tfoot > tr > td,
+html.theme-light .table td {
+    background-color: #ffffff;
+    color: #111111;
+    border-color: #767676;
+}
+html.theme-light .table-striped > tbody > tr:nth-child(odd) > td,
+html.theme-light .table-striped > tbody > tr:nth-child(odd) > th {
+    background-color: #f5f5f5;
+    color: #111111;
+}
+html.theme-light .table-striped > tbody > tr:nth-child(even) > td,
+html.theme-light .table-striped > tbody > tr:nth-child(even) > th {
+    background-color: #ffffff;
+    color: #111111;
+}
+html.theme-light .table-bordered,
+html.theme-light .table-bordered > thead > tr > th,
+html.theme-light .table-bordered > thead > tr > td,
+html.theme-light .table-bordered > tbody > tr > th,
+html.theme-light .table-bordered > tbody > tr > td,
+html.theme-light .table-bordered > tfoot > tr > th,
+html.theme-light .table-bordered > tfoot > tr > td {
+    border-color: #767676;
+}
+html.theme-light .table-hover > tbody > tr:hover > td,
+html.theme-light .table-hover > tbody > tr:hover > th {
+    background-color: #e8e8e8;
+    color: #111111;
+}
+html.theme-light .table > caption {
+    color: #4d4d4d;
+}
+
+html.theme-light .dataTables_wrapper .dataTables_length,
+html.theme-light .dataTables_wrapper .dataTables_filter,
+html.theme-light .dataTables_wrapper .dataTables_info,
+html.theme-light .dataTables_wrapper .dataTables_processing,
+html.theme-light .dataTables_wrapper .dataTables_paginate {
+    color: #111111;
+}
+html.theme-light .dataTables_wrapper .dataTables_paginate .paginate_button {
+    color: #111111 !important;
+    background-color: #ffffff;
+    background-image: none;
+    border: 1px solid #767676;
+}
+html.theme-light .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    color: #111111 !important;
+    background-color: #e8e8e8;
+    background-image: none;
+    border-color: #4d4d4d;
+}
+html.theme-light .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    color: #ffffff !important;
+    background-color: #003d7a;
+    background-image: none;
+    border-color: #003d7a;
+}
+html.theme-light .dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
+html.theme-light .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover,
+html.theme-light .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:active {
+    color: #767676 !important;
+    background-color: #ffffff;
+    background-image: none;
+    border-color: #a8a8a8;
+}
+
+/* ===== Bootstrap pagination ===== */
+html.theme-light .pagination > li > a,
+html.theme-light .pagination > li > span {
+    background-color: #ffffff;
+    color: #111111;
+    border-color: #767676;
+}
+html.theme-light .pagination > li > a:hover,
+html.theme-light .pagination > li > a:focus,
+html.theme-light .pagination > li > span:hover,
+html.theme-light .pagination > li > span:focus {
+    background-color: #e8e8e8;
+    color: #111111;
+    border-color: #4d4d4d;
+}
+html.theme-light .pagination > .active > a,
+html.theme-light .pagination > .active > a:hover,
+html.theme-light .pagination > .active > a:focus,
+html.theme-light .pagination > .active > span,
+html.theme-light .pagination > .active > span:hover,
+html.theme-light .pagination > .active > span:focus {
+    background-color: #003d7a;
+    border-color: #003d7a;
+    color: #ffffff;
+}
+html.theme-light .pagination > .disabled > a,
+html.theme-light .pagination > .disabled > a:hover,
+html.theme-light .pagination > .disabled > a:focus,
+html.theme-light .pagination > .disabled > span,
+html.theme-light .pagination > .disabled > span:hover,
+html.theme-light .pagination > .disabled > span:focus {
+    background-color: #ffffff;
+    border-color: #a8a8a8;
+    color: #767676;
+}
+
+/* ===== Forms ===== */
+html.theme-light input,
+html.theme-light select,
+html.theme-light textarea,
+html.theme-light .form-control {
+    background-color: #ffffff;
+    color: #111111;
+    border-color: #767676;
+    box-shadow: none;
+}
+html.theme-light input[type="checkbox"],
+html.theme-light input[type="radio"] {
+    background-color: #ffffff;
+    border-color: #4d4d4d;
+    box-shadow: none;
+}
+html.theme-light input:focus,
+html.theme-light select:focus,
+html.theme-light textarea:focus,
+html.theme-light .form-control:focus {
+    background-color: #ffffff;
+    color: #111111;
+    border-color: #003d7a;
+    box-shadow: 0 0 0 2px rgba(0, 61, 122, 0.35);
+}
+html.theme-light .form-control::placeholder,
+html.theme-light input::placeholder,
+html.theme-light textarea::placeholder {
+    color: #595959;
+}
+html.theme-light select option {
+    background-color: #ffffff;
+    color: #111111;
+}
+html.theme-light label,
+html.theme-light legend {
+    color: #111111;
+    border-color: #767676;
+}
+html.theme-light .form-control[disabled],
+html.theme-light .form-control[readonly],
+html.theme-light fieldset[disabled] .form-control {
+    background-color: #f5f5f5;
+    color: #4d4d4d;
+    border-color: #767676;
+}
+html.theme-light .input-group-addon {
+    background-color: #e8e8e8;
+    color: #111111;
+    border-color: #767676;
+}
+html.theme-light .has-error .form-control {
+    border-color: #a94442;
+}
+html.theme-light .has-error .help-block {
+    color: #a94442;
+}
+
+
+/* ===== Buttons ===== */
+html.theme-light .btn {
+    color: #111111;
+}
+html.theme-light .btn-default {
+    background-color: #ffffff;
+    background-image: none;
+    border-color: #767676;
+    color: #111111;
+}
+html.theme-light .btn-default:hover,
+html.theme-light .btn-default:focus,
+html.theme-light .btn-default:active,
+html.theme-light .btn-default.active {
+    background-color: #e8e8e8;
+    background-image: none;
+    border-color: #4d4d4d;
+    color: #111111;
+}
+html.theme-light .btn-default.disabled,
+html.theme-light .btn-default[disabled] {
+    background-color: #f5f5f5;
+    border-color: #a8a8a8;
+    color: #767676;
+}
+html.theme-light .btn-primary {
+    background-color: #003d7a;
+    background-image: none;
+    border-color: #003d7a;
+    color: #ffffff;
+}
+html.theme-light .btn-primary:hover,
+html.theme-light .btn-primary:focus,
+html.theme-light .btn-primary:active,
+html.theme-light .btn-primary.active {
+    background-color: #002b57;
+    background-image: none;
+    border-color: #002b57;
+    color: #ffffff;
+}
+html.theme-light .btn-primary.disabled,
+html.theme-light .btn-primary[disabled] {
+    background-color: #335f8f;
+    border-color: #335f8f;
+    color: #ffffff;
+}
+html.theme-light .btn-link {
+    color: #0056b3;
+    background-color: transparent;
+}
+html.theme-light .btn-link:hover,
+html.theme-light .btn-link:focus {
+    color: #003d7a;
+    text-decoration: underline;
+}
+html.theme-light .btn-link.disabled,
+html.theme-light .btn-link[disabled] {
+    color: #767676;
+}
+
+/* ===== Modal ===== */
+html.theme-light .modal-content {
+    background-color: #ffffff;
+    border-color: #767676;
+    color: #111111;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+}
+html.theme-light .modal-header,
+html.theme-light .modal-footer {
+    border-color: #767676;
+}
+html.theme-light .modal-title,
+html.theme-light .modal-body {
+    color: #111111;
+}
+html.theme-light .modal .close {
+    color: #111111;
+    text-shadow: none;
+    opacity: 0.8;
+}
+html.theme-light .modal .close:hover,
+html.theme-light .modal .close:focus {
+    color: #000000;
+    opacity: 1;
+}
+
+
+/* ===== Panels ===== */
+html.theme-light .panel {
+    background-color: #ffffff;
+    border-color: #767676;
+    color: #111111;
+    box-shadow: none;
+}
+html.theme-light .panel-default > .panel-heading {
+    background-color: #e8e8e8;
+    border-color: #767676;
+    color: #111111;
+}
+html.theme-light .panel-default > .panel-footer {
+    background-color: #f5f5f5;
+    border-color: #767676;
+    color: #111111;
+}
+html.theme-light .panel-title,
+html.theme-light .panel-body {
+    color: #111111;
+}
+html.theme-light .panel-group .panel-heading + .panel-collapse > .panel-body {
+    border-color: #767676;
+}
+
+/* ===== Wells ===== */
+html.theme-light .well {
+    background-color: #f5f5f5;
+    border-color: #767676;
+    color: #111111;
+    box-shadow: none;
+}
+
+/* ===== Alerts / notifications ===== */
+html.theme-light .alert {
+    background-color: #f5f5f5;
+    border-color: #767676;
+    color: #111111;
+}
+html.theme-light .alert-success {
+    background-color: #dff0d8;
+    border-color: #3c763d;
+    color: #1a3a17;
+}
+html.theme-light .alert-info {
+    background-color: #d9edf7;
+    border-color: #31708f;
+    color: #123c4d;
+}
+html.theme-light .alert-warning {
+    background-color: #fcf8e3;
+    border-color: #8a6d3b;
+    color: #4d3a10;
+}
+html.theme-light .alert-danger {
+    background-color: #f2dede;
+    border-color: #a94442;
+    color: #5c1c1a;
+}
+html.theme-light .alert .close {
+    color: #111111;
+    text-shadow: none;
+    opacity: 0.8;
+}
+html.theme-light .alert .close:hover,
+html.theme-light .alert .close:focus {
+    color: #000000;
+    opacity: 1;
+}
+html.theme-light .notifications > div {
+    background-color: #ffffff;
+    border-color: #767676;
+    color: #111111;
+}
+html.theme-light .notifications .alert-success {
+    background-color: #dff0d8;
+    border-color: #3c763d;
+    color: #1a3a17;
+}
+html.theme-light .notifications .alert-info {
+    background-color: #d9edf7;
+    border-color: #31708f;
+    color: #123c4d;
+}
+html.theme-light .notifications .alert-warning {
+    background-color: #fcf8e3;
+    border-color: #8a6d3b;
+    color: #4d3a10;
+}
+html.theme-light .notifications .alert-danger {
+    background-color: #f2dede;
+    border-color: #a94442;
+    color: #5c1c1a;
+}
+
+/* ===== Code ===== */
+html.theme-light pre {
+    background-color: #f5f5f5;
+    border-color: #767676;
+    color: #111111;
+}
+html.theme-light code {
+    background-color: #f0f0f0;
+    color: #a31515;
+}
+html.theme-light pre code {
+    background-color: transparent;
+    color: inherit;
+}
+html.theme-light kbd {
+    background-color: #111111;
+    color: #ffffff;
+    box-shadow: none;
+}
+
+/* ===== Labels / badges ===== */
+html.theme-light .label-default {
+    background-color: #4d4d4d;
+    color: #ffffff;
+}
+html.theme-light .label-primary {
+    background-color: #003d7a;
+    color: #ffffff;
+}
+html.theme-light .badge {
+    background-color: #4d4d4d;
+    color: #ffffff;
+}
+
+/* ===== Status helper classes from kcli.css ===== */
+html.theme-light .green {
+    color: #1f5c1f;
+}
+html.theme-light .red {
+    color: #a31515;
+}
+html.theme-light .blue {
+    color: #003d7a;
+}
+
+/* ===== Spinner ===== */
+html.theme-light .loader {
+    border-color: #e8e8e8;
+    border-top-color: #003d7a;
+}
+

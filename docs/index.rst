@@ -2498,6 +2498,12 @@ Launch the following command and access your machine at port 8000:
 
 The command supports a flag ``--readonly`` to make the web read only.
 
+The following environment variables are understood by the kweb server:
+
+- KWEB_PORT: port to listen on (defaults to 8000)
+- KWEB_DEBUG: set to enable debug mode
+- KWEB_THEME: predefined theme, one of ``default``, ``light`` or ``dark`` (defaults to ``default``); an unknown value is ignored with a warning on stderr. The choice a user makes in the theme menu of the browser is stored locally and takes precedence over this value.
+
 You can check the `swagger spec <https://petstore.swagger.io/?url=https://raw.githubusercontent.com/karmab/kcli/main/kvirt/web/swagger.yml>`__ to call the different endpoints using your language of choice.
 
 ksushy

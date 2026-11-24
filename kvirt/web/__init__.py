@@ -15,6 +15,7 @@ from kvirt.cluster import kubeadm
 from kvirt.cluster import hypershift
 from kvirt.cluster import openshift
 import os
+import sys
 from shutil import which
 from time import sleep
 from threading import Thread
@@ -27,7 +28,12 @@ class Kweb():
 
         app = Bottle()
         basedir = f"{os.path.dirname(Bottle.run.__code__.co_filename)}/web"
-        view = functools.partial(jinja2_view, template_lookup=[f"{basedir}/templates"])
+        theme = os.environ.get('KWEB_THEME', 'default').strip().lower() or 'default'
+        if theme not in ('default', 'light', 'dark'):
+            print(f"Invalid KWEB_THEME '{theme}', falling back to default", file=sys.stderr)
+            theme = 'default'
+        self.theme = theme
+        view = functools.partial(jinja2_view, template_lookup=[f"{basedir}/templates"], theme=theme)
 
         @app.route('/static/<filename:path>')
         def server_static(filename):
