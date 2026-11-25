@@ -146,6 +146,8 @@ html.theme-dark .table {
     background-color: #2a2a2a;
     color: #e6e6e6;
     border-color: #555;
+    border-collapse: collapse;
+    border-width: 1px;
 }
 html.theme-dark .table > thead > tr > th,
 html.theme-dark .table > tbody > tr > th,
