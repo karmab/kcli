@@ -1451,7 +1451,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
                               {'path': "/etc/kubernetes/Corefile.template", 'data': corefile_data},
                               {"path": "/etc/NetworkManager/dispatcher.d/99-kcli-forcedns", "data": forcedns_data,
                                "mode": int('755', 8)}])
+        sno_extra_args = overrides.get('sno_extra_args')
         if api_ip is not None:
+            if sno_extra_args is not None and api_ip in sno_extra_args:
+                reason = "api_ip cant be set to the same value as the one in sno_extra_args"
+                return {'result': 'failure', 'reason': reason}
             data['virtual_router_id'] = data['virtual_router_id'] or hash(cluster) % 254 + 1
             virtual_router_id = data['virtual_router_id']
             pprint(f"Using keepalived virtual_router_id {virtual_router_id}")
@@ -1493,7 +1497,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
         with open("iso.ign", 'w') as f:
             iso_overrides = data.copy()
             iso_overrides['image'] = 'rhcos4000'
-            sno_extra_args = overrides.get('sno_extra_args')
             _files = [{"path": "/root/sno-finish.service", "origin": f"{plandir}/sno-finish.service"},
                       {"path": "/usr/local/bin/sno-finish.sh", "origin": f"{plandir}/sno-finish.sh", "mode": 700}]
             if notify:
