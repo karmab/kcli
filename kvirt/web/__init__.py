@@ -29,7 +29,7 @@ class Kweb():
         app = Bottle()
         basedir = f"{os.path.dirname(Bottle.run.__code__.co_filename)}/web"
         theme = os.environ.get('KWEB_THEME', 'default').strip().lower() or 'default'
-        if theme not in ('default', 'light', 'dark'):
+        if theme not in ('light-contrast', 'default', 'dark', 'dark-contrast'):
             print(f"Invalid KWEB_THEME '{theme}', falling back to default", file=sys.stderr)
             theme = 'default'
         self.theme = theme

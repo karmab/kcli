@@ -2502,7 +2502,7 @@ The following environment variables are understood by the kweb server:
 
 - KWEB_PORT: port to listen on (defaults to 8000)
 - KWEB_DEBUG: set to enable debug mode
-- KWEB_THEME: predefined theme, one of ``default``, ``light`` or ``dark`` (defaults to ``default``); an unknown value is ignored with a warning on stderr. The choice a user makes in the theme menu of the browser is stored locally and takes precedence over this value.
+- KWEB_THEME: predefined theme, one of ``default``, ``dark``, ``dark-contrast`` or ``light-contrast``; ``dark-contrast`` is the ``dark`` palette with brighter, higher-contrast text and ``light-contrast`` is the ``default`` palette with stronger text contrast (thin borders, unlike the removed ``light`` theme); defaults to ``default``. An unknown value is ignored with a warning on stderr. The choice a user makes in the theme menu of the browser is stored locally and takes precedence over this value.
 
 You can check the `swagger spec <https://petstore.swagger.io/?url=https://raw.githubusercontent.com/karmab/kcli/main/kvirt/web/swagger.yml>`__ to call the different endpoints using your language of choice.
 

@@ -1,0 +1,549 @@
+/*
+ * dark-contrast-theme.css — "Dark Contrast" theme for the kweb UI.
+ *
+ * Active only when <html> carries the `theme-dark-contrast` class (set server
+ * side from KWEB_THEME=dark-contrast and switched client side by
+ * static/js/theme.js). Every rule is prefixed with `html.theme-dark-contrast`
+ * so the `default`, `light` and `dark` themes are not affected at all.
+ *
+ * Derived from the `dark` theme but with deliberately brighter,
+ * higher-contrast text: brighter body/table/navbar text, brighter
+ * muted/disabled text, brighter borders and brighter links. Backgrounds
+ * stay the same as `dark`.
+ *
+ * Palette:
+ *   page background  #1a1a1a (html) / #222 (body)   text #f5f5f5
+ *   panels / tables  #262626 - #333                 text #f2f2f2, borders #555 - #666
+ *   navbar           #111                           text #f5f5f5
+ *   accents          #008092 (brand) / #9fd0ff (links)
+ */
+
+/* ===== Page root ===== */
+html.theme-dark-contrast {
+    background-color: #1a1a1a;
+    color-scheme: dark;
+}
+html.theme-dark-contrast body {
+    background-color: #222;
+    color: #ffffff;
+}
+html.theme-dark-contrast hr {
+    border-color: #555;
+}
+
+/* ===== Links ===== */
+html.theme-dark-contrast a {
+    color: #aee0ff;
+}
+html.theme-dark-contrast a:hover,
+html.theme-dark-contrast a:focus {
+    color: #e6f2ff;
+}
+html.theme-dark-contrast a.text-muted,
+html.theme-dark-contrast .text-muted {
+    color: #cccccc;
+}
+
+/* ===== Navbar ===== */
+html.theme-dark-contrast .navbar-custom {
+    background-color: #111;
+    border-color: #333;
+}
+html.theme-dark-contrast .navbar-custom .navbar-brand,
+html.theme-dark-contrast .navbar-custom .navbar-text,
+html.theme-dark-contrast .navbar-custom .navbar-link {
+    color: #ffffff;
+}
+html.theme-dark-contrast .navbar-custom .navbar-brand:hover,
+html.theme-dark-contrast .navbar-custom .navbar-brand:focus,
+html.theme-dark-contrast .navbar-custom .navbar-link:hover,
+html.theme-dark-contrast .navbar-custom .navbar-link:focus {
+    color: #fff;
+    background-color: transparent;
+}
+html.theme-dark-contrast .navbar-custom .navbar-nav > li > a {
+    color: #ffffff;
+    border-left-color: #333;
+}
+html.theme-dark-contrast .navbar-custom .navbar-nav > li:last-child > a {
+    border-right-color: #333;
+}
+html.theme-dark-contrast .navbar-custom .navbar-nav > li > a:hover,
+html.theme-dark-contrast .navbar-custom .navbar-nav > li > a:focus {
+    color: #fff;
+    background-color: #1c1c1c;
+}
+html.theme-dark-contrast .navbar-custom .navbar-nav > .active > a,
+html.theme-dark-contrast .navbar-custom .navbar-nav > .active > a:hover,
+html.theme-dark-contrast .navbar-custom .navbar-nav > .active > a:focus,
+html.theme-dark-contrast .navbar-custom .navbar-nav > .open > a,
+html.theme-dark-contrast .navbar-custom .navbar-nav > .open > a:hover,
+html.theme-dark-contrast .navbar-custom .navbar-nav > .open > a:focus {
+    color: #fff;
+    background-color: #1c1c1c;
+}
+html.theme-dark-contrast .navbar-custom .navbar-nav > .disabled > a,
+html.theme-dark-contrast .navbar-custom .navbar-nav > .disabled > a:hover,
+html.theme-dark-contrast .navbar-custom .navbar-nav > .disabled > a:focus {
+    color: #b5b5b5;
+    background-color: transparent;
+}
+html.theme-dark-contrast .navbar-custom .navbar-nav > li > a .caret,
+html.theme-dark-contrast .navbar-custom .navbar-nav > .dropdown > a .caret,
+html.theme-dark-contrast .navbar-custom .navbar-nav > .open > a .caret {
+    border-top-color: #f2f2f2;
+    border-bottom-color: #f2f2f2;
+}
+html.theme-dark-contrast .navbar-custom .navbar-toggle {
+    border-color: #666;
+}
+html.theme-dark-contrast .navbar-custom .navbar-toggle:hover,
+html.theme-dark-contrast .navbar-custom .navbar-toggle:focus {
+    background-color: #333;
+}
+html.theme-dark-contrast .navbar-custom .navbar-toggle .icon-bar {
+    background-color: #e8e8e8;
+}
+html.theme-dark-contrast .navbar-custom .navbar-collapse,
+html.theme-dark-contrast .navbar-custom .navbar-form {
+    border-color: #333;
+}
+
+/* ===== Dropdowns ===== */
+html.theme-dark-contrast .dropdown-menu {
+    background-color: #2b2b2b;
+    border-color: #666;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.6);
+}
+html.theme-dark-contrast .dropdown-menu > li > a {
+    color: #ffffff;
+}
+html.theme-dark-contrast .dropdown-menu > li > a:hover,
+html.theme-dark-contrast .dropdown-menu > li > a:focus {
+    background-color: #3a3a3a;
+    color: #fff;
+}
+html.theme-dark-contrast .dropdown-menu > .active > a,
+html.theme-dark-contrast .dropdown-menu > .active > a:hover,
+html.theme-dark-contrast .dropdown-menu > .active > a:focus {
+    background-color: #008092;
+    color: #fff;
+}
+html.theme-dark-contrast .dropdown-menu > .disabled > a,
+html.theme-dark-contrast .dropdown-menu > .disabled > a:hover,
+html.theme-dark-contrast .dropdown-menu > .disabled > a:focus {
+    color: #b5b5b5;
+    background-color: transparent;
+}
+html.theme-dark-contrast .dropdown-header {
+    color: #b8b8b8;
+}
+html.theme-dark-contrast .dropdown-menu .divider {
+    background-color: #555;
+}
+html.theme-dark-contrast .caret {
+    border-top-color: #f2f2f2;
+    border-bottom-color: #f2f2f2;
+}
+
+/* ===== Tables ===== */
+html.theme-dark-contrast .table {
+    background-color: #2a2a2a;
+    color: #ffffff;
+    border-color: #666;
+}
+html.theme-dark-contrast .table > thead > tr > th,
+html.theme-dark-contrast .table > tbody > tr > th,
+html.theme-dark-contrast .table > tfoot > tr > th,
+html.theme-dark-contrast .table th {
+    background-color: #333;
+    color: #ffffff;
+    border-color: #666;
+}
+html.theme-dark-contrast .table > thead > tr > td,
+html.theme-dark-contrast .table > tbody > tr > td,
+html.theme-dark-contrast .table > tfoot > tr > td,
+html.theme-dark-contrast .table td {
+    background-color: #2a2a2a;
+    color: #ffffff;
+    border-color: #666;
+}
+html.theme-dark-contrast .table-striped > tbody > tr:nth-child(odd) > td,
+html.theme-dark-contrast .table-striped > tbody > tr:nth-child(odd) > th {
+    background-color: #262626;
+}
+html.theme-dark-contrast .table-striped > tbody > tr:nth-child(even) > td,
+html.theme-dark-contrast .table-striped > tbody > tr:nth-child(even) > th {
+    background-color: #2a2a2a;
+}
+html.theme-dark-contrast .table-bordered,
+html.theme-dark-contrast .table-bordered > thead > tr > th,
+html.theme-dark-contrast .table-bordered > thead > tr > td,
+html.theme-dark-contrast .table-bordered > tbody > tr > th,
+html.theme-dark-contrast .table-bordered > tbody > tr > td,
+html.theme-dark-contrast .table-bordered > tfoot > tr > th,
+html.theme-dark-contrast .table-bordered > tfoot > tr > td {
+    border-color: #666;
+}
+html.theme-dark-contrast .table-hover > tbody > tr:hover > td,
+html.theme-dark-contrast .table-hover > tbody > tr:hover > th {
+    background-color: #333;
+}
+html.theme-dark-contrast .table > caption {
+    color: #cccccc;
+}
+html.theme-dark-contrast .dataTables_wrapper .dataTables_length,
+html.theme-dark-contrast .dataTables_wrapper .dataTables_filter,
+html.theme-dark-contrast .dataTables_wrapper .dataTables_info,
+html.theme-dark-contrast .dataTables_wrapper .dataTables_processing,
+html.theme-dark-contrast .dataTables_wrapper .dataTables_paginate {
+    color: #ffffff;
+}
+html.theme-dark-contrast .dataTables_wrapper .dataTables_paginate .paginate_button {
+    color: #ffffff !important;
+    background-color: #2a2a2a;
+    background-image: none;
+    border: 1px solid #666;
+}
+html.theme-dark-contrast .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    color: #fff !important;
+    background-color: #3a3a3a;
+    background-image: none;
+    border-color: #888;
+}
+html.theme-dark-contrast .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    color: #fff !important;
+    background-color: #008092;
+    background-image: none;
+    border-color: #008092;
+}
+html.theme-dark-contrast .dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
+html.theme-dark-contrast .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover,
+html.theme-dark-contrast .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:active {
+    color: #b5b5b5 !important;
+    background-color: transparent;
+    background-image: none;
+    border-color: transparent;
+}
+
+/* ===== Bootstrap pagination ===== */
+html.theme-dark-contrast .pagination > li > a,
+html.theme-dark-contrast .pagination > li > span {
+    background-color: #2a2a2a;
+    color: #ffffff;
+    border-color: #666;
+}
+html.theme-dark-contrast .pagination > li > a:hover,
+html.theme-dark-contrast .pagination > li > a:focus,
+html.theme-dark-contrast .pagination > li > span:hover,
+html.theme-dark-contrast .pagination > li > span:focus {
+    background-color: #3a3a3a;
+    color: #fff;
+    border-color: #888;
+}
+html.theme-dark-contrast .pagination > .active > a,
+html.theme-dark-contrast .pagination > .active > a:hover,
+html.theme-dark-contrast .pagination > .active > a:focus,
+html.theme-dark-contrast .pagination > .active > span,
+html.theme-dark-contrast .pagination > .active > span:hover,
+html.theme-dark-contrast .pagination > .active > span:focus {
+    background-color: #008092;
+    border-color: #008092;
+    color: #fff;
+}
+html.theme-dark-contrast .pagination > .disabled > a,
+html.theme-dark-contrast .pagination > .disabled > a:hover,
+html.theme-dark-contrast .pagination > .disabled > a:focus,
+html.theme-dark-contrast .pagination > .disabled > span,
+html.theme-dark-contrast .pagination > .disabled > span:hover,
+html.theme-dark-contrast .pagination > .disabled > span:focus {
+    background-color: #222;
+    border-color: #555;
+    color: #b5b5b5;
+}
+
+/* ===== Forms ===== */
+html.theme-dark-contrast input,
+html.theme-dark-contrast select,
+html.theme-dark-contrast textarea,
+html.theme-dark-contrast .form-control {
+    background-color: #2a2a2a;
+    color: #ffffff;
+    border-color: #666;
+    box-shadow: none;
+}
+html.theme-dark-contrast input[type="checkbox"],
+html.theme-dark-contrast input[type="radio"] {
+    background-color: transparent;
+    border-color: #888;
+    box-shadow: none;
+}
+html.theme-dark-contrast input:focus,
+html.theme-dark-contrast select:focus,
+html.theme-dark-contrast textarea:focus,
+html.theme-dark-contrast .form-control:focus {
+    background-color: #2f2f2f;
+    color: #fff;
+    border-color: #008092;
+    box-shadow: 0 0 0 2px rgba(0, 128, 146, 0.35);
+}
+html.theme-dark-contrast .form-control::placeholder,
+html.theme-dark-contrast input::placeholder,
+html.theme-dark-contrast textarea::placeholder {
+    color: #cccccc;
+}
+html.theme-dark-contrast select option {
+    background-color: #2a2a2a;
+    color: #ffffff;
+}
+html.theme-dark-contrast label,
+html.theme-dark-contrast legend {
+    color: #ffffff;
+    border-color: #555;
+}
+html.theme-dark-contrast .help-block {
+    color: #cccccc;
+}
+html.theme-dark-contrast .form-control[disabled],
+html.theme-dark-contrast .form-control[readonly],
+html.theme-dark-contrast fieldset[disabled] .form-control {
+    background-color: #262626;
+    color: #cccccc;
+    border-color: #555;
+}
+html.theme-dark-contrast .input-group-addon {
+    background-color: #333;
+    color: #ffffff;
+    border-color: #666;
+}
+html.theme-dark-contrast .has-error .form-control {
+    border-color: #d9534f;
+}
+html.theme-dark-contrast .has-error .help-block {
+    color: #ff8a86;
+}
+
+/* ===== Buttons ===== */
+html.theme-dark-contrast .btn-default {
+    background-color: #333;
+    border-color: #666;
+    color: #ffffff;
+}
+html.theme-dark-contrast .btn-default:hover,
+html.theme-dark-contrast .btn-default:focus,
+html.theme-dark-contrast .btn-default:active,
+html.theme-dark-contrast .btn-default.active {
+    background-color: #3f3f3f;
+    border-color: #888;
+    color: #fff;
+}
+html.theme-dark-contrast .btn-default.disabled,
+html.theme-dark-contrast .btn-default[disabled] {
+    background-color: #2a2a2a;
+    border-color: #555;
+    color: #b5b5b5;
+}
+html.theme-dark-contrast .btn-primary {
+    background-color: #008092;
+    border-color: #008092;
+    color: #fff;
+}
+html.theme-dark-contrast .btn-primary:hover,
+html.theme-dark-contrast .btn-primary:focus,
+html.theme-dark-contrast .btn-primary:active,
+html.theme-dark-contrast .btn-primary.active {
+    background-color: #0099ad;
+    border-color: #0099ad;
+    color: #fff;
+}
+html.theme-dark-contrast .btn-primary.disabled,
+html.theme-dark-contrast .btn-primary[disabled] {
+    background-color: #005f6d;
+    border-color: #005f6d;
+    color: #e8e8e8;
+}
+html.theme-dark-contrast .btn-link {
+    color: #aee0ff;
+    background-color: transparent;
+}
+html.theme-dark-contrast .btn-link:hover,
+html.theme-dark-contrast .btn-link:focus {
+    color: #e6f2ff;
+    text-decoration: underline;
+}
+html.theme-dark-contrast .btn-link.disabled,
+html.theme-dark-contrast .btn-link[disabled] {
+    color: #b5b5b5;
+}
+
+/* ===== Modal ===== */
+html.theme-dark-contrast .modal-content {
+    background-color: #2a2a2a;
+    border-color: #555;
+    color: #ffffff;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.6);
+}
+html.theme-dark-contrast .modal-header,
+html.theme-dark-contrast .modal-footer {
+    border-color: #555;
+}
+html.theme-dark-contrast .modal-title,
+html.theme-dark-contrast .modal-body {
+    color: #ffffff;
+}
+html.theme-dark-contrast .modal .close {
+    color: #ffffff;
+    text-shadow: none;
+    opacity: 0.7;
+}
+html.theme-dark-contrast .modal .close:hover,
+html.theme-dark-contrast .modal .close:focus {
+    color: #fff;
+    opacity: 1;
+}
+
+/* ===== Panels ===== */
+html.theme-dark-contrast .panel {
+    background-color: #2a2a2a;
+    border-color: #555;
+    color: #ffffff;
+    box-shadow: none;
+}
+html.theme-dark-contrast .panel-default > .panel-heading {
+    background-color: #333;
+    border-color: #555;
+    color: #ffffff;
+}
+html.theme-dark-contrast .panel-default > .panel-footer {
+    background-color: #262626;
+    border-color: #555;
+    color: #ffffff;
+}
+html.theme-dark-contrast .panel-title,
+html.theme-dark-contrast .panel-body {
+    color: #ffffff;
+}
+html.theme-dark-contrast .panel-group .panel-heading + .panel-collapse > .panel-body {
+    border-color: #555;
+}
+
+/* ===== Wells ===== */
+html.theme-dark-contrast .well {
+    background-color: #2a2a2a;
+    border-color: #555;
+    color: #ffffff;
+    box-shadow: none;
+}
+
+/* ===== Alerts / notifications ===== */
+html.theme-dark-contrast .alert {
+    background-color: #2a2a2a;
+    border-color: #666;
+    color: #ffffff;
+}
+html.theme-dark-contrast .alert-success {
+    background-color: #1f3a24;
+    border-color: #346b3d;
+    color: #b9e6be;
+}
+html.theme-dark-contrast .alert-info {
+    background-color: #1d3444;
+    border-color: #2f5d7a;
+    color: #b8dff2;
+}
+html.theme-dark-contrast .alert-warning {
+    background-color: #3b3218;
+    border-color: #6d5a25;
+    color: #f2e0a8;
+}
+html.theme-dark-contrast .alert-danger {
+    background-color: #3d1f1f;
+    border-color: #7a3636;
+    color: #f5c2c2;
+}
+html.theme-dark-contrast .alert .close {
+    color: #ffffff;
+    text-shadow: none;
+    opacity: 0.7;
+}
+html.theme-dark-contrast .alert .close:hover,
+html.theme-dark-contrast .alert .close:focus {
+    color: #fff;
+    opacity: 1;
+}
+html.theme-dark-contrast .notifications > div {
+    background-color: #2a2a2a;
+    border-color: #666;
+    color: #ffffff;
+}
+html.theme-dark-contrast .notifications .alert-success {
+    background-color: #1f3a24;
+    border-color: #346b3d;
+    color: #b9e6be;
+}
+html.theme-dark-contrast .notifications .alert-info {
+    background-color: #1d3444;
+    border-color: #2f5d7a;
+    color: #b8dff2;
+}
+html.theme-dark-contrast .notifications .alert-warning {
+    background-color: #3b3218;
+    border-color: #6d5a25;
+    color: #f2e0a8;
+}
+html.theme-dark-contrast .notifications .alert-danger {
+    background-color: #3d1f1f;
+    border-color: #7a3636;
+    color: #f5c2c2;
+}
+
+/* ===== Code ===== */
+html.theme-dark-contrast pre {
+    background-color: #2a2a2a;
+    border-color: #555;
+    color: #ffffff;
+}
+html.theme-dark-contrast code {
+    background-color: #2a2a2a;
+    color: #f0b7a1;
+}
+html.theme-dark-contrast pre code {
+    background-color: transparent;
+    color: inherit;
+}
+html.theme-dark-contrast kbd {
+    background-color: #333;
+    color: #ffffff;
+    box-shadow: none;
+}
+
+/* ===== Labels / badges ===== */
+html.theme-dark-contrast .label-default {
+    background-color: #555;
+    color: #ffffff;
+}
+html.theme-dark-contrast .label-primary {
+    background-color: #008092;
+    color: #fff;
+}
+html.theme-dark-contrast .badge {
+    background-color: #555;
+    color: #ffffff;
+}
+
+/* ===== Status helper classes from kcli.css ===== */
+html.theme-dark-contrast .green {
+    color: #8fd18f;
+}
+html.theme-dark-contrast .red {
+    color: #ff6b6b;
+}
+html.theme-dark-contrast .blue {
+    color: #74b9ff;
+}
+
+/* ===== Spinner ===== */
+html.theme-dark-contrast .loader {
+    border-color: #333;
+    border-top-color: #4a90e2;
+}

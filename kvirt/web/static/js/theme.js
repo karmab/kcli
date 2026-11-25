@@ -1,9 +1,12 @@
 /**
  * Theme switching mechanism for kweb UI.
  *
- * Three themes are supported: default, light and dark. The choice made in the
- * navbar dropdown is persisted in localStorage under 'kweb-theme'; when
- * nothing is stored the theme comes from the server rendered
+ * Four themes are supported: light-contrast, default, dark and
+ * dark-contrast.
+ * ("Dark Contrast", the dark palette with brighter, higher-contrast text;
+ * "Light Contrast", the default palette with stronger text contrast).
+ * The choice made in the navbar dropdown is persisted in localStorage under
+ * 'kweb-theme'; when nothing is stored the theme comes from the server rendered
  * data-default-theme attribute on <html> (KWEB_THEME), falling back to
  * 'default'. Only explicit menu selections are persisted, so a changed
  * KWEB_THEME still reaches users who never picked a theme.
@@ -13,9 +16,10 @@
     var DEFAULT_THEME = 'default';
 
     var THEMES = {
+        'light-contrast': { icon: '\u2600\uFE0F', label: 'Light Contrast' },
         'default': { icon: '\ud83c\udfa8', label: 'Default' },
-        'light': { icon: '\u2600\ufe0f', label: 'Light' },
-        'dark': { icon: '\ud83c\udf19', label: 'Dark' }
+        'dark': { icon: '\ud83c\udf19', label: 'Dark' },
+        'dark-contrast': { icon: '\ud83c\udf18', label: 'Dark Contrast' }
     };
 
     function isValidTheme(theme) {
