@@ -1048,7 +1048,7 @@ class Kweb():
             baseconfig = Kbaseconfig()
             return {'title': 'KubeProfiles', 'client': baseconfig.client}
 
-        @app.route("/container/<name>/start", method='POST')
+        @app.route("/containers/<name>/start", method='POST')
         def containerstart(name):
             if readonly:
                 response.status = 403
@@ -1076,7 +1076,7 @@ class Kweb():
             response.status = 200
             return result
 
-        @app.route("/container/<name>", method='DELETE')
+        @app.route("/containers/<name>", method='DELETE')
         def containerdelete(name):
             if readonly:
                 response.status = 403
