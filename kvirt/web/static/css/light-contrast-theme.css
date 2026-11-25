@@ -44,7 +44,6 @@ html.theme-light-contrast a {
 html.theme-light-contrast a:hover,
 html.theme-light-contrast a:focus {
     color: #004c99;
-    text-decoration: underline;
 }
 html.theme-light-contrast a.text-muted,
 html.theme-light-contrast .text-muted {
@@ -138,34 +137,40 @@ html.theme-light-contrast .dropdown-menu .divider {
 /* ===== Tables ===== */
 html.theme-light-contrast .table {
     background-color: #fff;
-    color: #0a0a0a;
+    color: #000000;
     border-color: #ddd;
+    border-collapse: collapse;
+    border-width: 1px;
 }
 html.theme-light-contrast .table > thead > tr > th,
 html.theme-light-contrast .table > tbody > tr > th,
 html.theme-light-contrast .table > tfoot > tr > th,
 html.theme-light-contrast .table th {
     background-color: #f5f5f5;
-    color: #0a0a0a;
+    color: #000000;
     border-color: #ddd;
+    font-weight: 500;
 }
 html.theme-light-contrast .table > thead > tr > td,
 html.theme-light-contrast .table > tbody > tr > td,
 html.theme-light-contrast .table > tfoot > tr > td,
 html.theme-light-contrast .table td {
     background-color: #fff;
-    color: #0a0a0a;
+    color: #000000;
     border-color: #ddd;
+    font-weight: 500;
 }
 html.theme-light-contrast .table-striped > tbody > tr:nth-child(odd) > td,
 html.theme-light-contrast .table-striped > tbody > tr:nth-child(odd) > th {
     background-color: #f5f5f5;
-    color: #0a0a0a;
+    color: #000000;
+    font-weight: 500;
 }
 html.theme-light-contrast .table-striped > tbody > tr:nth-child(even) > td,
 html.theme-light-contrast .table-striped > tbody > tr:nth-child(even) > th {
     background-color: #fff;
-    color: #0a0a0a;
+    color: #000000;
+    font-weight: 500;
 }
 html.theme-light-contrast .table-bordered,
 html.theme-light-contrast .table-bordered > thead > tr > th,
@@ -175,6 +180,8 @@ html.theme-light-contrast .table-bordered > tbody > tr > td,
 html.theme-light-contrast .table-bordered > tfoot > tr > th,
 html.theme-light-contrast .table-bordered > tfoot > tr > td {
     border-color: #ddd;
+    color: #000000;
+    font-weight: 500;
 }
 html.theme-light-contrast .table > caption {
     color: #333;
@@ -281,7 +288,6 @@ html.theme-light-contrast .btn-link {
 html.theme-light-contrast .btn-link:hover,
 html.theme-light-contrast .btn-link:focus {
     color: #004c99;
-    text-decoration: underline;
 }
 html.theme-light-contrast .btn-link.disabled,
 html.theme-light-contrast .btn-link[disabled] {

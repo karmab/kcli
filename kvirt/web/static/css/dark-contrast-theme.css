@@ -20,11 +20,11 @@
 
 /* ===== Page root ===== */
 html.theme-dark-contrast {
-    background-color: #1a1a1a;
+    background-color: #111;
     color-scheme: dark;
 }
 html.theme-dark-contrast body {
-    background-color: #222;
+    background-color: #1a1a1a;
     color: #ffffff;
 }
 html.theme-dark-contrast hr {
@@ -151,6 +151,8 @@ html.theme-dark-contrast .table {
     background-color: #2a2a2a;
     color: #ffffff;
     border-color: #666;
+    border-collapse: collapse;
+    border-width: 1px;
 }
 html.theme-dark-contrast .table > thead > tr > th,
 html.theme-dark-contrast .table > tbody > tr > th,
@@ -158,6 +160,7 @@ html.theme-dark-contrast .table > tfoot > tr > th,
 html.theme-dark-contrast .table th {
     background-color: #333;
     color: #ffffff;
+    font-weight: 500;
     border-color: #666;
 }
 html.theme-dark-contrast .table > thead > tr > td,
@@ -166,15 +169,18 @@ html.theme-dark-contrast .table > tfoot > tr > td,
 html.theme-dark-contrast .table td {
     background-color: #2a2a2a;
     color: #ffffff;
+    font-weight: 500;
     border-color: #666;
 }
 html.theme-dark-contrast .table-striped > tbody > tr:nth-child(odd) > td,
 html.theme-dark-contrast .table-striped > tbody > tr:nth-child(odd) > th {
     background-color: #262626;
+    font-weight: 500;
 }
 html.theme-dark-contrast .table-striped > tbody > tr:nth-child(even) > td,
 html.theme-dark-contrast .table-striped > tbody > tr:nth-child(even) > th {
     background-color: #2a2a2a;
+    font-weight: 500;
 }
 html.theme-dark-contrast .table-bordered,
 html.theme-dark-contrast .table-bordered > thead > tr > th,
@@ -184,10 +190,12 @@ html.theme-dark-contrast .table-bordered > tbody > tr > td,
 html.theme-dark-contrast .table-bordered > tfoot > tr > th,
 html.theme-dark-contrast .table-bordered > tfoot > tr > td {
     border-color: #666;
+    font-weight: 500;
 }
 html.theme-dark-contrast .table-hover > tbody > tr:hover > td,
 html.theme-dark-contrast .table-hover > tbody > tr:hover > th {
     background-color: #333;
+    font-weight: 500;
 }
 html.theme-dark-contrast .table > caption {
     color: #cccccc;
