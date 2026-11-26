@@ -129,7 +129,6 @@ ctlplane_localhost_fix: false
 worker_localhost_fix: false
 sno: false
 sno_cloud_remove_lb: true
-sno_ctlplanes: false
 sno_cpuset:
 sno_debug: false
 sno_disable_nics: []
@@ -140,7 +139,6 @@ sno_hostname:
 sno_nic:
 sno_vm: false
 sno_wait: false
-sno_workers: false
 sno_telco: false
 metal3: false
 baremetal_user: root

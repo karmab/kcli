@@ -749,8 +749,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
     sno_disk = data['sno_disk']
     if sno_disk is not None and not sno_disk.startswith('/dev/'):
         sno_disk = f'/dev/{sno_disk}'
-    sno_ctlplanes = data['sno_ctlplanes'] or baremetal_ctlplane
-    sno_workers = data['sno_workers']
     sno_telco = data['sno_telco']
     ignore_hosts = data['ignore_hosts'] or sslip
     if sno:
@@ -1476,13 +1474,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             rendered = config.process_inputfile(cluster, f"{plandir}/99-sno.yaml", overrides={'files': sno_files})
             with open(f"{clusterdir}/openshift/99-sno.yaml", 'w') as f:
                 f.write(rendered)
-        if sno_ctlplanes:
-            sno_ctlplanes_number = len(baremetal_hosts) if baremetal_hosts else 3
-            ingress = config.process_inputfile(cluster, f"{plandir}/customisation/99-ingress-controller.yaml",
-                                               overrides={'role': 'master', 'cluster': cluster, 'domain': domain,
-                                                          'replicas': sno_ctlplanes_number})
-            with open(f"{clusterdir}/openshift/99-ingress-controller.yaml", 'w') as _f:
-                _f.write(ingress)
         pprint("Generating bootstrap-in-place ignition")
         run = call(f'openshift-install --dir={clusterdir} --log-level={log_level} create single-node-ignition-config',
                    shell=True)
@@ -1528,22 +1519,11 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             pprint(f"Storing generated iso in pool {iso_pool}")
             generate_rhcos_iso(k, f"{cluster}-sno", iso_pool, installer=True, arch=arch, extra_args=sno_extra_args,
                                url=live_url)
-        if sno_ctlplanes:
-            if api_ip is None:
-                warning("sno ctlplanes requires api vip to be defined. Skipping")
-            else:
-                ctlplane_overrides = overrides.copy()
-                ctlplane_overrides['role'] = 'ctlplane'
-                ctlplane_overrides['image'] = 'rhcos410'
-                config.create_openshift_iso(cluster, overrides=ctlplane_overrides, installer=True)
-        if sno_workers:
-            worker_overrides = overrides.copy()
-            worker_overrides['role'] = 'worker'
-            worker_overrides['image'] = 'rhcos410'
-            config.create_openshift_iso(cluster, overrides=worker_overrides, installer=True)
         sno_vm_ip = None
         sno_vm_port = None
-        if sno_vm:
+        if sno_extra_args is not None and 'ip' in sno_extra_args:
+            sno_vm_ip = [f for f in sno_extra_args.split(':') if 'ip' in f][0].split('=')[1]
+        elif sno_vm:
             result = config.plan(plan, inputfile=f'{plandir}/sno.yml', overrides=overrides)
             if result['result'] != 'success':
                 return result
@@ -1583,7 +1563,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             iso_pool = data['pool'] or config.pool
             iso_url = handle_baremetal_iso_sno(config, plandir, cluster, data, iso_pool)
             if len(baremetal_hosts) > 0:
-                overrides['role'] = 'ctlplane' if sno_ctlplanes else 'worker'
+                overrides['role'] = 'ctlplane'
             if 'secureboot' in overrides or [h for h in baremetal_hosts if 'secureboot' in h or 'bmc_secureboot' in h]:
                 result = update_baremetal_hosts(baremetal_hosts, overrides=overrides, debug=config.debug)
                 if result['result'] != 'success':
@@ -1609,10 +1589,6 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             info2(f"Login to the console with user: kubeadmin, password: {kubepassword}")
             if not baremetal_hosts:
                 pprint(f"Plug {cluster}-sno.iso to your SNO node to complete the installation")
-            if sno_ctlplanes:
-                pprint(f"Plug {cluster}-master.iso to get additional ctlplanes")
-            if sno_workers:
-                pprint(f"Plug {cluster}-worker.iso to get additional workers")
         backup_paramfile(config.client, installparam, clusterdir, cluster, plan, image, dnsconfig)
         os.environ['KUBECONFIG'] = f"{clusterdir}/auth/kubeconfig"
         if sno_wait:
