@@ -14,7 +14,6 @@ from libvirt import VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE as vir_src_lease
 from libvirt import (VIR_DOMAIN_NOSTATE, VIR_DOMAIN_RUNNING, VIR_DOMAIN_BLOCKED, VIR_DOMAIN_PAUSED,
                      VIR_DOMAIN_SHUTDOWN, VIR_DOMAIN_SHUTOFF, VIR_DOMAIN_CRASHED)
 from libvirt import VIR_CONNECT_LIST_STORAGE_POOLS_ACTIVE
-from libvirt import VIR_DOMAIN_SNAPSHOT_CREATE_DISK_ONLY, VIR_DOMAIN_SNAPSHOT_CREATE_ATOMIC
 from libvirt import VIR_DOMAIN_BLOCK_COMMIT_ACTIVE, VIR_DOMAIN_BLOCK_JOB_ABORT_PIVOT
 from libvirt import VIR_DOMAIN_UNDEFINE_KEEP_NVRAM
 from pwd import getpwuid
@@ -1550,12 +1549,18 @@ class Kvirt(object):
             return {'result': 'failure', 'reason': f"VM {base} not found"}
         if name in vm.snapshotListNames():
             return {'result': 'failure', 'reason': f"Snapshot {name} already exists"}
-        raw_disks, primary_disk = self._get_raw_disks(vm)
+        raw_disks = self._get_raw_disks(vm)
         memory_snapshot = 'internal' if vm.isActive() != 0 and not raw_disks else 'no'
-        snapshot_type = 'external' if raw_disks else 'internal'
-        disksxml = f"<disk name='{primary_disk}' snapshot='{snapshot_type}'/>"
-        for disk in raw_disks:
-            disksxml += f"<disk name='{disk}' snapshot='no'/>"
+        disksxml = ''
+        root = ET.fromstring(vmxml)
+        for element in list(root.iter('disk')):
+            device = element.find('target').get('dev')
+            if device.startswith('hd') or device.startswith('fd'):
+                continue
+            elif device in raw_disks or device.startswith('hd') or device.startswith('fd'):
+                disksxml += f"<disk name='{device}' snapshot='no'/>"
+            elif not device.startswith('hdd'):
+                disksxml += f"<disk name='{device}' snapshot='internal'/>"
         memoryxml = f"<memory snapshot='{memory_snapshot}'/>"
         snapxml = """<domainsnapshot>
           <name>%s</name>
@@ -1565,9 +1570,7 @@ class Kvirt(object):
           </disks>
           %s
           </domainsnapshot>""" % (name, memoryxml, disksxml, vmxml)
-        flags = VIR_DOMAIN_SNAPSHOT_CREATE_DISK_ONLY | VIR_DOMAIN_SNAPSHOT_CREATE_ATOMIC\
-            if snapshot_type == 'external' else 0
-        vm.snapshotCreateXML(snapxml, flags=flags)
+        vm.snapshotCreateXML(snapxml, flags=0)
         return {'result': 'success'}
 
     def delete_snapshot(self, name, base):
@@ -1580,7 +1583,7 @@ class Kvirt(object):
             return {'result': 'failure', 'reason': f"Snapshot {name} doesn't exist"}
         snap_metadata = 0
         snap = vm.snapshotLookupByName(name)
-        raw_disks = self._get_raw_disks(vm)[0]
+        raw_disks = self._get_raw_disks(vm)
         if raw_disks:
             if not vm.isActive():
                 msg = f"VM {base} needs to be up for deleting an external snapshot"
@@ -1625,7 +1628,7 @@ class Kvirt(object):
         if name not in vm.snapshotListNames():
             return {'result': 'failure', 'reason': f"Snapshot {name} doesn't exist"}
         snap = vm.snapshotLookupByName(name)
-        raw_disks = self._get_raw_disks(vm)[0]
+        raw_disks = self._get_raw_disks(vm)
         if raw_disks:
             if vm.isActive():
                 msg = f"VM {base} needs to be down for reverting to an external snapshot"
@@ -4402,7 +4405,6 @@ class Kvirt(object):
         return bus, slot
 
     def _get_raw_disks(self, vm):
-        primary_disk = None
         raw_disks = []
         xml = vm.XMLDesc(0)
         root = ET.fromstring(xml)
@@ -4410,8 +4412,6 @@ class Kvirt(object):
             if element.get('device') == 'cdrom':
                 continue
             device = element.find('target').get('dev')
-            if index == 0:
-                primary_disk = device
             if element.find('driver').get('type') == 'raw':
                 raw_disks.append(device)
-        return raw_disks, primary_disk
+        return raw_disks
