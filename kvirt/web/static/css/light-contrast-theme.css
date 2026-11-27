@@ -1,0 +1,470 @@
+/*
+ * light-contrast-theme.css — Light Contrast theme for the kweb UI.
+ *
+ * Active only when <html> carries the `theme-light-contrast` class (set server
+ * side from KWEB_THEME and switched client side by static/js/theme.js). Every
+ * rule is prefixed with `html.theme-light-contrast` so the `default` and
+ * `dark` themes are not affected at all.
+ *
+ * Policy: the `default` look (white backgrounds, teal navbar, thin bootstrap
+ * borders) but with stronger text contrast. Borders keep the bootstrap
+ * defaults and are never darkened: tables #ddd, inputs #ccc, panels #ddd,
+ * modal #999.
+ *
+ * Palette (each value meets its target contrast on the given background):
+ *   primary text        #0a0a0a   body/tables/inputs/dropdowns/.btn-default/
+ *                                .btn-link   (>= 17 on #fff)
+ *   secondary           #333      labels / .help-block
+ *   muted / placeholder #595959   (about 6 on #fff)
+ *   links               #0056b3   hover/focus #004c99 (about 7 on #fff)
+ *   .navbar-custom      #006b7a   white text (about 6 on #006b7a, >= 5.5)
+ *   .btn-default        #fff      text #0a0a0a, border #ccc
+ *   .btn-primary        #006633   white text (>= 5.5)
+ *   backgrounds         body #fff, striped rows #f5f5f5, panel/well #f5f5f5,
+ *                                modal #fff, dropdown #fff
+ */
+
+/* ===== Page root ===== */
+html.theme-light-contrast {
+    background-color: #fff;
+    color-scheme: light;
+}
+html.theme-light-contrast body {
+    background-color: #fff;
+    color: #0a0a0a;
+}
+html.theme-light-contrast hr {
+    border-color: #ddd;
+}
+
+/* ===== Links ===== */
+html.theme-light-contrast a {
+    color: #0056b3;
+}
+html.theme-light-contrast a:hover,
+html.theme-light-contrast a:focus {
+    color: #004c99;
+}
+html.theme-light-contrast a.text-muted,
+html.theme-light-contrast .text-muted {
+    color: #595959;
+}
+html.theme-light-contrast .help-block {
+    color: #333;
+}
+
+/* ===== Navbar (teal identity kept, darkened) ===== */
+html.theme-light-contrast .navbar-custom {
+    background-color: #006b7a;
+    background-image: none;
+    background-repeat: no-repeat;
+}
+html.theme-light-contrast .navbar-custom .navbar-brand,
+html.theme-light-contrast .navbar-custom .navbar-text,
+html.theme-light-contrast .navbar-custom .navbar-link {
+    color: #fff;
+}
+html.theme-light-contrast .navbar-custom .navbar-brand:hover,
+html.theme-light-contrast .navbar-custom .navbar-brand:focus,
+html.theme-light-contrast .navbar-custom .navbar-link:hover,
+html.theme-light-contrast .navbar-custom .navbar-link:focus {
+    color: #fff;
+    background-color: #00545f;
+}
+html.theme-light-contrast .navbar-custom .navbar-nav > li > a {
+    color: #fff;
+}
+html.theme-light-contrast .navbar-custom .navbar-nav > li > a:hover,
+html.theme-light-contrast .navbar-custom .navbar-nav > li > a:focus {
+    color: #fff;
+    background-color: #00545f;
+}
+html.theme-light-contrast .navbar-custom .navbar-nav > .active > a,
+html.theme-light-contrast .navbar-custom .navbar-nav > .active > a:hover,
+html.theme-light-contrast .navbar-custom .navbar-nav > .active > a:focus,
+html.theme-light-contrast .navbar-custom .navbar-nav > .open > a,
+html.theme-light-contrast .navbar-custom .navbar-nav > .open > a:hover,
+html.theme-light-contrast .navbar-custom .navbar-nav > .open > a:focus {
+    color: #fff;
+    background-color: #004e59;
+}
+html.theme-light-contrast .navbar-custom .navbar-nav > .disabled > a,
+html.theme-light-contrast .navbar-custom .navbar-nav > .disabled > a:hover,
+html.theme-light-contrast .navbar-custom .navbar-nav > .disabled > a:focus {
+    color: #d5d5d5;
+    background-color: transparent;
+}
+
+/* ===== Dropdowns ===== */
+html.theme-light-contrast .dropdown-menu {
+    background-color: #fff;
+    border-color: #ccc;
+    color: #0a0a0a;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+}
+html.theme-light-contrast .dropdown-menu > li > a,
+html.theme-light-contrast .dropdown-menu li a {
+    color: #0a0a0a;
+}
+html.theme-light-contrast .dropdown-menu > li > a:hover,
+html.theme-light-contrast .dropdown-menu > li > a:focus,
+html.theme-light-contrast .dropdown-menu li a:hover,
+html.theme-light-contrast .dropdown-menu li a:focus {
+    background-color: #f5f5f5;
+    background-image: none;
+    color: #0a0a0a;
+}
+html.theme-light-contrast .dropdown-menu > .active > a,
+html.theme-light-contrast .dropdown-menu > .active > a:hover,
+html.theme-light-contrast .dropdown-menu > .active > a:focus {
+    background-color: #0056b3;
+    background-image: none;
+    color: #fff;
+}
+html.theme-light-contrast .dropdown-menu > .disabled > a,
+html.theme-light-contrast .dropdown-menu > .disabled > a:hover,
+html.theme-light-contrast .dropdown-menu > .disabled > a:focus {
+    color: #595959;
+    background-color: transparent;
+}
+html.theme-light-contrast .dropdown-header {
+    color: #595959;
+}
+html.theme-light-contrast .dropdown-menu .divider {
+    background-color: #f5f5f5;
+}
+
+/* ===== Tables ===== */
+html.theme-light-contrast .table {
+    background-color: #fff;
+    color: #000000;
+    border-color: #ddd;
+    border-collapse: collapse;
+    border-width: 1px;
+}
+html.theme-light-contrast .table > thead > tr > th,
+html.theme-light-contrast .table > tbody > tr > th,
+html.theme-light-contrast .table > tfoot > tr > th,
+html.theme-light-contrast .table th {
+    background-color: #f5f5f5;
+    color: #000000;
+    border-color: #ddd;
+    font-weight: 500;
+}
+html.theme-light-contrast .table > thead > tr > td,
+html.theme-light-contrast .table > tbody > tr > td,
+html.theme-light-contrast .table > tfoot > tr > td,
+html.theme-light-contrast .table td {
+    background-color: #fff;
+    color: #000000;
+    border-color: #ddd;
+    font-weight: 500;
+}
+html.theme-light-contrast .table-striped > tbody > tr:nth-child(odd) > td,
+html.theme-light-contrast .table-striped > tbody > tr:nth-child(odd) > th {
+    background-color: #f5f5f5;
+    color: #000000;
+    font-weight: 500;
+}
+html.theme-light-contrast .table-striped > tbody > tr:nth-child(even) > td,
+html.theme-light-contrast .table-striped > tbody > tr:nth-child(even) > th {
+    background-color: #fff;
+    color: #000000;
+    font-weight: 500;
+}
+html.theme-light-contrast .table-bordered,
+html.theme-light-contrast .table-bordered > thead > tr > th,
+html.theme-light-contrast .table-bordered > thead > tr > td,
+html.theme-light-contrast .table-bordered > tbody > tr > th,
+html.theme-light-contrast .table-bordered > tbody > tr > td,
+html.theme-light-contrast .table-bordered > tfoot > tr > th,
+html.theme-light-contrast .table-bordered > tfoot > tr > td {
+    border-color: #ddd;
+    color: #000000;
+    font-weight: 500;
+}
+html.theme-light-contrast .table > caption {
+    color: #333;
+}
+html.theme-light-contrast .table-hover > tbody > tr:hover > td,
+html.theme-light-contrast .table-hover > tbody > tr:hover > th {
+    background-color: #f5f5f5;
+}
+
+
+/* ===== Forms ===== */
+html.theme-light-contrast input,
+html.theme-light-contrast select,
+html.theme-light-contrast textarea,
+html.theme-light-contrast .form-control {
+    background-color: #fff;
+    color: #0a0a0a;
+    border-color: #ccc;
+}
+html.theme-light-contrast input:focus,
+html.theme-light-contrast select:focus,
+html.theme-light-contrast textarea:focus,
+html.theme-light-contrast .form-control:focus {
+    background-color: #fff;
+    color: #0a0a0a;
+    border-color: #ccc;
+    box-shadow: 0 0 0 2px rgba(0, 128, 146, 0.35);
+}
+html.theme-light-contrast .form-control::placeholder,
+html.theme-light-contrast input::placeholder,
+html.theme-light-contrast textarea::placeholder {
+    color: #595959;
+}
+html.theme-light-contrast select option {
+    background-color: #fff;
+    color: #0a0a0a;
+}
+html.theme-light-contrast label,
+html.theme-light-contrast legend {
+    color: #333;
+}
+html.theme-light-contrast .form-control[disabled],
+html.theme-light-contrast .form-control[readonly],
+html.theme-light-contrast fieldset[disabled] .form-control {
+    background-color: #f5f5f5;
+    color: #595959;
+    border-color: #ccc;
+}
+html.theme-light-contrast .input-group-addon {
+    background-color: #f5f5f5;
+    color: #0a0a0a;
+    border-color: #ccc;
+}
+
+/* ===== Buttons ===== */
+html.theme-light-contrast .btn {
+    color: #0a0a0a;
+}
+html.theme-light-contrast .btn-default {
+    background-color: #fff;
+    background-image: none;
+    border-color: #ccc;
+    color: #0a0a0a;
+}
+html.theme-light-contrast .btn-default:hover,
+html.theme-light-contrast .btn-default:focus,
+html.theme-light-contrast .btn-default:active,
+html.theme-light-contrast .btn-default.active {
+    background-color: #f5f5f5;
+    background-image: none;
+    border-color: #ccc;
+    color: #0a0a0a;
+}
+html.theme-light-contrast .btn-default.disabled,
+html.theme-light-contrast .btn-default[disabled] {
+    background-color: #f5f5f5;
+    background-image: none;
+    border-color: #ccc;
+    color: #595959;
+}
+html.theme-light-contrast .btn-primary {
+    background-color: #006633;
+    background-image: none;
+    color: #fff;
+}
+html.theme-light-contrast .btn-primary:hover,
+html.theme-light-contrast .btn-primary:focus,
+html.theme-light-contrast .btn-primary:active,
+html.theme-light-contrast .btn-primary.active {
+    background-color: #004d26;
+    background-image: none;
+    color: #fff;
+}
+html.theme-light-contrast .btn-primary.disabled,
+html.theme-light-contrast .btn-primary[disabled] {
+    background-color: #f5f5f5;
+    background-image: none;
+    color: #595959;
+}
+html.theme-light-contrast .btn-link {
+    color: #0056b3;
+    background-color: transparent;
+}
+html.theme-light-contrast .btn-link:hover,
+html.theme-light-contrast .btn-link:focus {
+    color: #004c99;
+}
+html.theme-light-contrast .btn-link.disabled,
+html.theme-light-contrast .btn-link[disabled] {
+    color: #595959;
+}
+
+
+/* ===== Modal ===== */
+html.theme-light-contrast .modal-content {
+    background-color: #fff;
+    border-color: #999;
+    color: #0a0a0a;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+}
+html.theme-light-contrast .modal-header,
+html.theme-light-contrast .modal-footer {
+    border-color: #999;
+}
+html.theme-light-contrast .modal-title,
+html.theme-light-contrast .modal-body {
+    color: #0a0a0a;
+}
+html.theme-light-contrast .modal .close {
+    color: #0a0a0a;
+    text-shadow: none;
+    opacity: 0.7;
+}
+html.theme-light-contrast .modal .close:hover,
+html.theme-light-contrast .modal .close:focus {
+    color: #0a0a0a;
+    opacity: 1;
+}
+
+/* ===== Panels ===== */
+html.theme-light-contrast .panel {
+    background-color: #f5f5f5;
+    border-color: #ddd;
+    color: #0a0a0a;
+    box-shadow: none;
+}
+html.theme-light-contrast .panel-default > .panel-heading {
+    background-color: #f5f5f5;
+    border-color: #ddd;
+    color: #0a0a0a;
+}
+html.theme-light-contrast .panel-default > .panel-footer {
+    background-color: #f5f5f5;
+    border-color: #ddd;
+    color: #0a0a0a;
+}
+html.theme-light-contrast .panel-title,
+html.theme-light-contrast .panel-body {
+    color: #0a0a0a;
+}
+html.theme-light-contrast .panel-group .panel-heading + .panel-collapse > .panel-body {
+    border-color: #ddd;
+}
+
+/* ===== Wells ===== */
+html.theme-light-contrast .well {
+    background-color: #f5f5f5;
+    border-color: #ddd;
+    color: #0a0a0a;
+    box-shadow: none;
+}
+
+/* ===== Alerts / notifications ===== */
+html.theme-light-contrast .alert {
+    background-color: #f5f5f5;
+    border-color: #ddd;
+    color: #0a0a0a;
+}
+html.theme-light-contrast .alert-success {
+    background-color: #dff0d8;
+    border-color: #ddd;
+    color: #1a3a17;
+}
+html.theme-light-contrast .alert-info {
+    background-color: #d9edf7;
+    border-color: #ddd;
+    color: #123c4d;
+}
+html.theme-light-contrast .alert-warning {
+    background-color: #fcf8e3;
+    border-color: #ddd;
+    color: #4d3a10;
+}
+html.theme-light-contrast .alert-danger {
+    background-color: #f2dede;
+    border-color: #ddd;
+    color: #5c1c1a;
+}
+html.theme-light-contrast .alert .close {
+    color: #0a0a0a;
+    text-shadow: none;
+    opacity: 0.8;
+}
+html.theme-light-contrast .alert .close:hover,
+html.theme-light-contrast .alert .close:focus {
+    color: #0a0a0a;
+    opacity: 1;
+}
+html.theme-light-contrast .notifications > div {
+    background-color: #fff;
+    border-color: #ddd;
+    color: #0a0a0a;
+}
+html.theme-light-contrast .notifications .alert-success {
+    background-color: #dff0d8;
+    border-color: #ddd;
+    color: #1a3a17;
+}
+html.theme-light-contrast .notifications .alert-info {
+    background-color: #d9edf7;
+    border-color: #ddd;
+    color: #123c4d;
+}
+html.theme-light-contrast .notifications .alert-warning {
+    background-color: #fcf8e3;
+    border-color: #ddd;
+    color: #4d3a10;
+}
+html.theme-light-contrast .notifications .alert-danger {
+    background-color: #f2dede;
+    border-color: #ddd;
+    color: #5c1c1a;
+}
+
+/* ===== Code ===== */
+html.theme-light-contrast pre {
+    background-color: #f5f5f5;
+    border-color: #ddd;
+    color: #0a0a0a;
+}
+html.theme-light-contrast code {
+    background-color: #f5f5f5;
+    color: #0a0a0a;
+}
+html.theme-light-contrast pre code {
+    background-color: transparent;
+    color: inherit;
+}
+
+/* ===== Bootstrap pagination ===== */
+html.theme-light-contrast .pagination > li > a,
+html.theme-light-contrast .pagination > li > span {
+    background-color: #fff;
+    color: #0a0a0a;
+    border-color: #ddd;
+}
+html.theme-light-contrast .pagination > li > a:hover,
+html.theme-light-contrast .pagination > li > a:focus,
+html.theme-light-contrast .pagination > li > span:hover,
+html.theme-light-contrast .pagination > li > span:focus {
+    background-color: #f5f5f5;
+    color: #0a0a0a;
+    border-color: #ddd;
+}
+html.theme-light-contrast .pagination > .active > a,
+html.theme-light-contrast .pagination > .active > a:hover,
+html.theme-light-contrast .pagination > .active > a:focus,
+html.theme-light-contrast .pagination > .active > span,
+html.theme-light-contrast .pagination > .active > span:hover,
+html.theme-light-contrast .pagination > .active > span:focus {
+    background-color: #0056b3;
+    background-image: none;
+    color: #fff;
+}
+html.theme-light-contrast .pagination > .disabled > a,
+html.theme-light-contrast .pagination > .disabled > a:hover,
+html.theme-light-contrast .pagination > .disabled > a:focus,
+html.theme-light-contrast .pagination > .disabled > span,
+html.theme-light-contrast .pagination > .disabled > span:hover,
+html.theme-light-contrast .pagination > .disabled > span:focus {
+    background-color: #fff;
+    background-image: none;
+    border-color: #ddd;
+    color: #595959;
+}
+

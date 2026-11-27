@@ -14,6 +14,24 @@ body {
     vertical-align: middle;
 }
 
+/*
+ * Table "Actions" column: make the clickable area show a pointer cursor.
+ *
+ * Every table's "Actions" column exposes one of two clickable areas per row:
+ *   - a single action   -> <td onclick="...">
+ *   - an actions drop-down -> <button class="dropdown-toggle"> that opens a
+ *                             .dropdown-menu of <li onclick="..."> items
+ *
+ * Bootstrap already gives .btn a pointer cursor (so the dropdown-toggle button
+ * and the "create" buttons are covered); the <td> and <li> action elements do
+ * not, so give the whole action area a pointer cursor here.
+ */
+td[onclick],
+.dropdown .dropdown-toggle,
+.dropdown-menu li {
+    cursor: pointer;
+}
+
 .green {
         color: #6e8a6e;
 }
