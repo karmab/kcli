@@ -620,16 +620,22 @@ class Kweb():
         @app.route('/containers')
         def containerslist():
             config = Kconfig()
-            cont = Kcontainerconfig(config).cont
-            containers = cont.list_containers()
+            try:
+                cont = Kcontainerconfig(config).cont
+                containers = cont.list_containers()
+            except Exception as err:
+                return {'result': 'failure', 'reason': str(err)}
             return {'containers': containers}
 
         @app.route('/containerstable')
         @view('containerstable.html')
         def containerstable():
             config = Kconfig()
-            cont = Kcontainerconfig(config).cont
-            containers = cont.list_containers()
+            try:
+                cont = Kcontainerconfig(config).cont
+                containers = cont.list_containers()
+            except Exception as err:
+                return {'containers': [], 'error': str(err), 'readonly': readonly}
             return {'containers': containers, 'readonly': readonly}
 
         @app.route('/containersindex')
@@ -1042,14 +1048,17 @@ class Kweb():
             baseconfig = Kbaseconfig()
             return {'title': 'KubeProfiles', 'client': baseconfig.client}
 
-        @app.route("/container/<name>/start", method='POST')
+        @app.route("/containers/<name>/start", method='POST')
         def containerstart(name):
             if readonly:
                 response.status = 403
                 return {}
             config = Kconfig()
-            cont = Kcontainerconfig(config).cont
-            result = cont.start_container(name)
+            try:
+                cont = Kcontainerconfig(config).cont
+                result = cont.start_container(name)
+            except Exception as err:
+                result = {'result': 'failure', 'reason': str(err)}
             response.status = 200
             return result
 
@@ -1059,19 +1068,25 @@ class Kweb():
                 response.status = 403
                 return {}
             config = Kconfig()
-            cont = Kcontainerconfig(config).cont
-            result = cont.stop_container(name)
+            try:
+                cont = Kcontainerconfig(config).cont
+                result = cont.stop_container(name)
+            except Exception as err:
+                result = {'result': 'failure', 'reason': str(err)}
             response.status = 200
             return result
 
-        @app.route("/container/<name>", method='DELETE')
+        @app.route("/containers/<name>", method='DELETE')
         def containerdelete(name):
             if readonly:
                 response.status = 403
                 return {}
             config = Kconfig()
-            cont = Kcontainerconfig(config).cont
-            result = cont.delete_container(name)
+            try:
+                cont = Kcontainerconfig(config).cont
+                result = cont.delete_container(name)
+            except Exception as err:
+                result = {'result': 'failure', 'reason': str(err)}
             response.status = 200
             return result
 
@@ -1085,7 +1100,10 @@ class Kweb():
                 response.status = 400
                 return 'Invalid data'
             config = Kconfig()
-            cont = Kcontainerconfig(config).cont
+            try:
+                cont = Kcontainerconfig(config).cont
+            except Exception as err:
+                return {'result': 'failure', 'reason': str(err)}
             k = config.k
             if 'name' in data:
                 name = data['name']

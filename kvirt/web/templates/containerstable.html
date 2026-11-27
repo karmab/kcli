@@ -1,3 +1,10 @@
+        {% if error %}
+        <tbody>
+            <tr>
+                <td colspan="7" style="color: red;">{{ error }}</td>
+            </tr>
+        </tbody>
+        {% else %}
         <thead>
             <tr>
                 <th>Name</th>
@@ -36,3 +43,4 @@
             </tr>
             {% endfor %} 
         </tbody>
+        {% endif %}

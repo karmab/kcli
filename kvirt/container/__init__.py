@@ -2,6 +2,7 @@
 
 import os
 from shutil import which
+from kvirt.common import warning
 
 
 class Kcontainer():
@@ -13,14 +14,28 @@ class Kcontainer():
         self.containermode = False
         self.engine = engine
         self.insecure = insecure
-        if self.host == '127.0.0.1' and which(engine) is None:
-            reason = f"executable {engine} not found in path"
-            return {'result': 'failure', 'reason': reason}
+        self.d = None
         if self.host == '127.0.0.1' and os.path.exists("/i_am_a_container"):
             self.containermode = True
-            if not os.path.exists("/run/podman/io.podman"):
-                reason = "You need to add -v /run/podman/io.podman:/run/podman/io.podman to container alias"
-                return {'result': 'failure', 'reason': reason}
+            socket_paths = {'docker': '/var/run/docker.sock', 'podman': '/run/podman/io.podman'}
+            if self.engine not in socket_paths:
+                raise ValueError(f"Unsupported container engine {self.engine}")
+            socket_path = socket_paths[self.engine]
+            if not os.path.exists(socket_path):
+                # Fall back to whichever container runtime socket is available
+                available = [name for name, path in socket_paths.items() if os.path.exists(path)]
+                if not available:
+                    reason = ("No container runtime socket available. Add -v /var/run/docker.sock:/var/run/docker.sock "
+                               "or -v /run/podman/io.podman:/run/podman/io.podman to the container alias")
+                    raise ValueError(reason)
+                previous = self.engine
+                self.engine = available[0]
+                socket_path = socket_paths[self.engine]
+                warning(f"Container runtime socket for {previous} not found; using {self.engine} ({socket_path}) instead")
+            import docker
+            self.d = docker.DockerClient(base_url=f'unix:///{socket_path}')
+        elif self.host == '127.0.0.1' and which(engine) is None:
+            raise ValueError(f"executable {engine} not found in path")
 
     def create_container(self, name, image, nets=None, cmds=[], ports=[], volumes=[], environment=[], label=None,
                          overrides={}):
