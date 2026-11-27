@@ -90,6 +90,7 @@ def update_pull_secret(pull_secret, registry, user, password):
 
 
 def get_registry_cert(disconnected_url):
+    pprint(f"Trying to gather registry ca cert from {disconnected_url}")
     cacmd = f"openssl s_client -showcerts -connect {disconnected_url} </dev/null 2>/dev/null|"
     cacmd += "awk '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/'"
     return os.popen(cacmd).read()
@@ -1022,10 +1023,7 @@ def create(config, plandir, cluster, overrides, dnsconfig=None):
             tag = f'{disconnected_url}/{disconnected_prefix}:{INSTALLER_VERSION}-{arch}'
             os.environ['OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE'] = tag
         if data['ca'] is None and 'quay.io' not in disconnected_url:
-            pprint(f"Trying to gather registry ca cert from {disconnected_url}")
-            cacmd = f"openssl s_client -showcerts -connect {disconnected_url} </dev/null 2>/dev/null|"
-            cacmd += "openssl x509 -outform PEM"
-            data['ca'] = os.popen(cacmd).read()
+            data['ca'] = get_registry_cert(disconnected_url)
         kcli_images = ["curl:multi", "origin-coredns:multi", "haproxy:multi", "origin-keepalived-ipfailover:multi",
                        "mdns-publisher:multi", "kubectl:multi"]
         kcli_images = '\n'.join([f'quay.io/karmab/{image}' for image in kcli_images])
